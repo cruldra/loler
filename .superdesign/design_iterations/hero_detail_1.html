@@ -1,0 +1,957 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>戏命师 烬 - 英雄详情 - LOL助手</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="lol_theme.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-sans) !important;
+            background: var(--background) !important;
+            color: var(--foreground) !important;
+            min-height: 100vh;
+        }
+
+        .hero-detail {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        .hero-header {
+            background: var(--card) !important;
+            border: 1px solid var(--border) !important;
+            border-radius: var(--radius-lg) !important;
+            box-shadow: var(--shadow-xl) !important;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, 
+                rgba(255, 215, 0, 0.1) 0%, 
+                transparent 50%, 
+                rgba(96, 165, 250, 0.1) 100%);
+            pointer-events: none;
+        }
+
+        .hero-header-content {
+            position: relative;
+            z-index: 1;
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        .hero-avatar {
+            width: 120px;
+            height: 120px;
+            border-radius: var(--radius-lg) !important;
+            border: 3px solid var(--primary) !important;
+            box-shadow: 0 0 30px rgba(255, 215, 0, 0.4) !important;
+            object-fit: cover;
+        }
+
+        .hero-info h1 {
+            font-size: 2.5rem !important;
+            font-weight: 700 !important;
+            color: var(--primary) !important;
+            margin-bottom: 0.5rem !important;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-title {
+            font-size: 1.2rem !important;
+            color: var(--muted-foreground) !important;
+            margin-bottom: 1rem !important;
+        }
+
+        .hero-tags {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .hero-tag {
+            background: var(--secondary) !important;
+            color: var(--secondary-foreground) !important;
+            padding: 0.25rem 0.75rem !important;
+            border-radius: var(--radius) !important;
+            font-size: 0.8rem !important;
+            font-weight: 500 !important;
+        }
+
+        .hero-stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            min-width: 200px;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 0.8rem !important;
+            color: var(--muted-foreground) !important;
+            margin-bottom: 0.25rem !important;
+        }
+
+        .stat-value {
+            font-size: 1.5rem !important;
+            font-weight: 600 !important;
+            color: var(--primary) !important;
+        }
+
+        .stat-bar {
+            width: 100%;
+            height: 4px;
+            background: var(--muted) !important;
+            border-radius: 2px;
+            margin-top: 0.25rem;
+            overflow: hidden;
+        }
+
+        .stat-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--accent));
+            border-radius: 2px;
+            transition: width 0.8s ease-out;
+        }
+
+        .tabs-container {
+            background: var(--card) !important;
+            border: 1px solid var(--border) !important;
+            border-radius: var(--radius-lg) !important;
+            box-shadow: var(--shadow-xl) !important;
+            overflow: hidden;
+        }
+
+        .tabs-header {
+            display: flex;
+            background: var(--muted) !important;
+            border-bottom: 1px solid var(--border) !important;
+        }
+
+        .tab-button {
+            flex: 1;
+            padding: 1rem 1.5rem !important;
+            background: transparent !important;
+            border: none !important;
+            color: var(--muted-foreground) !important;
+            font-size: 0.95rem !important;
+            font-weight: 500 !important;
+            cursor: pointer !important;
+            transition: all 0.2s ease-out !important;
+            position: relative;
+        }
+
+        .tab-button::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--primary);
+            transform: scaleX(0);
+            transition: transform 0.2s ease-out;
+        }
+
+        .tab-button:hover {
+            background: rgba(255, 215, 0, 0.1) !important;
+            color: var(--foreground) !important;
+        }
+
+        .tab-button.active {
+            background: var(--card) !important;
+            color: var(--primary) !important;
+        }
+
+        .tab-button.active::after {
+            transform: scaleX(1);
+        }
+
+        .tab-content {
+            padding: 2rem;
+            min-height: 500px;
+        }
+
+        .tab-panel {
+            display: none;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .tab-panel.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* 技能面板样式 */
+        .skills-grid {
+            display: grid;
+            gap: 1.5rem;
+        }
+
+        .skill-item {
+            background: var(--muted) !important;
+            border: 1px solid var(--border) !important;
+            border-radius: var(--radius-lg) !important;
+            padding: 1.5rem;
+            transition: all 0.2s ease-out;
+        }
+
+        .skill-item:hover {
+            border-color: var(--primary) !important;
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.2) !important;
+        }
+
+        .skill-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .skill-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: var(--radius) !important;
+            border: 2px solid var(--primary) !important;
+            background: var(--card) !important;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            color: var(--primary) !important;
+        }
+
+        .skill-info h3 {
+            font-size: 1.2rem !important;
+            font-weight: 600 !important;
+            color: var(--foreground) !important;
+            margin-bottom: 0.25rem !important;
+        }
+
+        .skill-type {
+            font-size: 0.8rem !important;
+            color: var(--muted-foreground) !important;
+        }
+
+        .skill-description {
+            color: var(--muted-foreground) !important;
+            line-height: 1.6 !important;
+            margin-bottom: 1rem !important;
+        }
+
+        .skill-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 1rem;
+            padding: 1rem;
+            background: var(--card) !important;
+            border-radius: var(--radius) !important;
+            border: 1px solid var(--border) !important;
+        }
+
+        .skill-stat {
+            text-align: center;
+        }
+
+        .skill-stat-label {
+            font-size: 0.8rem !important;
+            color: var(--muted-foreground) !important;
+            margin-bottom: 0.25rem !important;
+        }
+
+        .skill-stat-value {
+            font-size: 0.9rem !important;
+            font-weight: 600 !important;
+            color: var(--primary) !important;
+        }
+
+        /* 皮肤面板样式 */
+        .skins-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .skin-card {
+            background: var(--muted) !important;
+            border: 1px solid var(--border) !important;
+            border-radius: var(--radius-lg) !important;
+            overflow: hidden;
+            transition: all 0.2s ease-out;
+            cursor: pointer;
+        }
+
+        .skin-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--primary) !important;
+            box-shadow: var(--shadow-xl) !important;
+        }
+
+        .skin-image {
+            width: 100%;
+            height: 120px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary-foreground) !important;
+            font-size: 2rem;
+            font-weight: 600;
+        }
+
+        .skin-info {
+            padding: 1rem;
+        }
+
+        .skin-name {
+            font-size: 0.9rem !important;
+            font-weight: 600 !important;
+            color: var(--foreground) !important;
+            margin-bottom: 0.5rem !important;
+        }
+
+        .skin-price {
+            font-size: 0.8rem !important;
+            color: var(--muted-foreground) !important;
+        }
+
+        .chromas-badge {
+            display: inline-block;
+            background: var(--accent) !important;
+            color: var(--accent-foreground) !important;
+            padding: 0.2rem 0.5rem !important;
+            border-radius: var(--radius) !important;
+            font-size: 0.7rem !important;
+            font-weight: 500 !important;
+            margin-top: 0.5rem;
+        }
+
+        /* 攻略面板样式 */
+        .tips-section {
+            margin-bottom: 2rem;
+        }
+
+        .tips-title {
+            font-size: 1.3rem !important;
+            font-weight: 600 !important;
+            color: var(--primary) !important;
+            margin-bottom: 1rem !important;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .tip-item {
+            background: var(--muted) !important;
+            border: 1px solid var(--border) !important;
+            border-radius: var(--radius) !important;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            border-left: 4px solid var(--primary) !important;
+        }
+
+        .tip-text {
+            color: var(--muted-foreground) !important;
+            line-height: 1.6 !important;
+        }
+
+        /* 属性面板样式 */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+        }
+
+        .stats-section {
+            background: var(--muted) !important;
+            border: 1px solid var(--border) !important;
+            border-radius: var(--radius-lg) !important;
+            padding: 1.5rem;
+        }
+
+        .stats-section h3 {
+            font-size: 1.2rem !important;
+            font-weight: 600 !important;
+            color: var(--primary) !important;
+            margin-bottom: 1rem !important;
+        }
+
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid var(--border) !important;
+        }
+
+        .stat-row:last-child {
+            border-bottom: none;
+        }
+
+        .stat-name {
+            color: var(--muted-foreground) !important;
+            font-size: 0.9rem !important;
+        }
+
+        .stat-number {
+            color: var(--foreground) !important;
+            font-weight: 600 !important;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .hero-header-content {
+                grid-template-columns: 1fr;
+                text-align: center;
+                gap: 1rem;
+            }
+
+            .hero-stats {
+                grid-template-columns: repeat(4, 1fr);
+            }
+
+            .tabs-header {
+                flex-wrap: wrap;
+            }
+
+            .tab-button {
+                flex: none;
+                min-width: 120px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="hero-detail">
+        <!-- 英雄头部信息 -->
+        <div class="hero-header">
+            <div class="hero-header-content">
+                <img src="https://picsum.photos/120/120?random=jhin" alt="戏命师 烬" class="hero-avatar">
+                
+                <div class="hero-info">
+                    <h1>戏命师</h1>
+                    <div class="hero-title">烬</div>
+                    <div class="hero-tags">
+                        <span class="hero-tag">射手</span>
+                        <span class="hero-tag">法师</span>
+                    </div>
+                </div>
+
+                <div class="hero-stats">
+                    <div class="stat-item">
+                        <div class="stat-label">攻击</div>
+                        <div class="stat-value">10</div>
+                        <div class="stat-bar">
+                            <div class="stat-fill" style="width: 100%"></div>
+                        </div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">防御</div>
+                        <div class="stat-value">2</div>
+                        <div class="stat-bar">
+                            <div class="stat-fill" style="width: 20%"></div>
+                        </div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">魔法</div>
+                        <div class="stat-value">6</div>
+                        <div class="stat-bar">
+                            <div class="stat-fill" style="width: 60%"></div>
+                        </div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">难度</div>
+                        <div class="stat-value">6</div>
+                        <div class="stat-bar">
+                            <div class="stat-fill" style="width: 60%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 标签页容器 -->
+        <div class="tabs-container">
+            <div class="tabs-header">
+                <button class="tab-button active" data-tab="overview">
+                    <i data-lucide="info" class="w-4 h-4 inline mr-2"></i>
+                    概览
+                </button>
+                <button class="tab-button" data-tab="skills">
+                    <i data-lucide="zap" class="w-4 h-4 inline mr-2"></i>
+                    技能
+                </button>
+                <button class="tab-button" data-tab="skins">
+                    <i data-lucide="palette" class="w-4 h-4 inline mr-2"></i>
+                    皮肤
+                </button>
+                <button class="tab-button" data-tab="tips">
+                    <i data-lucide="lightbulb" class="w-4 h-4 inline mr-2"></i>
+                    攻略
+                </button>
+                <button class="tab-button" data-tab="stats">
+                    <i data-lucide="bar-chart-3" class="w-4 h-4 inline mr-2"></i>
+                    属性
+                </button>
+            </div>
+
+            <div class="tab-content">
+                <!-- 概览面板 -->
+                <div class="tab-panel active" id="overview">
+                    <div class="tips-section">
+                        <h2 class="tips-title">
+                            <i data-lucide="scroll-text" class="w-5 h-5"></i>
+                            英雄背景
+                        </h2>
+                        <div class="tip-item">
+                            <div class="tip-text">
+                                作为一名心思缜密的癫狂杀手，烬坚信如何让人直面死亡是一门精巧的艺术。他曾在艾欧尼亚的监狱中服刑，却因执政议会里涌动的暗流得到释放，最终成为权术斗争所利用的刺客。烬将手中的枪当成画笔，尽情地挥洒他所追求的残忍艺术，让受害者肝胆俱裂，令旁观者震悚难平。他在自己制作的阴森剧目里肆意取乐，让"恐怖"二字有了最合适不过的定义。
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="tips-section">
+                        <h2 class="tips-title">
+                            <i data-lucide="target" class="w-5 h-5"></i>
+                            被动技能：低语
+                        </h2>
+                        <div class="tip-item">
+                            <div class="tip-text">
+                                烬的手枪，"低语"，是一台精密的设备，用来造成出色的伤害。它会以一个固定的频率发射子弹，并且只能装四颗子弹。烬会将黑暗魔法注入最后一颗子弹，来让它产生暴击并造成额外斩杀伤害。当"低语"暴击时，它会为烬提供一个爆发性的移动速度加成。
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 技能面板 -->
+                <div class="tab-panel" id="skills">
+                    <div class="skills-grid">
+                        <div class="skill-item">
+                            <div class="skill-header">
+                                <div class="skill-icon">Q</div>
+                                <div class="skill-info">
+                                    <h3>曼舞手雷</h3>
+                                    <div class="skill-type">主动技能</div>
+                                </div>
+                            </div>
+                            <div class="skill-description">
+                                烬朝敌人扔出一颗迷人的手雷。它最多可以命中四个目标，并在每次击杀单位后获得伤害提升。
+                            </div>
+                            <div class="skill-stats">
+                                <div class="skill-stat">
+                                    <div class="skill-stat-label">冷却时间</div>
+                                    <div class="skill-stat-value">7/6.5/6/5.5/5秒</div>
+                                </div>
+                                <div class="skill-stat">
+                                    <div class="skill-stat-label">消耗</div>
+                                    <div class="skill-stat-value">40/45/50/55/60</div>
+                                </div>
+                                <div class="skill-stat">
+                                    <div class="skill-stat-label">射程</div>
+                                    <div class="skill-stat-value">550</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="skill-item">
+                            <div class="skill-header">
+                                <div class="skill-icon">W</div>
+                                <div class="skill-info">
+                                    <h3>致命华彩</h3>
+                                    <div class="skill-type">主动技能</div>
+                                </div>
+                            </div>
+                            <div class="skill-description">
+                                烬挥舞他的长枪，进行一次射程极远的射击。它可穿透小兵和野怪，但会在命中第一个敌方英雄后停下。如果目标最近踩到了烬的陷阱、承受过烬的伤害或被烬的队友给命中过，那么还会受到禁锢效果。
+                            </div>
+                            <div class="skill-stats">
+                                <div class="skill-stat">
+                                    <div class="skill-stat-label">冷却时间</div>
+                                    <div class="skill-stat-value">12秒</div>
+                                </div>
+                                <div class="skill-stat">
+                                    <div class="skill-stat-label">消耗</div>
+                                    <div class="skill-stat-value">50/55/60/65/70</div>
+                                </div>
+                                <div class="skill-stat">
+                                    <div class="skill-stat-label">射程</div>
+                                    <div class="skill-stat-value">3000</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="skill-item">
+                            <div class="skill-header">
+                                <div class="skill-icon">E</div>
+                                <div class="skill-info">
+                                    <h3>万众倾倒</h3>
+                                    <div class="skill-type">主动技能</div>
+                                </div>
+                            </div>
+                            <div class="skill-description">
+                                烬放置一个隐形的莲花陷阱，陷阱会在敌人经过时绽放。它会减速附近的敌人，然后爆炸为一阵飘零的花瓣并对敌人造成伤害。当烬击杀掉一名敌方英雄时，一个莲花陷阱将在该英雄的尸体附近爆炸。
+                            </div>
+                            <div class="skill-stats">
+                                <div class="skill-stat">
+                                    <div class="skill-stat-label">冷却时间</div>
+                                    <div class="skill-stat-value">2秒</div>
+                                </div>
+                                <div class="skill-stat">
+                                    <div class="skill-stat-label">消耗</div>
+                                    <div class="skill-stat-value">30</div>
+                                </div>
+                                <div class="skill-stat">
+                                    <div class="skill-stat-label">充能数</div>
+                                    <div class="skill-stat-value">2</div>
+                                </div>
+                                <div class="skill-stat">
+                                    <div class="skill-stat-label">射程</div>
+                                    <div class="skill-stat-value">750</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="skill-item">
+                            <div class="skill-header">
+                                <div class="skill-icon">R</div>
+                                <div class="skill-info">
+                                    <h3>完美谢幕</h3>
+                                    <div class="skill-type">终极技能</div>
+                                </div>
+                            </div>
+                            <div class="skill-description">
+                                烬开始引导，将"低语"切换成一个肩扛式重炮。它能够进行四次超级射击，超级射击的射程极远，可穿透小兵和野怪，但会在命中第一个敌方英雄后停下。"低语"会让命中的敌方单位怯场，也就是对它们造成减速效果和斩杀伤害。第四次射击是经过精心调制的，所以威力特别大，并且必定会造成暴击。
+                            </div>
+                            <div class="skill-stats">
+                                <div class="skill-stat">
+                                    <div class="skill-stat-label">冷却时间</div>
+                                    <div class="skill-stat-value">120/105/90秒</div>
+                                </div>
+                                <div class="skill-stat">
+                                    <div class="skill-stat-label">消耗</div>
+                                    <div class="skill-stat-value">100</div>
+                                </div>
+                                <div class="skill-stat">
+                                    <div class="skill-stat-label">射程</div>
+                                    <div class="skill-stat-value">25000</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 皮肤面板 -->
+                <div class="tab-panel" id="skins">
+                    <div class="skins-grid">
+                        <div class="skin-card">
+                            <div class="skin-image">默认</div>
+                            <div class="skin-info">
+                                <div class="skin-name">戏命师 烬</div>
+                                <div class="skin-price">免费</div>
+                            </div>
+                        </div>
+                        
+                        <div class="skin-card">
+                            <div class="skin-image">🤠</div>
+                            <div class="skin-info">
+                                <div class="skin-name">西部牛仔 烬</div>
+                                <div class="skin-price">1350 RP</div>
+                                <span class="chromas-badge">炫彩</span>
+                            </div>
+                        </div>
+
+                        <div class="skin-card">
+                            <div class="skin-image">🌙</div>
+                            <div class="skin-info">
+                                <div class="skin-name">腥红之月 烬</div>
+                                <div class="skin-price">1350 RP</div>
+                            </div>
+                        </div>
+
+                        <div class="skin-card">
+                            <div class="skin-image">🏆</div>
+                            <div class="skin-info">
+                                <div class="skin-name">SKT T1 烬</div>
+                                <div class="skin-price">1350 RP</div>
+                            </div>
+                        </div>
+
+                        <div class="skin-card">
+                            <div class="skin-image">⚡</div>
+                            <div class="skin-info">
+                                <div class="skin-name">源计划：升华 烬</div>
+                                <div class="skin-price">1820 RP</div>
+                            </div>
+                        </div>
+
+                        <div class="skin-card">
+                            <div class="skin-image">🌌</div>
+                            <div class="skin-info">
+                                <div class="skin-name">暗星尊 烬</div>
+                                <div class="skin-price">1350 RP</div>
+                            </div>
+                        </div>
+
+                        <div class="skin-card">
+                            <div class="skin-image">🎨</div>
+                            <div class="skin-info">
+                                <div class="skin-name">山海绘卷 烬</div>
+                                <div class="skin-price">1350 RP</div>
+                                <span class="chromas-badge">炫彩</span>
+                            </div>
+                        </div>
+
+                        <div class="skin-card">
+                            <div class="skin-image">👑</div>
+                            <div class="skin-info">
+                                <div class="skin-name">DWG 烬</div>
+                                <div class="skin-price">1350 RP</div>
+                                <span class="chromas-badge">炫彩</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 攻略面板 -->
+                <div class="tab-panel" id="tips">
+                    <div class="tips-section">
+                        <h2 class="tips-title">
+                            <i data-lucide="sword" class="w-5 h-5"></i>
+                            使用技巧
+                        </h2>
+                        <div class="tip-item">
+                            <div class="tip-text">
+                                【W致命华彩】有着难以置信的超远射程。在加入一场战斗之前，先观察下前方是否有能被你禁锢的敌人。
+                            </div>
+                        </div>
+                        <div class="tip-item">
+                            <div class="tip-text">
+                                对方的生命值越高，你的终极技能造成的伤害值越低。好好观察局势，找机会送那些残血的敌人上路。
+                            </div>
+                        </div>
+                        <div class="tip-item">
+                            <div class="tip-text">
+                                你在装弹时仍然可以施放技能。利用技能来撑过装弹时的脆弱期。
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="tips-section">
+                        <h2 class="tips-title">
+                            <i data-lucide="shield" class="w-5 h-5"></i>
+                            对抗技巧
+                        </h2>
+                        <div class="tip-item">
+                            <div class="tip-text">
+                                【W致命华彩】只会禁锢那些在前4秒被烬的普攻、陷阱、或友方英雄给命中的敌人。
+                            </div>
+                        </div>
+                        <div class="tip-item">
+                            <div class="tip-text">
+                                烬会在地图各处放置陷阱。当心你的脚下！
+                            </div>
+                        </div>
+                        <div class="tip-item">
+                            <div class="tip-text">
+                                烬的攻击非常强力，但他会在射出第四发子弹后装填子弹。利用这段时间接近他并将他轰趴。
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 属性面板 -->
+                <div class="tab-panel" id="stats">
+                    <div class="stats-grid">
+                        <div class="stats-section">
+                            <h3>基础属性</h3>
+                            <div class="stat-row">
+                                <span class="stat-name">生命值</span>
+                                <span class="stat-number">655 (+107/级)</span>
+                            </div>
+                            <div class="stat-row">
+                                <span class="stat-name">法力值</span>
+                                <span class="stat-number">300 (+50/级)</span>
+                            </div>
+                            <div class="stat-row">
+                                <span class="stat-name">移动速度</span>
+                                <span class="stat-number">330</span>
+                            </div>
+                            <div class="stat-row">
+                                <span class="stat-name">攻击距离</span>
+                                <span class="stat-number">550</span>
+                            </div>
+                        </div>
+
+                        <div class="stats-section">
+                            <h3>攻击属性</h3>
+                            <div class="stat-row">
+                                <span class="stat-name">攻击力</span>
+                                <span class="stat-number">59 (+4.4/级)</span>
+                            </div>
+                            <div class="stat-row">
+                                <span class="stat-name">攻击速度</span>
+                                <span class="stat-number">0.625 (+0/级)</span>
+                            </div>
+                            <div class="stat-row">
+                                <span class="stat-name">暴击几率</span>
+                                <span class="stat-number">0%</span>
+                            </div>
+                        </div>
+
+                        <div class="stats-section">
+                            <h3>防御属性</h3>
+                            <div class="stat-row">
+                                <span class="stat-name">护甲</span>
+                                <span class="stat-number">24 (+4.7/级)</span>
+                            </div>
+                            <div class="stat-row">
+                                <span class="stat-name">魔法抗性</span>
+                                <span class="stat-number">30 (+1.3/级)</span>
+                            </div>
+                        </div>
+
+                        <div class="stats-section">
+                            <h3>回复属性</h3>
+                            <div class="stat-row">
+                                <span class="stat-name">生命回复</span>
+                                <span class="stat-number">3.75 (+0.55/级)</span>
+                            </div>
+                            <div class="stat-row">
+                                <span class="stat-name">法力回复</span>
+                                <span class="stat-number">6 (+0.8/级)</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 初始化
+        function init() {
+            lucide.createIcons();
+            setupTabs();
+            animateStatBars();
+        }
+
+        // 设置标签页功能
+        function setupTabs() {
+            const tabButtons = document.querySelectorAll('.tab-button');
+            const tabPanels = document.querySelectorAll('.tab-panel');
+
+            tabButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const targetTab = button.dataset.tab;
+
+                    // 移除所有活跃状态
+                    tabButtons.forEach(btn => btn.classList.remove('active'));
+                    tabPanels.forEach(panel => panel.classList.remove('active'));
+
+                    // 添加活跃状态
+                    button.classList.add('active');
+                    document.getElementById(targetTab).classList.add('active');
+
+                    // 添加点击动画
+                    button.style.transform = 'scale(0.98)';
+                    setTimeout(() => {
+                        button.style.transform = '';
+                    }, 150);
+                });
+            });
+        }
+
+        // 动画化属性条
+        function animateStatBars() {
+            const statFills = document.querySelectorAll('.stat-fill');
+            
+            setTimeout(() => {
+                statFills.forEach(fill => {
+                    const width = fill.style.width;
+                    fill.style.width = '0%';
+                    setTimeout(() => {
+                        fill.style.width = width;
+                    }, 100);
+                });
+            }, 500);
+        }
+
+        // 皮肤卡片交互
+        function setupSkinCards() {
+            const skinCards = document.querySelectorAll('.skin-card');
+            
+            skinCards.forEach(card => {
+                card.addEventListener('click', () => {
+                    // 移除其他选中状态
+                    skinCards.forEach(c => c.classList.remove('selected'));
+                    
+                    // 添加选中状态
+                    card.classList.add('selected');
+                    
+                    // 添加点击动画
+                    card.style.transform = 'scale(0.95)';
+                    setTimeout(() => {
+                        card.style.transform = '';
+                    }, 150);
+                });
+            });
+        }
+
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            init();
+            setupSkinCards();
+        });
+
+        // 添加页面加载动画
+        window.addEventListener('load', () => {
+            document.body.style.opacity = '0';
+            document.body.style.transition = 'opacity 0.5s ease-out';
+            
+            setTimeout(() => {
+                document.body.style.opacity = '1';
+            }, 100);
+        });
+    </script>
+</body>
+</html>

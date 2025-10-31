@@ -1,0 +1,635 @@
+{# 英雄详情组件 #}
+{% macro ChampionDetail(champion) %}
+{# 标签翻译映射 #}
+{% set tag_translations = {
+    'Fighter': '战士',
+    'Tank': '坦克',
+    'Mage': '法师',
+    'Assassin': '刺客',
+    'Marksman': '射手',
+    'Support': '辅助'
+} %}
+<style>
+    .champion-detail {
+        max-width: 1200px;
+        margin: 2rem auto;
+        padding: 0 1rem;
+    }
+
+    .champion-header {
+        background: var(--card) !important;
+        border: 1px solid var(--border) !important;
+        border-radius: var(--radius-lg) !important;
+        box-shadow: var(--shadow-xl) !important;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .champion-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(135deg,
+            rgba(255, 215, 0, 0.1) 0%,
+            transparent 50%,
+            rgba(96, 165, 250, 0.1) 100%);
+        pointer-events: none;
+    }
+
+    .champion-header-content {
+        position: relative;
+        z-index: 1;
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        gap: 2rem;
+        align-items: center;
+    }
+
+    .champion-avatar {
+        width: 120px;
+        height: 120px;
+        border-radius: var(--radius-lg) !important;
+        border: 3px solid var(--primary) !important;
+        box-shadow: 0 0 30px rgba(255, 215, 0, 0.4) !important;
+        object-fit: cover;
+    }
+
+    .champion-info h1 {
+        font-size: 2.5rem !important;
+        font-weight: 700 !important;
+        color: var(--primary) !important;
+        margin-bottom: 0.5rem !important;
+        background: linear-gradient(135deg, var(--primary), var(--accent));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .champion-title {
+        font-size: 1.2rem !important;
+        color: var(--muted-foreground) !important;
+        margin-bottom: 1rem !important;
+    }
+
+    .champion-tags {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+
+    .champion-tag {
+        background: var(--secondary) !important;
+        color: var(--secondary-foreground) !important;
+        padding: 0.25rem 0.75rem !important;
+        border-radius: var(--radius) !important;
+        font-size: 0.8rem !important;
+        font-weight: 500 !important;
+    }
+
+    .champion-stats {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+        min-width: 200px;
+    }
+
+    .stat-item {
+        text-align: center;
+    }
+
+    .stat-label {
+        font-size: 0.8rem !important;
+        color: var(--muted-foreground) !important;
+        margin-bottom: 0.25rem !important;
+    }
+
+    .stat-value {
+        font-size: 1.5rem !important;
+        font-weight: 600 !important;
+        color: var(--primary) !important;
+    }
+
+    .stat-bar {
+        width: 100%;
+        height: 4px;
+        background: var(--muted) !important;
+        border-radius: 2px;
+        margin-top: 0.25rem;
+        overflow: hidden;
+    }
+
+    .stat-fill {
+        height: 100%;
+        background: linear-gradient(90deg, var(--primary), var(--accent));
+        border-radius: 2px;
+        transition: width 0.8s ease-out;
+    }
+
+    .tabs-container {
+        background: var(--card) !important;
+        border: 1px solid var(--border) !important;
+        border-radius: var(--radius-lg) !important;
+        box-shadow: var(--shadow-xl) !important;
+        overflow: hidden;
+    }
+
+    .tabs-header {
+        display: flex;
+        background: var(--muted) !important;
+        border-bottom: 1px solid var(--border) !important;
+    }
+
+    .tab-button {
+        flex: 1;
+        padding: 1rem 1.5rem !important;
+        background: transparent !important;
+        border: none !important;
+        color: var(--muted-foreground) !important;
+        font-size: 0.95rem !important;
+        font-weight: 500 !important;
+        cursor: pointer !important;
+        transition: all 0.2s ease-out !important;
+        position: relative;
+    }
+
+    .tab-button::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: var(--primary);
+        transform: scaleX(0);
+        transition: transform 0.2s ease-out;
+    }
+
+    .tab-button:hover {
+        background: rgba(255, 215, 0, 0.1) !important;
+        color: var(--foreground) !important;
+    }
+
+    .tab-button.active {
+        background: var(--card) !important;
+        color: var(--primary) !important;
+    }
+
+    .tab-button.active::after {
+        transform: scaleX(1);
+    }
+
+    .tab-content {
+        padding: 2rem;
+        min-height: 500px;
+    }
+
+    .tab-panel {
+        display: none;
+        animation: fadeIn 0.3s ease-out;
+    }
+
+    .tab-panel.active {
+        display: block;
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .skills-grid {
+        display: grid;
+        gap: 1.5rem;
+    }
+
+    .skill-item {
+        background: var(--muted) !important;
+        border: 1px solid var(--border) !important;
+        border-radius: var(--radius-lg) !important;
+        padding: 1.5rem;
+        transition: all 0.2s ease-out;
+    }
+
+    .skill-item:hover {
+        border-color: var(--primary) !important;
+        box-shadow: 0 0 20px rgba(255, 215, 0, 0.2) !important;
+    }
+
+    .skill-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .skill-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: var(--radius) !important;
+        border: 2px solid var(--primary) !important;
+        background: var(--card) !important;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        color: var(--primary) !important;
+    }
+
+    .skill-info h3 {
+        font-size: 1.2rem !important;
+        font-weight: 600 !important;
+        color: var(--foreground) !important;
+        margin-bottom: 0.25rem !important;
+    }
+
+    .skill-type {
+        font-size: 0.8rem !important;
+        color: var(--muted-foreground) !important;
+    }
+
+    .skill-description {
+        color: var(--muted-foreground) !important;
+        line-height: 1.6 !important;
+        margin-bottom: 1rem !important;
+    }
+
+    .skins-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 1rem;
+    }
+
+    .skin-card {
+        background: var(--muted) !important;
+        border: 1px solid var(--border) !important;
+        border-radius: var(--radius-lg) !important;
+        overflow: hidden;
+        transition: all 0.2s ease-out;
+        cursor: pointer;
+    }
+
+    .skin-card:hover {
+        transform: translateY(-4px);
+        border-color: var(--primary) !important;
+        box-shadow: var(--shadow-xl) !important;
+    }
+
+    .skin-image {
+        width: 100%;
+        height: 120px;
+        object-fit: cover;
+    }
+
+    .skin-info {
+        padding: 1rem;
+    }
+
+    .skin-name {
+        font-size: 0.9rem !important;
+        font-weight: 600 !important;
+        color: var(--foreground) !important;
+        margin-bottom: 0.5rem !important;
+    }
+
+    .skin-price {
+        font-size: 0.8rem !important;
+        color: var(--muted-foreground) !important;
+    }
+
+    .tips-section {
+        margin-bottom: 2rem;
+    }
+
+    .tips-title {
+        font-size: 1.3rem !important;
+        font-weight: 600 !important;
+        color: var(--primary) !important;
+        margin-bottom: 1rem !important;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .tip-item {
+        background: var(--muted) !important;
+        border: 1px solid var(--border) !important;
+        border-radius: var(--radius) !important;
+        padding: 1rem;
+        margin-bottom: 0.75rem;
+        border-left: 4px solid var(--primary) !important;
+    }
+
+    .tip-text {
+        color: var(--muted-foreground) !important;
+        line-height: 1.6 !important;
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 2rem;
+    }
+
+    .stats-section {
+        background: var(--muted) !important;
+        border: 1px solid var(--border) !important;
+        border-radius: var(--radius-lg) !important;
+        padding: 1.5rem;
+    }
+
+    .stats-section h3 {
+        font-size: 1.2rem !important;
+        font-weight: 600 !important;
+        color: var(--primary) !important;
+        margin-bottom: 1rem !important;
+    }
+
+    .stat-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.5rem 0;
+        border-bottom: 1px solid var(--border) !important;
+    }
+
+    .stat-row:last-child {
+        border-bottom: none;
+    }
+
+    .stat-name {
+        color: var(--muted-foreground) !important;
+        font-size: 0.9rem !important;
+    }
+
+    .stat-number {
+        color: var(--foreground) !important;
+        font-weight: 600 !important;
+    }
+
+    @media (max-width: 768px) {
+        .champion-header-content {
+            grid-template-columns: 1fr;
+            text-align: center;
+            gap: 1rem;
+        }
+
+        .champion-stats {
+            grid-template-columns: repeat(4, 1fr);
+        }
+
+        .tabs-header {
+            flex-wrap: wrap;
+        }
+
+        .tab-button {
+            flex: none;
+            min-width: 120px;
+        }
+    }
+</style>
+
+<div class="champion-detail">
+    <div class="champion-header">
+        <div class="champion-header-content">
+            <img src="https://ddragon.leagueoflegends.com/cdn/15.21.1/img/champion/{{ champion.image.full }}" alt="{{ champion.name }}" class="champion-avatar">
+
+            <div class="champion-info">
+                <h1>{{ champion.name }}</h1>
+                <div class="champion-title">{{ champion.title }}</div>
+                <div class="champion-tags">
+                    {% for tag in champion.tags %}
+                    <span class="champion-tag">{{ tag_translations.get(tag, tag) }}</span>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="champion-stats">
+                <div class="stat-item">
+                    <div class="stat-label">攻击</div>
+                    <div class="stat-value">{{ champion.info.attack }}</div>
+                    <div class="stat-bar">
+                        <div class="stat-fill" style="width: {{ champion.info.attack * 10 }}%"></div>
+                    </div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">防御</div>
+                    <div class="stat-value">{{ champion.info.defense }}</div>
+                    <div class="stat-bar">
+                        <div class="stat-fill" style="width: {{ champion.info.defense * 10 }}%"></div>
+                    </div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">魔法</div>
+                    <div class="stat-value">{{ champion.info.magic }}</div>
+                    <div class="stat-bar">
+                        <div class="stat-fill" style="width: {{ champion.info.magic * 10 }}%"></div>
+                    </div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">难度</div>
+                    <div class="stat-value">{{ champion.info.difficulty }}</div>
+                    <div class="stat-bar">
+                        <div class="stat-fill" style="width: {{ champion.info.difficulty * 10 }}%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="tabs-container">
+        <div class="tabs-header">
+            <button class="tab-button active" data-tab="overview">
+                <i data-lucide="info" class="w-4 h-4 inline mr-2"></i>
+                概览
+            </button>
+            <button class="tab-button" data-tab="skills">
+                <i data-lucide="zap" class="w-4 h-4 inline mr-2"></i>
+                技能
+            </button>
+            <button class="tab-button" data-tab="skins">
+                <i data-lucide="palette" class="w-4 h-4 inline mr-2"></i>
+                皮肤
+            </button>
+            <button class="tab-button" data-tab="stats">
+                <i data-lucide="bar-chart-3" class="w-4 h-4 inline mr-2"></i>
+                属性
+            </button>
+        </div>
+
+        <div class="tab-content">
+            <div class="tab-panel active" id="overview">
+                <div class="tips-section">
+                    <h2 class="tips-title">
+                        <i data-lucide="scroll-text" class="w-5 h-5"></i>
+                        英雄背景
+                    </h2>
+                    <div class="tip-item">
+                        <div class="tip-text">{{ champion.blurb }}</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-panel" id="skills">
+                <div class="skills-grid">
+                    {% if champion.spells %}
+                        {% for spell in champion.spells %}
+                        <div class="skill-item">
+                            <div class="skill-header">
+                                <div class="skill-icon">{{ ['Q', 'W', 'E', 'R'][loop.index0] }}</div>
+                                <div class="skill-info">
+                                    <h3>{{ spell.name }}</h3>
+                                    <div class="skill-type">主动技能</div>
+                                </div>
+                            </div>
+                            <div class="skill-description">{{ spell.description }}</div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="tip-text">暂无技能信息</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="tab-panel" id="skins">
+                <div class="skins-grid">
+                    {% if champion.skins %}
+                        {% for skin in champion.skins %}
+                        <div class="skin-card">
+                            <img src="https://ddragon.leagueoflegends.com/cdn/img/champion/splash/{{ champion.id }}_{{ skin.num }}.jpg" alt="{{ skin.name }}" class="skin-image" onerror="this.style.display='none'">
+                            <div class="skin-info">
+                                <div class="skin-name">{{ skin.name }}</div>
+                                <div class="skin-price">{{ '免费' if skin.num == 0 else '1350 RP' }}</div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="tip-text">暂无皮肤信息</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="tab-panel" id="stats">
+                <div class="stats-grid">
+                    <div class="stats-section">
+                        <h3>基础属性</h3>
+                        <div class="stat-row">
+                            <span class="stat-name">生命值</span>
+                            <span class="stat-number">{{ champion.stats.hp|round|int }} (+{{ champion.stats.hpperlevel|round|int }}/级)</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-name">法力值</span>
+                            <span class="stat-number">{{ champion.stats.mp|round|int }} (+{{ champion.stats.mpperlevel|round|int }}/级)</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-name">移动速度</span>
+                            <span class="stat-number">{{ champion.stats.movespeed|round|int }}</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-name">攻击距离</span>
+                            <span class="stat-number">{{ champion.stats.attackrange|round|int }}</span>
+                        </div>
+                    </div>
+
+                    <div class="stats-section">
+                        <h3>攻击属性</h3>
+                        <div class="stat-row">
+                            <span class="stat-name">攻击力</span>
+                            <span class="stat-number">{{ champion.stats.attackdamage|round|int }} (+{{ champion.stats.attackdamageperlevel|round(1) }}/级)</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-name">攻击速度</span>
+                            <span class="stat-number">{{ champion.stats.attackspeed|round(3) }}</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-name">暴击几率</span>
+                            <span class="stat-number">{{ champion.stats.crit|round|int }}%</span>
+                        </div>
+                    </div>
+
+                    <div class="stats-section">
+                        <h3>防御属性</h3>
+                        <div class="stat-row">
+                            <span class="stat-name">护甲</span>
+                            <span class="stat-number">{{ champion.stats.armor|round|int }} (+{{ champion.stats.armorperlevel|round(1) }}/级)</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-name">魔法抗性</span>
+                            <span class="stat-number">{{ champion.stats.spellblock|round|int }} (+{{ champion.stats.spellblockperlevel|round(1) }}/级)</span>
+                        </div>
+                    </div>
+
+                    <div class="stats-section">
+                        <h3>回复属性</h3>
+                        <div class="stat-row">
+                            <span class="stat-name">生命回复</span>
+                            <span class="stat-number">{{ champion.stats.hpregen|round(2) }} (+{{ champion.stats.hpregenperlevel|round(2) }}/级)</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-name">法力回复</span>
+                            <span class="stat-number">{{ champion.stats.mpregen|round(2) }} (+{{ champion.stats.mpregenperlevel|round(2) }}/级)</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+(function() {
+    function setupTabs() {
+        const tabButtons = document.querySelectorAll('.tab-button');
+        const tabPanels = document.querySelectorAll('.tab-panel');
+
+        tabButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const targetTab = button.dataset.tab;
+
+                tabButtons.forEach(btn => btn.classList.remove('active'));
+                tabPanels.forEach(panel => panel.classList.remove('active'));
+
+                button.classList.add('active');
+                const targetPanel = document.getElementById(targetTab);
+                if (targetPanel) {
+                    targetPanel.classList.add('active');
+                }
+
+                button.style.transform = 'scale(0.98)';
+                setTimeout(() => {
+                    button.style.transform = '';
+                }, 150);
+            });
+        });
+    }
+
+    function animateStatBars() {
+        const statFills = document.querySelectorAll('.stat-fill');
+
+        setTimeout(() => {
+            statFills.forEach(fill => {
+                const width = fill.style.width;
+                fill.style.width = '0%';
+                setTimeout(() => {
+                    fill.style.width = width;
+                }, 100);
+            });
+        }, 500);
+    }
+
+    setupTabs();
+    animateStatBars();
+})();
+</script>
+{% endmacro %}
+

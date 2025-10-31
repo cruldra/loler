@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>英雄浏览器 - LOL助手</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="lol_theme.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-sans) !important;
+            background: var(--background) !important;
+            color: var(--foreground) !important;
+            min-height: 100vh;
+        }
+
+        .hero-browser {
+            max-width: 400px;
+            margin: 2rem auto;
+            background: var(--card) !important;
+            border: 1px solid var(--border) !important;
+            border-radius: var(--radius-lg) !important;
+            box-shadow: var(--shadow-xl) !important;
+            overflow: hidden;
+        }
+
+        .search-container {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border) !important;
+        }
+
+        .search-box {
+            position: relative;
+            width: 100%;
+        }
+
+        .search-input {
+            width: 100% !important;
+            padding: 0.75rem 1rem 0.75rem 2.5rem !important;
+            background: var(--input) !important;
+            border: 1px solid var(--border) !important;
+            border-radius: var(--radius) !important;
+            color: var(--foreground) !important;
+            font-size: 0.9rem !important;
+            transition: all 0.2s ease-out !important;
+        }
+
+        .search-input:focus {
+            outline: none !important;
+            border-color: var(--primary) !important;
+            box-shadow: 0 0 0 2px rgba(255, 215, 0, 0.2) !important;
+        }
+
+        .search-input::placeholder {
+            color: var(--muted-foreground) !important;
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 0.75rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--muted-foreground) !important;
+            width: 1rem;
+            height: 1rem;
+        }
+
+        .filter-container {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border) !important;
+        }
+
+        .filter-buttons {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            width: 2.5rem !important;
+            height: 2.5rem !important;
+            border-radius: var(--radius) !important;
+            background: var(--muted) !important;
+            border: 1px solid var(--border) !important;
+            color: var(--muted-foreground) !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            cursor: pointer !important;
+            transition: all 0.2s ease-out !important;
+            font-size: 0.8rem !important;
+            font-weight: 600 !important;
+        }
+
+        .filter-btn:hover {
+            background: var(--accent) !important;
+            color: var(--accent-foreground) !important;
+            transform: scale(1.05) !important;
+        }
+
+        .filter-btn.active {
+            background: var(--primary) !important;
+            color: var(--primary-foreground) !important;
+            border-color: var(--primary) !important;
+        }
+
+        .heroes-grid {
+            padding: 1rem;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .heroes-container {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 0.5rem;
+        }
+
+        .hero-card {
+            position: relative;
+            aspect-ratio: 1;
+            border-radius: var(--radius) !important;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.2s ease-out !important;
+            border: 2px solid transparent;
+        }
+
+        .hero-card:hover {
+            transform: scale(1.05) !important;
+            border-color: var(--primary) !important;
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.4) !important;
+        }
+
+        .hero-card.selected {
+            border-color: var(--primary) !important;
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.6) !important;
+        }
+
+        .hero-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.2s ease-out;
+        }
+
+        .hero-card:hover .hero-image {
+            transform: scale(1.1);
+        }
+
+        .hero-name {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(transparent, rgba(0, 0, 0, 0.8));
+            color: white;
+            padding: 0.5rem 0.25rem 0.25rem;
+            font-size: 0.7rem;
+            font-weight: 500;
+            text-align: center;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+        }
+
+        .hero-difficulty {
+            position: absolute;
+            top: 0.25rem;
+            right: 0.25rem;
+            width: 1.2rem;
+            height: 1.2rem;
+            background: var(--primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.6rem;
+            font-weight: 600;
+            color: var(--primary-foreground);
+        }
+
+        /* 滚动条样式 */
+        .heroes-grid::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .heroes-grid::-webkit-scrollbar-track {
+            background: var(--muted);
+            border-radius: 3px;
+        }
+
+        .heroes-grid::-webkit-scrollbar-thumb {
+            background: var(--muted-foreground);
+            border-radius: 3px;
+        }
+
+        .heroes-grid::-webkit-scrollbar-thumb:hover {
+            background: var(--primary);
+        }
+
+        /* 动画效果 */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .hero-card {
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .hero-card:nth-child(n) {
+            animation-delay: calc(var(--index) * 0.02s);
+        }
+
+        /* 加载状态 */
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 200px;
+            color: var(--muted-foreground);
+        }
+
+        .spinner {
+            width: 2rem;
+            height: 2rem;
+            border: 2px solid var(--muted);
+            border-top: 2px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="hero-browser">
+        <!-- 搜索框 -->
+        <div class="search-container">
+            <div class="search-box">
+                <i data-lucide="search" class="search-icon"></i>
+                <input type="text" class="search-input" placeholder="搜索英雄" id="searchInput">
+            </div>
+        </div>
+
+        <!-- 过滤器 -->
+        <div class="filter-container">
+            <div class="filter-buttons">
+                <button class="filter-btn active" data-role="all" title="全部">
+                    <i data-lucide="asterisk" class="w-4 h-4"></i>
+                </button>
+                <button class="filter-btn" data-role="tank" title="坦克">
+                    <i data-lucide="shield" class="w-4 h-4"></i>
+                </button>
+                <button class="filter-btn" data-role="fighter" title="战士">
+                    <i data-lucide="sword" class="w-4 h-4"></i>
+                </button>
+                <button class="filter-btn" data-role="assassin" title="刺客">
+                    <i data-lucide="zap" class="w-4 h-4"></i>
+                </button>
+                <button class="filter-btn" data-role="mage" title="法师">
+                    <i data-lucide="sparkles" class="w-4 h-4"></i>
+                </button>
+                <button class="filter-btn" data-role="marksman" title="射手">
+                    <i data-lucide="crosshair" class="w-4 h-4"></i>
+                </button>
+                <button class="filter-btn" data-role="support" title="辅助">
+                    <i data-lucide="heart" class="w-4 h-4"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- 英雄网格 -->
+        <div class="heroes-grid">
+            <div class="heroes-container" id="heroesContainer">
+                <!-- 英雄卡片将通过JavaScript动态生成 -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 英雄数据
+        const heroes = [
+            { name: "万花通灵", role: "mage", difficulty: 3, image: "https://game.gtimg.cn/images/lol/act/img/champion/Neeko_0.jpg" },
+            { name: "不祥之刃", role: "assassin", difficulty: 3, image: "https://game.gtimg.cn/images/lol/act/img/champion/Katarina_0.jpg" },
+            { name: "不灭狂雷", role: "tank", difficulty: 2, image: "https://game.gtimg.cn/images/lol/act/img/champion/Volibear_0.jpg" },
+            { name: "九尾妖狐", role: "mage", difficulty: 2, image: "https://game.gtimg.cn/images/lol/act/img/champion/Ahri_0.jpg" },
+            { name: "亡灵战神", role: "tank", difficulty: 2, image: "https://game.gtimg.cn/images/lol/act/img/champion/Sion_0.jpg" },
+            { name: "元素女皇", role: "mage", difficulty: 3, image: "https://game.gtimg.cn/images/lol/act/img/champion/Qiyana_0.jpg" },
+            { name: "光辉女郎", role: "mage", difficulty: 2, image: "https://game.gtimg.cn/images/lol/act/img/champion/Lux_0.jpg" },
+            { name: "冰晶凤凰", role: "mage", difficulty: 3, image: "https://game.gtimg.cn/images/lol/act/img/champion/Anivia_0.jpg" },
+            { name: "刀锋舞者", role: "fighter", difficulty: 3, image: "https://game.gtimg.cn/images/lol/act/img/champion/Irelia_0.jpg" },
+            { name: "发条魔灵", role: "mage", difficulty: 3, image: "https://game.gtimg.cn/images/lol/act/img/champion/Orianna_0.jpg" },
+            { name: "双界灵兽", role: "fighter", difficulty: 2, image: "https://game.gtimg.cn/images/lol/act/img/champion/Udyr_0.jpg" },
+            { name: "发条魔灵", role: "mage", difficulty: 3, image: "https://game.gtimg.cn/images/lol/act/img/champion/Orianna_0.jpg" },
+            { name: "皎月女神", role: "assassin", difficulty: 2, image: "https://game.gtimg.cn/images/lol/act/img/champion/Diana_0.jpg" },
+            { name: "复仇焰魂", role: "fighter", difficulty: 2, image: "https://game.gtimg.cn/images/lol/act/img/champion/Brand_0.jpg" },
+            { name: "奥术法师", role: "mage", difficulty: 3, image: "https://game.gtimg.cn/images/lol/act/img/champion/Xerath_0.jpg" },
+            { name: "封魔剑魂", role: "fighter", difficulty: 3, image: "https://game.gtimg.cn/images/lol/act/img/champion/Viego_0.jpg" },
+            { name: "影流之主", role: "assassin", difficulty: 2, image: "https://game.gtimg.cn/images/lol/act/img/champion/Zed_0.jpg" },
+            { name: "疾风剑豪", role: "fighter", difficulty: 3, image: "https://game.gtimg.cn/images/lol/act/img/champion/Yasuo_0.jpg" },
+            { name: "时间刺客", role: "assassin", difficulty: 3, image: "https://game.gtimg.cn/images/lol/act/img/champion/Ekko_0.jpg" },
+            { name: "暗黑元首", role: "mage", difficulty: 2, image: "https://game.gtimg.cn/images/lol/act/img/champion/Syndra_0.jpg" },
+            { name: "合金重装", role: "tank", difficulty: 2, image: "https://game.gtimg.cn/images/lol/act/img/champion/Rammus_0.jpg" },
+            { name: "含羞蓓蕾", role: "mage", difficulty: 3, image: "https://game.gtimg.cn/images/lol/act/img/champion/Lillia_0.jpg" },
+            { name: "正义天使", role: "fighter", difficulty: 3, image: "https://game.gtimg.cn/images/lol/act/img/champion/Kayle_0.jpg" },
+            { name: "沙漠死神", role: "fighter", difficulty: 2, image: "https://game.gtimg.cn/images/lol/act/img/champion/Nasus_0.jpg" },
+            { name: "沙漠皇帝", role: "mage", difficulty: 3, image: "https://game.gtimg.cn/images/lol/act/img/champion/Azir_0.jpg" },
+            { name: "狂野女猎手", role: "marksman", difficulty: 2, image: "https://game.gtimg.cn/images/lol/act/img/champion/Nidalee_0.jpg" },
+            { name: "琴瑟仙女", role: "support", difficulty: 1, image: "https://game.gtimg.cn/images/lol/act/img/champion/Sona_0.jpg" },
+            { name: "异界游神", role: "mage", difficulty: 3, image: "https://game.gtimg.cn/images/lol/act/img/champion/AurelionSol_0.jpg" },
+            { name: "弗雷尔卓德之心", role: "support", difficulty: 2, image: "https://game.gtimg.cn/images/lol/act/img/champion/Braum_0.jpg" },
+            { name: "灵罗娃娃", role: "support", difficulty: 3, image: "https://game.gtimg.cn/images/lol/act/img/champion/Gwen_0.jpg" },
+            { name: "符文法师", role: "mage", difficulty: 3, image: "https://game.gtimg.cn/images/lol/act/img/champion/Ryze_0.jpg" },
+            { name: "英勇投弹手", role: "marksman", difficulty: 2, image: "https://game.gtimg.cn/images/lol/act/img/champion/Corki_0.jpg" },
+            { name: "虚空恐惧", role: "tank", difficulty: 2, image: "https://game.gtimg.cn/images/lol/act/img/champion/Chogath_0.jpg" },
+            { name: "虚空先知", role: "mage", difficulty: 2, image: "https://game.gtimg.cn/images/lol/act/img/champion/Malzahar_0.jpg" },
+            { name: "虚空行者", role: "assassin", difficulty: 2, image: "https://game.gtimg.cn/images/lol/act/img/champion/Kassadin_0.jpg" },
+            { name: "蒸汽机器人", role: "support", difficulty: 2, image: "https://game.gtimg.cn/images/lol/act/img/champion/Blitzcrank_0.jpg" },
+            { name: "魔蛇之拥", role: "mage", difficulty: 2, image: "https://game.gtimg.cn/images/lol/act/img/champion/Cassiopeia_0.jpg" },
+            { name: "魔法猫咪", role: "support", difficulty: 1, image: "https://game.gtimg.cn/images/lol/act/img/champion/Yuumi_0.jpg" },
+            { name: "魅惑妖姬", role: "assassin", difficulty: 3, image: "https://game.gtimg.cn/images/lol/act/img/champion/Leblanc_0.jpg" },
+            { name: "黑暗之女", role: "mage", difficulty: 1, image: "https://game.gtimg.cn/images/lol/act/img/champion/Annie_0.jpg" },
+            { name: "黑暗法师", role: "mage", difficulty: 2, image: "https://game.gtimg.cn/images/lol/act/img/champion/Veigar_0.jpg" },
+            { name: "魔腾", role: "tank", difficulty: 2, image: "https://game.gtimg.cn/images/lol/act/img/champion/Maokai_0.jpg" },
+            { name: "魔龙之王", role: "fighter", difficulty: 2, image: "https://game.gtimg.cn/images/lol/act/img/champion/Shyvana_0.jpg" }
+        ];
+
+        let currentFilter = 'all';
+        let searchTerm = '';
+        let selectedHero = null;
+
+        // 初始化
+        function init() {
+            lucide.createIcons();
+            renderHeroes();
+            setupEventListeners();
+        }
+
+        // 渲染英雄
+        function renderHeroes() {
+            const container = document.getElementById('heroesContainer');
+            const filteredHeroes = heroes.filter(hero => {
+                const matchesRole = currentFilter === 'all' || hero.role === currentFilter;
+                const matchesSearch = hero.name.toLowerCase().includes(searchTerm.toLowerCase());
+                return matchesRole && matchesSearch;
+            });
+
+            container.innerHTML = '';
+
+            if (filteredHeroes.length === 0) {
+                container.innerHTML = '<div class="loading">未找到匹配的英雄</div>';
+                return;
+            }
+
+            filteredHeroes.forEach((hero, index) => {
+                const heroCard = document.createElement('div');
+                heroCard.className = 'hero-card';
+                heroCard.style.setProperty('--index', index);
+                heroCard.innerHTML = `
+                    <img src="https://picsum.photos/80/80?random=${index}" alt="${hero.name}" class="hero-image" onerror="this.src='https://via.placeholder.com/80x80/333/fff?text=${hero.name.charAt(0)}'">
+                    <div class="hero-name">${hero.name}</div>
+                    <div class="hero-difficulty">${hero.difficulty}</div>
+                `;
+
+                heroCard.addEventListener('click', () => selectHero(heroCard, hero));
+                container.appendChild(heroCard);
+            });
+        }
+
+        // 选择英雄
+        function selectHero(cardElement, hero) {
+            // 移除之前的选中状态
+            document.querySelectorAll('.hero-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+
+            // 添加选中状态
+            cardElement.classList.add('selected');
+            selectedHero = hero;
+
+            // 添加点击动画
+            cardElement.style.transform = 'scale(0.95)';
+            setTimeout(() => {
+                cardElement.style.transform = '';
+            }, 150);
+        }
+
+        // 设置事件监听器
+        function setupEventListeners() {
+            // 搜索功能
+            const searchInput = document.getElementById('searchInput');
+            searchInput.addEventListener('input', (e) => {
+                searchTerm = e.target.value;
+                renderHeroes();
+            });
+
+            // 过滤器按钮
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    // 移除所有活跃状态
+                    document.querySelectorAll('.filter-btn').forEach(b => {
+                        b.classList.remove('active');
+                    });
+
+                    // 添加活跃状态
+                    btn.classList.add('active');
+                    currentFilter = btn.dataset.role;
+                    renderHeroes();
+
+                    // 添加点击动画
+                    btn.style.transform = 'scale(0.9)';
+                    setTimeout(() => {
+                        btn.style.transform = '';
+                    }, 150);
+                });
+            });
+
+            // 键盘导航
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    searchInput.value = '';
+                    searchTerm = '';
+                    renderHeroes();
+                }
+            });
+        }
+
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

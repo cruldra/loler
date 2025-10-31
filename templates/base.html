@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}LOL助手 - 英雄联盟辅助工具{% endblock %}</title>
+
+    {# 导入所有组件 #}
+    {% import 'components/button.html' as Button %}
+    {% import 'components/card.html' as Card %}
+    {% import 'components/form.html' as Form %}
+    {% import 'components/layout.html' as Layout %}
+
+    {# 样式 #}
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Merriweather:wght@300;400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/lol_theme.css">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-sans) !important;
+            background: var(--background) !important;
+            color: var(--foreground) !important;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background: var(--card) !important;
+            border-bottom: 1px solid var(--border) !important;
+            box-shadow: var(--shadow-lg) !important;
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            transition: transform 0.3s ease-out;
+        }
+
+        .logo {
+            font-size: 1.5rem !important;
+            font-weight: 700 !important;
+            color: var(--primary) !important;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55) !important;
+            text-decoration: none !important;
+        }
+
+        .logo:hover {
+            transform: scale(1.05) rotate(5deg) !important;
+            color: var(--accent) !important;
+        }
+
+        .nav-menu {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        .nav-item {
+            position: relative;
+            padding: 0.75rem 1rem !important;
+            color: var(--muted-foreground) !important;
+            text-decoration: none !important;
+            font-weight: 500 !important;
+            font-size: 0.95rem !important;
+            border-radius: var(--radius) !important;
+            transition: all 0.2s ease-out !important;
+            cursor: pointer;
+        }
+
+        .nav-item::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 50%;
+            width: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--primary), var(--accent));
+            transition: all 0.3s ease-out;
+            transform: translateX(-50%);
+        }
+
+        .nav-item:hover {
+            color: var(--foreground) !important;
+            transform: translateY(-2px) !important;
+            background: rgba(255, 215, 0, 0.1) !important;
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.3) !important;
+        }
+
+        .nav-item:hover::after {
+            width: 100%;
+        }
+
+        .nav-item.active {
+            color: var(--primary) !important;
+            background: rgba(255, 215, 0, 0.15) !important;
+        }
+
+        .nav-item.active::after {
+            width: 100%;
+        }
+
+        .user-actions {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .action-btn {
+            width: 2.5rem !important;
+            height: 2.5rem !important;
+            border-radius: var(--radius) !important;
+            background: var(--muted) !important;
+            border: 1px solid var(--border) !important;
+            color: var(--muted-foreground) !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            cursor: pointer !important;
+            transition: all 0.2s ease-out !important;
+        }
+
+        .action-btn:hover {
+            background: var(--primary) !important;
+            color: var(--primary-foreground) !important;
+            transform: scale(1.02) !important;
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.4) !important;
+        }
+
+        .action-btn:active {
+            transform: scale(0.98) !important;
+        }
+
+        .main-content {
+            flex: 1;
+            padding: 2rem;
+        }
+
+        .footer {
+            background: var(--card) !important;
+            border-top: 1px solid var(--border) !important;
+            padding: 2rem 0 !important;
+            text-align: center;
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        .footer-main {
+            color: var(--muted-foreground) !important;
+            font-size: 0.9rem !important;
+            margin-bottom: 1rem !important;
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .footer-link {
+            color: var(--muted-foreground) !important;
+            text-decoration: none !important;
+            font-size: 0.85rem !important;
+            transition: color 0.2s ease-out !important;
+        }
+
+        .footer-link:hover {
+            color: var(--primary) !important;
+        }
+
+        /* 动画效果 */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.7;
+            }
+        }
+
+        @keyframes ripple {
+            to {
+                transform: scale(4);
+                opacity: 0;
+            }
+        }
+
+        .animate-fade-in-up {
+            animation: fadeInUp 0.5s ease-out;
+        }
+
+        .animate-pulse {
+            animation: pulse 1.2s infinite;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .nav-menu {
+                gap: 1rem;
+            }
+
+            .nav-item {
+                padding: 0.5rem 0.75rem !important;
+                font-size: 0.9rem !important;
+            }
+
+            .footer-links {
+                gap: 1rem;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .nav-menu {
+                display: none;
+            }
+
+            .user-actions {
+                gap: 0.5rem;
+            }
+        }
+    </style>
+
+    {% block styles %}{% endblock %}
+</head>
+<body>
+    {# 导航栏 #}
+    {% block navbar %}
+    <header class="header">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <!-- Logo -->
+                <a href="/" class="logo">
+                    <i data-lucide="gamepad-2" class="w-6 h-6"></i>
+                    LOL助手
+                </a>
+
+                <!-- Navigation Menu -->
+                <nav class="nav-menu">
+                    <a href="/champions" class="nav-item">英雄查询</a>
+                    <a href="/items" class="nav-item">装备查询</a>
+                    <a href="/runes" class="nav-item">符文搭配</a>
+                    <a href="/builds" class="nav-item">出装思路</a>
+                    <a href="/team" class="nav-item">阵容B/P</a>
+                    <a href="/lane" class="nav-item">对线细节</a>
+                    <a href="/jungle" class="nav-item">野区规划</a>
+                </nav>
+
+                <!-- User Actions -->
+                <div class="user-actions">
+                    <button class="action-btn" title="搜索">
+                        <i data-lucide="search" class="w-5 h-5"></i>
+                    </button>
+                    <button class="action-btn" title="设置">
+                        <i data-lucide="settings" class="w-5 h-5"></i>
+                    </button>
+                    <button class="action-btn" title="用户">
+                        <i data-lucide="user" class="w-5 h-5"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+    {% endblock %}
+
+    {# 主内容区 #}
+    <main class="main-content">
+        {% block content %}{% endblock %}
+    </main>
+
+    {# 页脚 #}
+    {% block footer %}
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-main">
+                © 2024 LOL助手 | 数据来源: Riot Games
+            </div>
+            <div class="footer-links">
+                <a href="#" class="footer-link">联系我们</a>
+                <a href="#" class="footer-link">意见反馈</a>
+                <a href="#" class="footer-link">更新日志</a>
+                <a href="#" class="footer-link">隐私政策</a>
+                <a href="#" class="footer-link">服务条款</a>
+            </div>
+        </div>
+    </footer>
+    {% endblock %}
+
+    {# 脚本 #}
+    <script>
+        // 初始化 Lucide 图标
+        lucide.createIcons();
+
+        // 导航菜单交互
+        document.addEventListener('DOMContentLoaded', function() {
+            // 设置当前页面的活跃导航项
+            const currentPath = window.location.pathname;
+            document.querySelectorAll('.nav-item').forEach(item => {
+                if (item.getAttribute('href') === currentPath) {
+                    item.classList.add('active');
+                }
+
+                item.addEventListener('click', function(e) {
+                    // 移除所有活跃状态
+                    document.querySelectorAll('.nav-item').forEach(nav => {
+                        nav.classList.remove('active');
+                    });
+
+                    // 添加活跃状态到当前项
+                    this.classList.add('active');
+
+                    // 添加点击动画效果
+                    this.style.transform = 'scale(0.98)';
+                    setTimeout(() => {
+                        this.style.transform = '';
+                    }, 150);
+                });
+            });
+
+            // 按钮点击涟漪效果
+            document.querySelectorAll('.action-btn').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    const ripple = document.createElement('div');
+                    ripple.style.position = 'absolute';
+                    ripple.style.borderRadius = '50%';
+                    ripple.style.background = 'rgba(255, 215, 0, 0.6)';
+                    ripple.style.transform = 'scale(0)';
+                    ripple.style.animation = 'ripple 0.4s linear';
+                    ripple.style.left = '50%';
+                    ripple.style.top = '50%';
+                    ripple.style.width = '20px';
+                    ripple.style.height = '20px';
+                    ripple.style.marginLeft = '-10px';
+                    ripple.style.marginTop = '-10px';
+                    ripple.style.pointerEvents = 'none';
+
+                    this.style.position = 'relative';
+                    this.appendChild(ripple);
+
+                    setTimeout(() => {
+                        ripple.remove();
+                    }, 400);
+                });
+            });
+
+            // 页面加载动画
+            document.body.style.opacity = '0';
+            document.body.style.transition = 'opacity 0.8s ease-out';
+
+            setTimeout(() => {
+                document.body.style.opacity = '1';
+            }, 100);
+
+            // 滚动效果 - 隐藏/显示导航栏
+            let lastScrollTop = 0;
+            window.addEventListener('scroll', function() {
+                const header = document.querySelector('.header');
+                const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+
+                if (scrollTop > lastScrollTop && scrollTop > 100) {
+                    // 向下滚动
+                    header.style.transform = 'translateY(-100%)';
+                } else {
+                    // 向上滚动
+                    header.style.transform = 'translateY(0)';
+                }
+
+                lastScrollTop = scrollTop;
+            });
+        });
+    </script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>
+

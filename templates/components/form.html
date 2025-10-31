@@ -1,0 +1,55 @@
+{# 输入框组件 #}
+{% macro Input(name, type="text", placeholder="", value="", label="", required=false, class="") %}
+<div class="form-group {{ class }}">
+    {% if label %}
+    <label for="{{ name }}">
+        {{ label }}
+        {% if required %}<span class="required">*</span>{% endif %}
+    </label>
+    {% endif %}
+    <input 
+        type="{{ type }}" 
+        id="{{ name }}" 
+        name="{{ name }}"
+        {% if placeholder %}placeholder="{{ placeholder }}"{% endif %}
+        {% if value %}value="{{ value }}"{% endif %}
+        {% if required %}required{% endif %}
+        class="form-input"
+    >
+</div>
+{% endmacro %}
+
+{# 选择框组件 #}
+{% macro Select(name, options, label="", selected="", required=false, class="") %}
+<div class="form-group {{ class }}">
+    {% if label %}
+    <label for="{{ name }}">
+        {{ label }}
+        {% if required %}<span class="required">*</span>{% endif %}
+    </label>
+    {% endif %}
+    <select id="{{ name }}" name="{{ name }}" {% if required %}required{% endif %} class="form-select">
+        {% for option in options %}
+        <option value="{{ option.value }}" {% if option.value == selected %}selected{% endif %}>
+            {{ option.label }}
+        </option>
+        {% endfor %}
+    </select>
+</div>
+{% endmacro %}
+
+{# 搜索框组件 #}
+{% macro SearchInput(name="search", placeholder="搜索...", onchange="") %}
+<div class="search-box">
+    <i data-lucide="search"></i>
+    <input 
+        type="text" 
+        id="{{ name }}" 
+        name="{{ name }}"
+        placeholder="{{ placeholder }}"
+        {% if onchange %}oninput="{{ onchange }}"{% endif %}
+        class="search-input"
+    >
+</div>
+{% endmacro %}
+

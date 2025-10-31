@@ -1,0 +1,315 @@
+{# 英雄浏览器组件 #}
+{% macro ChampionBrowser(champions=[], max_width="400px") %}
+<style>
+    .champion-browser {
+        max-width: {{ max_width }};
+        margin: 2rem auto;
+        background: var(--card) !important;
+        border: 1px solid var(--border) !important;
+        border-radius: var(--radius-lg) !important;
+        box-shadow: var(--shadow-xl) !important;
+        overflow: hidden;
+    }
+
+    .search-container {
+        padding: 1rem;
+        border-bottom: 1px solid var(--border) !important;
+    }
+
+    .search-box {
+        position: relative;
+        width: 100%;
+    }
+
+    .search-input {
+        width: 100% !important;
+        padding: 0.75rem 1rem 0.75rem 2.5rem !important;
+        background: var(--input) !important;
+        border: 1px solid var(--border) !important;
+        border-radius: var(--radius) !important;
+        color: var(--foreground) !important;
+        font-size: 0.9rem !important;
+        transition: all 0.2s ease-out !important;
+    }
+
+    .search-input:focus {
+        outline: none !important;
+        border-color: var(--primary) !important;
+        box-shadow: 0 0 0 2px rgba(255, 215, 0, 0.2) !important;
+    }
+
+    .search-input::placeholder {
+        color: var(--muted-foreground) !important;
+    }
+
+    .search-icon {
+        position: absolute;
+        left: 0.75rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--muted-foreground) !important;
+        width: 1rem;
+        height: 1rem;
+    }
+
+    .filter-container {
+        padding: 1rem;
+        border-bottom: 1px solid var(--border) !important;
+    }
+
+    .filter-buttons {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+
+    .filter-btn {
+        width: 2.5rem !important;
+        height: 2.5rem !important;
+        border-radius: var(--radius) !important;
+        background: var(--muted) !important;
+        border: 1px solid var(--border) !important;
+        color: var(--muted-foreground) !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        cursor: pointer !important;
+        transition: all 0.2s ease-out !important;
+        font-size: 0.8rem !important;
+        font-weight: 600 !important;
+    }
+
+    .filter-btn:hover {
+        background: var(--accent) !important;
+        color: var(--accent-foreground) !important;
+        transform: scale(1.05) !important;
+    }
+
+    .filter-btn.active {
+        background: var(--primary) !important;
+        color: var(--primary-foreground) !important;
+        border-color: var(--primary) !important;
+    }
+
+    .champions-grid {
+        padding: 1rem;
+        max-height: 600px;
+        overflow-y: auto;
+    }
+
+    .champions-container {
+        display: grid;
+        grid-template-columns: repeat(6, 1fr);
+        gap: 0.5rem;
+    }
+
+    .champion-card {
+        position: relative;
+        aspect-ratio: 1;
+        border-radius: var(--radius) !important;
+        overflow: hidden;
+        cursor: pointer;
+        transition: all 0.2s ease-out !important;
+        border: 2px solid transparent;
+    }
+
+    .champion-card:hover {
+        transform: scale(1.05) !important;
+        border-color: var(--primary) !important;
+        box-shadow: 0 0 15px rgba(255, 215, 0, 0.4) !important;
+    }
+
+    .champion-card.selected {
+        border-color: var(--primary) !important;
+        box-shadow: 0 0 20px rgba(255, 215, 0, 0.6) !important;
+    }
+
+    .champion-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.2s ease-out;
+    }
+
+    .champion-card:hover .champion-image {
+        transform: scale(1.1);
+    }
+
+    .champion-name {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: linear-gradient(transparent, rgba(0, 0, 0, 0.8));
+        color: white;
+        padding: 0.5rem 0.25rem 0.25rem;
+        font-size: 0.7rem;
+        font-weight: 500;
+        text-align: center;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+    }
+
+    .champions-grid::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .champions-grid::-webkit-scrollbar-track {
+        background: var(--muted);
+        border-radius: 3px;
+    }
+
+    .champions-grid::-webkit-scrollbar-thumb {
+        background: var(--muted-foreground);
+        border-radius: 3px;
+    }
+
+    .champions-grid::-webkit-scrollbar-thumb:hover {
+        background: var(--primary);
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .champion-card {
+        animation: fadeIn 0.3s ease-out;
+    }
+
+    .loading {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 200px;
+        color: var(--muted-foreground);
+    }
+</style>
+
+<div class="champion-browser">
+    <div class="search-container">
+        <div class="search-box">
+            <i data-lucide="search" class="search-icon"></i>
+            <input type="text" class="search-input" placeholder="搜索英雄" id="searchInput">
+        </div>
+    </div>
+
+    <div class="filter-container">
+        <div class="filter-buttons">
+            <button class="filter-btn active" data-role="all" title="全部">
+                <i data-lucide="asterisk" class="w-4 h-4"></i>
+            </button>
+            <button class="filter-btn" data-role="Tank" title="坦克">
+                <i data-lucide="shield" class="w-4 h-4"></i>
+            </button>
+            <button class="filter-btn" data-role="Fighter" title="战士">
+                <i data-lucide="sword" class="w-4 h-4"></i>
+            </button>
+            <button class="filter-btn" data-role="Assassin" title="刺客">
+                <i data-lucide="zap" class="w-4 h-4"></i>
+            </button>
+            <button class="filter-btn" data-role="Mage" title="法师">
+                <i data-lucide="sparkles" class="w-4 h-4"></i>
+            </button>
+            <button class="filter-btn" data-role="Marksman" title="射手">
+                <i data-lucide="crosshair" class="w-4 h-4"></i>
+            </button>
+            <button class="filter-btn" data-role="Support" title="辅助">
+                <i data-lucide="heart" class="w-4 h-4"></i>
+            </button>
+        </div>
+    </div>
+
+    <div class="champions-grid">
+        <div class="champions-container" id="championsContainer">
+            {% if champions %}
+                {% for champion in champions %}
+                <div class="champion-card" style="--index: {{ loop.index0 }}" data-champion-id="{{ champion.id }}" data-role="{{ champion.tags[0] if champion.tags else 'Fighter' }}">
+                    <img src="https://ddragon.leagueoflegends.com/cdn/15.21.1/img/champion/{{ champion.image.full }}" alt="{{ champion.name }}" class="champion-image" onerror="this.src='https://via.placeholder.com/80x80/333/fff?text={{ champion.name[0] }}'">
+                    <div class="champion-name">{{ champion.name }}</div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="loading">加载中...</div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+(function() {
+    let currentFilter = 'all';
+    let searchTerm = '';
+    let selectedChampion = null;
+
+    function renderChampions() {
+        const container = document.getElementById('championsContainer');
+        const allCards = container.querySelectorAll('.champion-card');
+
+        allCards.forEach(card => {
+            const role = card.dataset.role;
+            const name = card.querySelector('.champion-name').textContent;
+            const matchesRole = currentFilter === 'all' || role === currentFilter;
+            const matchesSearch = name.toLowerCase().includes(searchTerm.toLowerCase());
+
+            card.style.display = (matchesRole && matchesSearch) ? 'block' : 'none';
+        });
+    }
+
+    function selectChampion(cardElement, championId) {
+        document.querySelectorAll('.champion-card').forEach(card => {
+            card.classList.remove('selected');
+        });
+        cardElement.classList.add('selected');
+        selectedChampion = championId;
+
+        cardElement.style.transform = 'scale(0.95)';
+        setTimeout(() => {
+            cardElement.style.transform = '';
+        }, 150);
+
+        window.dispatchEvent(new CustomEvent('championSelected', { detail: { championId } }));
+    }
+
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+            searchTerm = e.target.value;
+            renderChampions();
+        });
+    }
+
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            currentFilter = btn.dataset.role;
+            renderChampions();
+
+            btn.style.transform = 'scale(0.9)';
+            setTimeout(() => {
+                btn.style.transform = '';
+            }, 150);
+        });
+    });
+
+    document.querySelectorAll('.champion-card').forEach(card => {
+        card.addEventListener('click', () => selectChampion(card, card.dataset.championId));
+    });
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && searchInput) {
+            searchInput.value = '';
+            searchTerm = '';
+            renderChampions();
+        }
+    });
+})();
+</script>
+{% endmacro %}
+

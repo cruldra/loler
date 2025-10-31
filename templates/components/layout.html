@@ -1,0 +1,42 @@
+{# 导航栏组件 #}
+{% macro Navbar(brand="", items=[]) %}
+<nav class="navbar">
+    <div class="navbar-brand">
+        {{ brand }}
+    </div>
+    <ul class="navbar-menu">
+        {% for item in items %}
+        <li class="navbar-item">
+            <a href="{{ item.url }}" {% if item.active %}class="active"{% endif %}>
+                {% if item.icon %}<i data-lucide="{{ item.icon }}"></i>{% endif %}
+                {{ item.label }}
+            </a>
+        </li>
+        {% endfor %}
+    </ul>
+</nav>
+{% endmacro %}
+
+{# 侧边栏组件 #}
+{% macro Sidebar(items=[]) %}
+<aside class="sidebar">
+    <ul class="sidebar-menu">
+        {% for item in items %}
+        <li class="sidebar-item {% if item.active %}active{% endif %}">
+            <a href="{{ item.url }}">
+                {% if item.icon %}<i data-lucide="{{ item.icon }}"></i>{% endif %}
+                <span>{{ item.label }}</span>
+            </a>
+        </li>
+        {% endfor %}
+    </ul>
+</aside>
+{% endmacro %}
+
+{# 容器组件 #}
+{% macro Container(class="") %}
+<div class="container {{ class }}">
+    {{ caller() }}
+</div>
+{% endmacro %}
+

@@ -1,0 +1,19 @@
+{# 按钮组件 #}
+{% macro Button(text, variant="primary", size="md", onclick="", class="", disabled=false) %}
+<button 
+    class="btn btn-{{ variant }} btn-{{ size }} {{ class }}"
+    {% if onclick %}onclick="{{ onclick }}"{% endif %}
+    {% if disabled %}disabled{% endif %}
+>
+    {{ text }}
+</button>
+{% endmacro %}
+
+{# 图标按钮组件 #}
+{% macro IconButton(icon, text="", variant="primary", size="md", onclick="") %}
+<button class="btn btn-{{ variant }} btn-{{ size }} flex items-center gap-2" {% if onclick %}onclick="{{ onclick }}"{% endif %}>
+    <i data-lucide="{{ icon }}"></i>
+    {% if text %}{{ text }}{% endif %}
+</button>
+{% endmacro %}
+

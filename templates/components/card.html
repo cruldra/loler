@@ -1,0 +1,32 @@
+{# 卡片组件 #}
+{% macro Card(title="", class="") %}
+<div class="card {{ class }}">
+    {% if title %}
+    <div class="card-header">
+        <h3>{{ title }}</h3>
+    </div>
+    {% endif %}
+    <div class="card-body">
+        {{ caller() }}
+    </div>
+</div>
+{% endmacro %}
+
+{# 英雄卡片组件 #}
+{% macro ChampionCard(champion) %}
+<div class="champion-card" data-champion-id="{{ champion.id }}">
+    <div class="champion-avatar">
+        <img src="{{ champion.avatar }}" alt="{{ champion.name }}">
+    </div>
+    <div class="champion-info">
+        <h4>{{ champion.name }}</h4>
+        <p class="champion-title">{{ champion.title }}</p>
+        <div class="champion-tags">
+            {% for tag in champion.tags %}
+            <span class="tag">{{ tag }}</span>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endmacro %}
+
