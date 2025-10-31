@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>符文配置 - LOL助手</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="lol_theme.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-sans) !important;
+            background: 
+                radial-gradient(ellipse at center, rgba(20, 30, 48, 0.8) 0%, rgba(10, 15, 25, 0.95) 70%),
+                linear-gradient(135deg, #0f1419 0%, #1a2332 50%, #0f1419 100%) !important;
+            color: #c9aa71 !important;
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* 背景纹理效果 */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: 
+                radial-gradient(circle at 25% 25%, rgba(200, 170, 110, 0.03) 0%, transparent 50%),
+                radial-gradient(circle at 75% 75%, rgba(200, 170, 110, 0.03) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .rune-interface {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+            position: relative;
+        }
+
+        /* 符文系选择区域 */
+        .rune-trees-container {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            padding: 1rem;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 12px;
+            border: 1px solid rgba(200, 170, 110, 0.2);
+        }
+
+        .rune-tree {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            padding: 1rem;
+            border-radius: 8px;
+            position: relative;
+        }
+
+        .rune-tree:hover {
+            transform: translateY(-2px);
+        }
+
+        .rune-tree.selected {
+            background: rgba(200, 170, 110, 0.1);
+        }
+
+        .tree-icon {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 0.5rem;
+            position: relative;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .rune-tree.selected .tree-icon {
+            border-color: #c8aa6e;
+            box-shadow: 0 0 20px rgba(200, 170, 110, 0.5);
+        }
+
+        /* 符文系颜色 */
+        .tree-precision .tree-icon { 
+            background: radial-gradient(circle, #c89b3c 0%, #785a28 100%);
+            box-shadow: inset 0 0 20px rgba(200, 155, 60, 0.3);
+        }
+        .tree-domination .tree-icon { 
+            background: radial-gradient(circle, #dc143c 0%, #8b0000 100%);
+            box-shadow: inset 0 0 20px rgba(220, 20, 60, 0.3);
+        }
+        .tree-sorcery .tree-icon { 
+            background: radial-gradient(circle, #6a5acd 0%, #483d8b 100%);
+            box-shadow: inset 0 0 20px rgba(106, 90, 205, 0.3);
+        }
+        .tree-resolve .tree-icon { 
+            background: radial-gradient(circle, #228b22 0%, #006400 100%);
+            box-shadow: inset 0 0 20px rgba(34, 139, 34, 0.3);
+        }
+        .tree-inspiration .tree-icon { 
+            background: radial-gradient(circle, #00ced1 0%, #008b8b 100%);
+            box-shadow: inset 0 0 20px rgba(0, 206, 209, 0.3);
+        }
+
+        .tree-name {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #c9aa71;
+            text-align: center;
+        }
+
+        .tree-description {
+            font-size: 0.7rem;
+            color: #8b7355;
+            text-align: center;
+            margin-top: 0.25rem;
+        }
+
+        /* 符文选择主区域 */
+        .rune-selection-area {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .rune-tree-panel {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(200, 170, 110, 0.3);
+            border-radius: 12px;
+            padding: 1.5rem;
+            position: relative;
+        }
+
+        .panel-header {
+            text-align: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid rgba(200, 170, 110, 0.2);
+        }
+
+        .panel-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #c8aa6e;
+            margin-bottom: 0.25rem;
+        }
+
+        .panel-subtitle {
+            font-size: 0.8rem;
+            color: #8b7355;
+        }
+
+        /* 符文层级 */
+        .rune-tier {
+            margin-bottom: 1.5rem;
+        }
+
+        .tier-header {
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+
+        .tier-title {
+            font-size: 0.8rem;
+            color: #8b7355;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .rune-slots {
+            display: flex;
+            justify-content: center;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        /* 符文图标样式 */
+        .rune-slot {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            border: 2px solid rgba(200, 170, 110, 0.3);
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .rune-slot::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle, rgba(200, 170, 110, 0.1) 0%, transparent 70%);
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        .rune-slot:hover {
+            border-color: #c8aa6e;
+            transform: scale(1.1);
+            box-shadow: 0 0 15px rgba(200, 170, 110, 0.4);
+        }
+
+        .rune-slot:hover::before {
+            opacity: 1;
+        }
+
+        .rune-slot.selected {
+            border-color: #c8aa6e;
+            background: rgba(200, 170, 110, 0.2);
+            box-shadow: 0 0 20px rgba(200, 170, 110, 0.6);
+        }
+
+        .rune-slot.selected::before {
+            opacity: 1;
+        }
+
+        .rune-slot.keystone {
+            width: 56px;
+            height: 56px;
+            border-width: 3px;
+        }
+
+        .rune-icon {
+            font-size: 1.2rem;
+            filter: drop-shadow(0 0 3px rgba(200, 170, 110, 0.5));
+        }
+
+        .rune-slot.keystone .rune-icon {
+            font-size: 1.5rem;
+        }
+
+        /* 符文连接线 */
+        .rune-connections {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .connection-line {
+            position: absolute;
+            background: linear-gradient(to bottom, rgba(200, 170, 110, 0.3), rgba(200, 170, 110, 0.1));
+            width: 2px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        /* 符文提示框 */
+        .rune-tooltip {
+            position: absolute;
+            bottom: -35px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.9);
+            border: 1px solid rgba(200, 170, 110, 0.5);
+            border-radius: 4px;
+            padding: 0.4rem 0.6rem;
+            font-size: 0.7rem;
+            color: #c9aa71;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease;
+            z-index: 10;
+        }
+
+        .rune-slot:hover .rune-tooltip {
+            opacity: 1;
+        }
+
+        /* 副系限制样式 */
+        .secondary-tree .rune-tier:nth-child(n+4) .rune-slot {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .secondary-tree .rune-tier:nth-child(n+4) .rune-slot:hover {
+            transform: none;
+            box-shadow: none;
+            border-color: rgba(200, 170, 110, 0.3);
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 1024px) {
+            .rune-selection-area {
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
+            }
+            
+            .rune-trees-container {
+                flex-wrap: wrap;
+                gap: 0.5rem;
+            }
+            
+            .tree-icon {
+                width: 48px;
+                height: 48px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .rune-interface {
+                padding: 1rem;
+            }
+            
+            .rune-slot {
+                width: 40px;
+                height: 40px;
+            }
+            
+            .rune-slot.keystone {
+                width: 48px;
+                height: 48px;
+            }
+            
+            .rune-icon {
+                font-size: 1rem;
+            }
+            
+            .rune-slot.keystone .rune-icon {
+                font-size: 1.3rem;
+            }
+        }
+
+        /* 动画效果 */
+        @keyframes runeSelect {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1.1); }
+        }
+
+        .rune-slot.selecting {
+            animation: runeSelect 0.3s ease;
+        }
+
+        /* 页面加载动画 */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .rune-interface {
+            animation: fadeInUp 0.6s ease-out;
+        }
+    </style>
+</head>
+<body>
+    <div class="rune-interface">
+        <!-- 符文系选择 -->
+        <div class="rune-trees-container">
+            <div class="rune-tree tree-precision selected" data-tree="precision">
+                <div class="tree-icon">
+                    <svg width="32" height="32" viewBox="0 0 32 32" fill="currentColor">
+                        <path d="M16 2L20 10L28 10L22 16L24 24L16 20L8 24L10 16L4 10L12 10Z"/>
+                    </svg>
+                </div>
+                <div class="tree-name">精密</div>
+                <div class="tree-description">成为一个传奇</div>
+            </div>
+            
+            <div class="rune-tree tree-domination" data-tree="domination">
+                <div class="tree-icon">
+                    <svg width="32" height="32" viewBox="0 0 32 32" fill="currentColor">
+                        <path d="M16 2L22 8L28 6L26 12L32 16L26 20L28 26L22 24L16 30L10 24L4 26L6 20L0 16L6 12L4 6L10 8Z"/>
+                    </svg>
+                </div>
+                <div class="tree-name">主宰</div>
+                <div class="tree-description">猎杀并消灭敌人</div>
+            </div>
+            
+            <div class="rune-tree tree-sorcery" data-tree="sorcery">
+                <div class="tree-icon">
+                    <svg width="32" height="32" viewBox="0 0 32 32" fill="currentColor">
+                        <path d="M16 2L18 8L24 6L20 12L26 14L20 16L24 22L18 20L16 26L14 20L8 22L12 16L6 14L12 12L8 6L14 8Z"/>
+                    </svg>
+                </div>
+                <div class="tree-name">巫术</div>
+                <div class="tree-description">释放魔法</div>
+            </div>
+            
+            <div class="rune-tree tree-resolve" data-tree="resolve">
+                <div class="tree-icon">
+                    <svg width="32" height="32" viewBox="0 0 32 32" fill="currentColor">
+                        <path d="M16 2L20 6L26 4L24 10L30 12L24 14L26 20L20 18L16 22L12 18L6 20L8 14L2 12L8 10L6 4L12 6Z"/>
+                    </svg>
+                </div>
+                <div class="tree-name">坚决</div>
+                <div class="tree-description">生存</div>
+            </div>
+            
+            <div class="rune-tree tree-inspiration" data-tree="inspiration">
+                <div class="tree-icon">
+                    <svg width="32" height="32" viewBox="0 0 32 32" fill="currentColor">
+                        <path d="M16 2L19 7L25 5L23 11L29 13L23 15L25 21L19 19L16 24L13 19L7 21L9 15L3 13L9 11L7 5L13 7Z"/>
+                    </svg>
+                </div>
+                <div class="tree-name">启迪</div>
+                <div class="tree-description">创造性工具和规则改动</div>
+            </div>
+        </div>
+
+        <!-- 符文选择区域 -->
+        <div class="rune-selection-area">
+            <!-- 主系符文 -->
+            <div class="rune-tree-panel primary-tree">
+                <div class="rune-connections">
+                    <div class="connection-line" style="top: 120px; height: 80px;"></div>
+                    <div class="connection-line" style="top: 220px; height: 80px;"></div>
+                    <div class="connection-line" style="top: 320px; height: 80px;"></div>
+                </div>
+                
+                <div class="panel-header">
+                    <div class="panel-title">精密</div>
+                    <div class="panel-subtitle">成为一个传奇</div>
+                </div>
+
+                <!-- 基石符文 -->
+                <div class="rune-tier">
+                    <div class="tier-header">
+                        <div class="tier-title">基石符文</div>
+                    </div>
+                    <div class="rune-slots">
+                        <div class="rune-slot keystone selected" data-rune="conqueror">
+                            <div class="rune-icon">👑</div>
+                            <div class="rune-tooltip">征服者</div>
+                        </div>
+                        <div class="rune-slot keystone" data-rune="lethal-tempo">
+                            <div class="rune-icon">⚔️</div>
+                            <div class="rune-tooltip">致命节奏</div>
+                        </div>
+                        <div class="rune-slot keystone" data-rune="fleet-footwork">
+                            <div class="rune-icon">🏃</div>
+                            <div class="rune-tooltip">迅捷步法</div>
+                        </div>
+                        <div class="rune-slot keystone" data-rune="press-attack">
+                            <div class="rune-icon">🎯</div>
+                            <div class="rune-tooltip">强攻</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 英勇符文 -->
+                <div class="rune-tier">
+                    <div class="rune-slots">
+                        <div class="rune-slot" data-rune="overheal">
+                            <div class="rune-icon">💚</div>
+                            <div class="rune-tooltip">过量治疗</div>
+                        </div>
+                        <div class="rune-slot selected" data-rune="triumph">
+                            <div class="rune-icon">🏆</div>
+                            <div class="rune-tooltip">凯旋</div>
+                        </div>
+                        <div class="rune-slot" data-rune="presence-mind">
+                            <div class="rune-icon">🧠</div>
+                            <div class="rune-tooltip">气定神闲</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 传说符文 -->
+                <div class="rune-tier">
+                    <div class="rune-slots">
+                        <div class="rune-slot selected" data-rune="legend-alacrity">
+                            <div class="rune-icon">⚡</div>
+                            <div class="rune-tooltip">传说：欢欣</div>
+                        </div>
+                        <div class="rune-slot" data-rune="legend-tenacity">
+                            <div class="rune-icon">🛡️</div>
+                            <div class="rune-tooltip">传说：韧性</div>
+                        </div>
+                        <div class="rune-slot" data-rune="legend-bloodline">
+                            <div class="rune-icon">🩸</div>
+                            <div class="rune-tooltip">传说：血统</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 终极符文 -->
+                <div class="rune-tier">
+                    <div class="rune-slots">
+                        <div class="rune-slot" data-rune="coup-grace">
+                            <div class="rune-icon">💀</div>
+                            <div class="rune-tooltip">致命一击</div>
+                        </div>
+                        <div class="rune-slot selected" data-rune="cut-down">
+                            <div class="rune-icon">⚔️</div>
+                            <div class="rune-tooltip">砍倒</div>
+                        </div>
+                        <div class="rune-slot" data-rune="last-stand">
+                            <div class="rune-icon">🔥</div>
+                            <div class="rune-tooltip">坚毅不倒</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 副系符文 -->
+            <div class="rune-tree-panel secondary-tree">
+                <div class="rune-connections">
+                    <div class="connection-line" style="top: 120px; height: 80px;"></div>
+                    <div class="connection-line" style="top: 220px; height: 80px;"></div>
+                </div>
+                
+                <div class="panel-header">
+                    <div class="panel-title">主宰</div>
+                    <div class="panel-subtitle">猎杀并消灭敌人</div>
+                </div>
+
+                <!-- 恶意中伤 -->
+                <div class="rune-tier">
+                    <div class="tier-header">
+                        <div class="tier-title">恶意中伤</div>
+                    </div>
+                    <div class="rune-slots">
+                        <div class="rune-slot" data-rune="cheap-shot">
+                            <div class="rune-icon">🗡️</div>
+                            <div class="rune-tooltip">恶意中伤</div>
+                        </div>
+                        <div class="rune-slot selected" data-rune="taste-blood">
+                            <div class="rune-icon">🩸</div>
+                            <div class="rune-tooltip">血之滋味</div>
+                        </div>
+                        <div class="rune-slot" data-rune="sudden-impact">
+                            <div class="rune-icon">💥</div>
+                            <div class="rune-tooltip">猛然冲击</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 追击 -->
+                <div class="rune-tier">
+                    <div class="rune-slots">
+                        <div class="rune-slot" data-rune="zombie-ward">
+                            <div class="rune-icon">👁️</div>
+                            <div class="rune-tooltip">僵尸守卫</div>
+                        </div>
+                        <div class="rune-slot" data-rune="ghost-poro">
+                            <div class="rune-icon">👻</div>
+                            <div class="rune-tooltip">幽灵魄罗</div>
+                        </div>
+                        <div class="rune-slot selected" data-rune="eyeball-collection">
+                            <div class="rune-icon">👀</div>
+                            <div class="rune-tooltip">眼球收集器</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 无情猎手（禁用） -->
+                <div class="rune-tier">
+                    <div class="tier-header">
+                        <div class="tier-title">无情猎手</div>
+                    </div>
+                    <div class="rune-slots">
+                        <div class="rune-slot" data-rune="treasure-hunter">
+                            <div class="rune-icon">💰</div>
+                            <div class="rune-tooltip">赏金猎人</div>
+                        </div>
+                        <div class="rune-slot" data-rune="ingenious-hunter">
+                            <div class="rune-icon">🔧</div>
+                            <div class="rune-tooltip">灵性猎手</div>
+                        </div>
+                        <div class="rune-slot" data-rune="relentless-hunter">
+                            <div class="rune-icon">🏃</div>
+                            <div class="rune-tooltip">无情猎手</div>
+                        </div>
+                        <div class="rune-slot" data-rune="ultimate-hunter">
+                            <div class="rune-icon">🎯</div>
+                            <div class="rune-tooltip">终极猎手</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 终极（禁用） -->
+                <div class="rune-tier">
+                    <div class="rune-slots">
+                        <div class="rune-slot" data-rune="coup-grace-2">
+                            <div class="rune-icon">💀</div>
+                            <div class="rune-tooltip">致命一击</div>
+                        </div>
+                        <div class="rune-slot" data-rune="cut-down-2">
+                            <div class="rune-icon">⚔️</div>
+                            <div class="rune-tooltip">砍倒</div>
+                        </div>
+                        <div class="rune-slot" data-rune="last-stand-2">
+                            <div class="rune-icon">🔥</div>
+                            <div class="rune-tooltip">坚毅不倒</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 符文数据
+        const runeData = {
+            precision: {
+                name: '精密',
+                description: '成为一个传奇',
+                color: '#c89b3c'
+            },
+            domination: {
+                name: '主宰', 
+                description: '猎杀并消灭敌人',
+                color: '#dc143c'
+            },
+            sorcery: {
+                name: '巫术',
+                description: '释放魔法', 
+                color: '#6a5acd'
+            },
+            resolve: {
+                name: '坚决',
+                description: '生存',
+                color: '#228b22'
+            },
+            inspiration: {
+                name: '启迪',
+                description: '创造性工具和规则改动',
+                color: '#00ced1'
+            }
+        };
+
+        let currentPrimaryTree = 'precision';
+        let currentSecondaryTree = 'domination';
+
+        // 初始化
+        function init() {
+            lucide.createIcons();
+            setupTreeSelection();
+            setupRuneSelection();
+        }
+
+        // 设置符文系选择
+        function setupTreeSelection() {
+            const trees = document.querySelectorAll('.rune-tree');
+            
+            trees.forEach(tree => {
+                tree.addEventListener('click', () => {
+                    const treeType = tree.dataset.tree;
+                    
+                    if (tree.classList.contains('selected')) {
+                        // 如果是当前选中的主系，设为副系
+                        if (treeType !== currentSecondaryTree) {
+                            setSecondaryTree(treeType);
+                        }
+                    } else {
+                        // 设为主系
+                        setPrimaryTree(treeType);
+                    }
+                });
+            });
+        }
+
+        // 设置主系
+        function setPrimaryTree(treeType) {
+            if (treeType === currentSecondaryTree) {
+                // 交换主副系
+                const oldPrimary = currentPrimaryTree;
+                currentPrimaryTree = treeType;
+                currentSecondaryTree = oldPrimary;
+            } else {
+                currentPrimaryTree = treeType;
+            }
+            
+            updateTreeSelection();
+            updatePanelHeaders();
+        }
+
+        // 设置副系
+        function setSecondaryTree(treeType) {
+            if (treeType === currentPrimaryTree) return;
+            currentSecondaryTree = treeType;
+            updateTreeSelection();
+            updatePanelHeaders();
+        }
+
+        // 更新符文系选择状态
+        function updateTreeSelection() {
+            const trees = document.querySelectorAll('.rune-tree');
+            trees.forEach(tree => {
+                tree.classList.remove('selected');
+                if (tree.dataset.tree === currentPrimaryTree) {
+                    tree.classList.add('selected');
+                }
+            });
+        }
+
+        // 更新面板标题
+        function updatePanelHeaders() {
+            const primaryPanel = document.querySelector('.primary-tree .panel-title');
+            const secondaryPanel = document.querySelector('.secondary-tree .panel-title');
+            const primarySubtitle = document.querySelector('.primary-tree .panel-subtitle');
+            const secondarySubtitle = document.querySelector('.secondary-tree .panel-subtitle');
+            
+            primaryPanel.textContent = runeData[currentPrimaryTree].name;
+            secondaryPanel.textContent = runeData[currentSecondaryTree].name;
+            primarySubtitle.textContent = runeData[currentPrimaryTree].description;
+            secondarySubtitle.textContent = runeData[currentSecondaryTree].description;
+        }
+
+        // 设置符文选择
+        function setupRuneSelection() {
+            const runeSlots = document.querySelectorAll('.rune-slot');
+            
+            runeSlots.forEach(slot => {
+                slot.addEventListener('click', () => {
+                    // 检查是否在副系的禁用层级
+                    const isSecondary = slot.closest('.secondary-tree');
+                    const tier = slot.closest('.rune-tier');
+                    const tierIndex = Array.from(tier.parentNode.children).indexOf(tier) - 1; // 减1因为有header
+                    
+                    if (isSecondary && tierIndex >= 2) {
+                        return; // 副系第3、4层禁用
+                    }
+                    
+                    // 移除同层其他符文的选中状态
+                    const tierSlots = tier.querySelectorAll('.rune-slot');
+                    tierSlots.forEach(s => s.classList.remove('selected'));
+                    
+                    // 选中当前符文
+                    slot.classList.add('selected', 'selecting');
+                    
+                    // 移除动画类
+                    setTimeout(() => {
+                        slot.classList.remove('selecting');
+                    }, 300);
+                });
+            });
+        }
+
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

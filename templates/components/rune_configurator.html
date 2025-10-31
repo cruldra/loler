@@ -1,0 +1,610 @@
+{# 符文配置器组件 #}
+{% macro RuneConfigurator(rune_trees, selected_primary=None, selected_secondary=None, selected_runes=[]) %}
+{# 符文系翻译映射 #}
+{% set tree_translations = {
+    'Precision': {'name': '精密', 'desc': '成为一个传奇'},
+    'Domination': {'name': '主宰', 'desc': '猎杀并消灭敌人'},
+    'Sorcery': {'name': '巫术', 'desc': '释放魔法'},
+    'Resolve': {'name': '坚决', 'desc': '生存'},
+    'Inspiration': {'name': '启迪', 'desc': '创造性工具和规则改动'}
+} %}
+
+<style>
+    .rune-configurator {
+        width: 100%;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem;
+        position: relative;
+    }
+
+    /* 符文系选择区域 */
+    .rune-trees-container {
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+        margin-bottom: 2rem;
+        padding: 1rem;
+        background: rgba(0, 0, 0, 0.3);
+        border-radius: 12px;
+        border: 1px solid rgba(200, 170, 110, 0.2);
+    }
+
+    .rune-tree {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        padding: 1rem;
+        border-radius: 8px;
+        position: relative;
+    }
+
+    .rune-tree:hover {
+        transform: translateY(-2px);
+    }
+
+    .rune-tree.selected {
+        background: rgba(200, 170, 110, 0.1);
+    }
+
+    .tree-icon {
+        width: 64px;
+        height: 64px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 0.5rem;
+        position: relative;
+        border: 2px solid transparent;
+        transition: all 0.3s ease;
+        overflow: hidden;
+    }
+
+    .tree-icon img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        filter: brightness(1.2);
+    }
+
+    .rune-tree.selected .tree-icon {
+        border-color: #c8aa6e;
+        box-shadow: 0 0 20px rgba(200, 170, 110, 0.5);
+    }
+
+    /* 符文系颜色 */
+    .tree-Precision .tree-icon { 
+        background: radial-gradient(circle, #c89b3c 0%, #785a28 100%);
+        box-shadow: inset 0 0 20px rgba(200, 155, 60, 0.3);
+    }
+    .tree-Domination .tree-icon { 
+        background: radial-gradient(circle, #dc143c 0%, #8b0000 100%);
+        box-shadow: inset 0 0 20px rgba(220, 20, 60, 0.3);
+    }
+    .tree-Sorcery .tree-icon { 
+        background: radial-gradient(circle, #6a5acd 0%, #483d8b 100%);
+        box-shadow: inset 0 0 20px rgba(106, 90, 205, 0.3);
+    }
+    .tree-Resolve .tree-icon { 
+        background: radial-gradient(circle, #228b22 0%, #006400 100%);
+        box-shadow: inset 0 0 20px rgba(34, 139, 34, 0.3);
+    }
+    .tree-Inspiration .tree-icon { 
+        background: radial-gradient(circle, #00ced1 0%, #008b8b 100%);
+        box-shadow: inset 0 0 20px rgba(0, 206, 209, 0.3);
+    }
+
+    .tree-name {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #c9aa71;
+        text-align: center;
+    }
+
+    .tree-description {
+        font-size: 0.7rem;
+        color: #8b7355;
+        text-align: center;
+        margin-top: 0.25rem;
+    }
+
+    /* 符文选择主区域 */
+    .rune-selection-area {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2rem;
+        margin-top: 2rem;
+    }
+
+    .rune-tree-panel {
+        background: rgba(0, 0, 0, 0.4);
+        border: 1px solid rgba(200, 170, 110, 0.3);
+        border-radius: 12px;
+        padding: 1.5rem;
+        position: relative;
+    }
+
+    .panel-header {
+        text-align: center;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid rgba(200, 170, 110, 0.2);
+    }
+
+    .panel-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #c8aa6e;
+        margin-bottom: 0.25rem;
+    }
+
+    .panel-subtitle {
+        font-size: 0.8rem;
+        color: #8b7355;
+    }
+
+    /* 符文层级 */
+    .rune-tier {
+        margin-bottom: 1.5rem;
+    }
+
+    .tier-header {
+        text-align: center;
+        margin-bottom: 1rem;
+    }
+
+    .tier-title {
+        font-size: 0.8rem;
+        color: #8b7355;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .rune-slots {
+        display: flex;
+        justify-content: center;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+    }
+
+    /* 符文图标样式 */
+    .rune-slot {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        border: 2px solid rgba(200, 170, 110, 0.3);
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .rune-slot img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        filter: brightness(0.8);
+    }
+
+    .rune-slot::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: radial-gradient(circle, rgba(200, 170, 110, 0.1) 0%, transparent 70%);
+        opacity: 0;
+        transition: opacity 0.2s ease;
+    }
+
+    .rune-slot:hover {
+        border-color: #c8aa6e;
+        transform: scale(1.1);
+        box-shadow: 0 0 15px rgba(200, 170, 110, 0.4);
+    }
+
+    .rune-slot:hover img {
+        filter: brightness(1.2);
+    }
+
+    .rune-slot:hover::before {
+        opacity: 1;
+    }
+
+    .rune-slot.selected {
+        border-color: #c8aa6e;
+        background: rgba(200, 170, 110, 0.2);
+        box-shadow: 0 0 20px rgba(200, 170, 110, 0.6);
+    }
+
+    .rune-slot.selected img {
+        filter: brightness(1.3);
+    }
+
+    .rune-slot.selected::before {
+        opacity: 1;
+    }
+
+    .rune-slot.keystone {
+        width: 56px;
+        height: 56px;
+        border-width: 3px;
+    }
+
+    /* 符文提示框 */
+    .rune-tooltip {
+        position: absolute;
+        bottom: calc(100% + 10px);
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(0, 0, 0, 0.95);
+        border: 1px solid rgba(200, 170, 110, 0.5);
+        border-radius: 6px;
+        padding: 0.75rem;
+        font-size: 0.75rem;
+        color: #c9aa71;
+        white-space: normal;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.2s ease;
+        z-index: 100;
+        min-width: 200px;
+        max-width: 300px;
+    }
+
+    .rune-tooltip-name {
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+        color: #c8aa6e;
+    }
+
+    .rune-tooltip-desc {
+        font-size: 0.7rem;
+        line-height: 1.4;
+        color: #a0896d;
+    }
+
+    .rune-slot:hover .rune-tooltip {
+        opacity: 1;
+    }
+
+    /* 副系限制样式 */
+    .secondary-tree .rune-tier:first-child {
+        display: none;
+    }
+
+    .secondary-tree .rune-tier:nth-child(n+4) .rune-slot {
+        opacity: 0.3;
+        cursor: not-allowed;
+    }
+
+    .secondary-tree .rune-tier:nth-child(n+4) .rune-slot:hover {
+        transform: none;
+        box-shadow: none;
+        border-color: rgba(200, 170, 110, 0.3);
+    }
+
+    /* 响应式设计 */
+    @media (max-width: 1024px) {
+        .rune-selection-area {
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+        }
+        
+        .rune-trees-container {
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+        
+        .tree-icon {
+            width: 48px;
+            height: 48px;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .rune-configurator {
+            padding: 1rem;
+        }
+        
+        .rune-slot {
+            width: 40px;
+            height: 40px;
+        }
+        
+        .rune-slot.keystone {
+            width: 48px;
+            height: 48px;
+        }
+    }
+
+    /* 动画效果 */
+    @keyframes runeSelect {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.2); }
+        100% { transform: scale(1.1); }
+    }
+
+    .rune-slot.selecting {
+        animation: runeSelect 0.3s ease;
+    }
+</style>
+
+<div class="rune-configurator">
+    <!-- 符文系选择 -->
+    <div class="rune-trees-container">
+        {% for tree in rune_trees %}
+        <div class="rune-tree tree-{{ tree.key }} {% if loop.index0 == 0 %}selected{% endif %}" data-tree-id="{{ tree.id }}" data-tree-key="{{ tree.key }}">
+            <div class="tree-icon">
+                <img src="https://ddragon.leagueoflegends.com/cdn/15.21.1/img/{{ tree.icon }}" alt="{{ tree.name }}">
+            </div>
+            <div class="tree-name">{{ tree_translations.get(tree.key, {}).get('name', tree.name) }}</div>
+            <div class="tree-description">{{ tree_translations.get(tree.key, {}).get('desc', '') }}</div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- 符文选择区域 -->
+    <div class="rune-selection-area">
+        <!-- 主系符文 -->
+        <div class="rune-tree-panel primary-tree" id="primaryTreePanel">
+            <div class="panel-header">
+                <div class="panel-title">{{ tree_translations.get(rune_trees[0].key, {}).get('name', rune_trees[0].name) if rune_trees else '' }}</div>
+                <div class="panel-subtitle">{{ tree_translations.get(rune_trees[0].key, {}).get('desc', '') if rune_trees else '' }}</div>
+            </div>
+
+            {% if rune_trees %}
+            {% set primary_tree = rune_trees[0] %}
+            {% for slot in primary_tree.slots %}
+            <div class="rune-tier">
+                {% if loop.index0 == 0 %}
+                <div class="tier-header">
+                    <div class="tier-title">基石符文</div>
+                </div>
+                {% endif %}
+                <div class="rune-slots">
+                    {% for rune in slot.runes %}
+                    <div class="rune-slot {% if loop.index0 == 0 %}keystone{% endif %} {% if loop.index0 == 0 %}selected{% endif %}"
+                         data-rune-id="{{ rune.id }}"
+                         data-tier="{{ loop.index0 }}">
+                        <img src="https://ddragon.leagueoflegends.com/cdn/15.21.1/img/{{ rune.icon }}" alt="{{ rune.name }}">
+                        <div class="rune-tooltip">
+                            <div class="rune-tooltip-name">{{ rune.name }}</div>
+                            <div class="rune-tooltip-desc">{{ rune.shortDesc | replace('<br>', ' ') | striptags }}</div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+            {% endif %}
+        </div>
+
+        <!-- 副系符文 -->
+        <div class="rune-tree-panel secondary-tree" id="secondaryTreePanel">
+            <div class="panel-header">
+                <div class="panel-title">{{ tree_translations.get(rune_trees[1].key, {}).get('name', rune_trees[1].name) if rune_trees|length > 1 else '' }}</div>
+                <div class="panel-subtitle">{{ tree_translations.get(rune_trees[1].key, {}).get('desc', '') if rune_trees|length > 1 else '' }}</div>
+            </div>
+
+            {% if rune_trees|length > 1 %}
+            {% set secondary_tree = rune_trees[1] %}
+            {% for slot in secondary_tree.slots %}
+            <div class="rune-tier">
+                <div class="rune-slots">
+                    {% for rune in slot.runes %}
+                    <div class="rune-slot {% if loop.index0 == 0 and loop.index == 1 %}selected{% endif %}"
+                         data-rune-id="{{ rune.id }}"
+                         data-tier="{{ loop.index0 }}">
+                        <img src="https://ddragon.leagueoflegends.com/cdn/15.21.1/img/{{ rune.icon }}" alt="{{ rune.name }}">
+                        <div class="rune-tooltip">
+                            <div class="rune-tooltip-name">{{ rune.name }}</div>
+                            <div class="rune-tooltip-desc">{{ rune.shortDesc | replace('<br>', ' ') | striptags }}</div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+(function() {
+    let currentPrimaryTreeId = {{ rune_trees[0].id if rune_trees else 'null' }};
+    let currentSecondaryTreeId = {{ rune_trees[1].id if rune_trees|length > 1 else 'null' }};
+
+    const runeTreesData = {{ rune_trees | tojson | safe }};
+    const treeTranslations = {{ tree_translations | tojson | safe }};
+
+    // 初始化
+    function init() {
+        setupTreeSelection();
+        setupRuneSelection();
+    }
+
+    // 设置符文系选择
+    function setupTreeSelection() {
+        const trees = document.querySelectorAll('.rune-tree');
+
+        trees.forEach(tree => {
+            tree.addEventListener('click', () => {
+                const treeId = parseInt(tree.dataset.treeId);
+                const treeKey = tree.dataset.treeKey;
+
+                if (tree.classList.contains('selected')) {
+                    // 如果是当前选中的主系，设为副系
+                    if (treeId !== currentSecondaryTreeId) {
+                        setSecondaryTree(treeId, treeKey);
+                    }
+                } else {
+                    // 设为主系
+                    setPrimaryTree(treeId, treeKey);
+                }
+            });
+        });
+    }
+
+    // 设置主系
+    function setPrimaryTree(treeId, treeKey) {
+        if (treeId === currentSecondaryTreeId) {
+            // 交换主副系
+            const oldPrimary = currentPrimaryTreeId;
+            currentPrimaryTreeId = treeId;
+            currentSecondaryTreeId = oldPrimary;
+        } else {
+            currentPrimaryTreeId = treeId;
+        }
+
+        updateTreeSelection();
+        updatePanels();
+    }
+
+    // 设置副系
+    function setSecondaryTree(treeId, treeKey) {
+        if (treeId === currentPrimaryTreeId) return;
+        currentSecondaryTreeId = treeId;
+        updateTreeSelection();
+        updatePanels();
+    }
+
+    // 更新符文系选择状态
+    function updateTreeSelection() {
+        const trees = document.querySelectorAll('.rune-tree');
+        trees.forEach(tree => {
+            tree.classList.remove('selected');
+            if (parseInt(tree.dataset.treeId) === currentPrimaryTreeId) {
+                tree.classList.add('selected');
+            }
+        });
+    }
+
+    // 更新面板
+    function updatePanels() {
+        const primaryTree = runeTreesData.find(t => t.id === currentPrimaryTreeId);
+        const secondaryTree = runeTreesData.find(t => t.id === currentSecondaryTreeId);
+
+        if (primaryTree) {
+            updatePanel('primary', primaryTree);
+        }
+        if (secondaryTree) {
+            updatePanel('secondary', secondaryTree);
+        }
+    }
+
+    // 更新单个面板
+    function updatePanel(type, tree) {
+        const panel = document.getElementById(type === 'primary' ? 'primaryTreePanel' : 'secondaryTreePanel');
+        const title = panel.querySelector('.panel-title');
+        const subtitle = panel.querySelector('.panel-subtitle');
+
+        const translation = treeTranslations[tree.key] || {};
+        title.textContent = translation.name || tree.name;
+        subtitle.textContent = translation.desc || '';
+
+        // 重新渲染符文槽位
+        renderRuneSlots(panel, tree, type === 'secondary');
+    }
+
+    // 渲染符文槽位
+    function renderRuneSlots(panel, tree, isSecondary) {
+        // 清除现有符文层级
+        const existingTiers = panel.querySelectorAll('.rune-tier');
+        existingTiers.forEach(tier => tier.remove());
+
+        // 渲染新的符文层级
+        tree.slots.forEach((slot, slotIndex) => {
+            if (isSecondary && slotIndex === 0) return; // 副系跳过基石符文
+
+            const tierDiv = document.createElement('div');
+            tierDiv.className = 'rune-tier';
+
+            if (slotIndex === 0 && !isSecondary) {
+                tierDiv.innerHTML = '<div class="tier-header"><div class="tier-title">基石符文</div></div>';
+            }
+
+            const slotsDiv = document.createElement('div');
+            slotsDiv.className = 'rune-slots';
+
+            slot.runes.forEach((rune, runeIndex) => {
+                const runeSlot = document.createElement('div');
+                runeSlot.className = `rune-slot ${slotIndex === 0 && !isSecondary ? 'keystone' : ''}`;
+                runeSlot.dataset.runeId = rune.id;
+                runeSlot.dataset.tier = slotIndex;
+
+                const cleanDesc = rune.shortDesc.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ');
+
+                runeSlot.innerHTML = `
+                    <img src="https://ddragon.leagueoflegends.com/cdn/15.21.1/img/${rune.icon}" alt="${rune.name}">
+                    <div class="rune-tooltip">
+                        <div class="rune-tooltip-name">${rune.name}</div>
+                        <div class="rune-tooltip-desc">${cleanDesc}</div>
+                    </div>
+                `;
+
+                slotsDiv.appendChild(runeSlot);
+            });
+
+            tierDiv.appendChild(slotsDiv);
+            panel.appendChild(tierDiv);
+        });
+
+        // 重新绑定点击事件
+        setupRuneSelection();
+    }
+
+    // 设置符文选择
+    function setupRuneSelection() {
+        const runeSlots = document.querySelectorAll('.rune-slot');
+
+        runeSlots.forEach(slot => {
+            // 移除旧的事件监听器
+            const newSlot = slot.cloneNode(true);
+            slot.parentNode.replaceChild(newSlot, slot);
+
+            newSlot.addEventListener('click', () => {
+                // 检查是否在副系的禁用层级
+                const isSecondary = newSlot.closest('.secondary-tree');
+                const tier = newSlot.closest('.rune-tier');
+                const allTiers = Array.from(tier.parentNode.querySelectorAll('.rune-tier'));
+                const tierIndex = allTiers.indexOf(tier);
+
+                if (isSecondary && tierIndex >= 2) {
+                    return; // 副系第3、4层禁用
+                }
+
+                // 移除同层其他符文的选中状态
+                const tierSlots = tier.querySelectorAll('.rune-slot');
+                tierSlots.forEach(s => s.classList.remove('selected'));
+
+                // 选中当前符文
+                newSlot.classList.add('selected', 'selecting');
+
+                // 移除动画类
+                setTimeout(() => {
+                    newSlot.classList.remove('selecting');
+                }, 300);
+            });
+        });
+    }
+
+    // 页面加载完成后初始化
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+})();
+</script>
+{% endmacro %}
+

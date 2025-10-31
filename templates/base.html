@@ -280,9 +280,44 @@
                     <button class="action-btn" title="设置">
                         <i data-lucide="settings" class="w-5 h-5"></i>
                     </button>
-                    <button class="action-btn" title="用户">
-                        <i data-lucide="user" class="w-5 h-5"></i>
-                    </button>
+                    {% if user %}
+                    <!-- 已登录: 显示用户头像和下拉菜单 -->
+                    <div class="user-profile-container" style="position: relative;">
+                        <button class="action-btn user-profile-btn" title="{{ user.name }}" id="userProfileBtn">
+                            {% if user.avatar %}
+                            <img src="{{ user.avatar }}" alt="{{ user.name }}" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover;">
+                            {% else %}
+                            <i data-lucide="user" class="w-5 h-5"></i>
+                            {% endif %}
+                        </button>
+                        <!-- 用户下拉菜单 -->
+                        <div class="user-dropdown" id="userDropdown" style="display: none; position: absolute; right: 0; top: 100%; margin-top: 0.5rem; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow-lg); min-width: 200px; z-index: 1000;">
+                            <div style="padding: 1rem; border-bottom: 1px solid var(--border);">
+                                <div style="font-weight: 600; color: var(--foreground);">{{ user.name }}</div>
+                                {% if user.email %}
+                                <div style="font-size: 0.875rem; color: var(--muted-foreground); margin-top: 0.25rem;">{{ user.email }}</div>
+                                {% endif %}
+                                <div style="font-size: 0.75rem; color: var(--muted-foreground); margin-top: 0.25rem;">通过 {{ user.provider }} 登录</div>
+                            </div>
+                            <div style="padding: 0.5rem;">
+                                <a href="/profile" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem; color: var(--foreground); text-decoration: none; border-radius: var(--radius-sm); transition: background 0.2s;" onmouseover="this.style.background='var(--accent)'" onmouseout="this.style.background='transparent'">
+                                    <i data-lucide="user" class="w-4 h-4"></i>
+                                    <span>个人资料</span>
+                                </a>
+                                <a href="/auth/logout" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem; color: var(--destructive); text-decoration: none; border-radius: var(--radius-sm); transition: background 0.2s;" onmouseover="this.style.background='var(--accent)'" onmouseout="this.style.background='transparent'">
+                                    <i data-lucide="log-out" class="w-4 h-4"></i>
+                                    <span>退出登录</span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    {% else %}
+                    <!-- 未登录: 显示登录按钮 -->
+                    <a href="/login" class="login-btn" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; background: var(--primary); color: var(--primary-foreground); border-radius: var(--radius); text-decoration: none; font-weight: 500; transition: all 0.2s;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='var(--shadow-lg)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none'">
+                        <i data-lucide="log-in" class="w-4 h-4"></i>
+                        <span>登录</span>
+                    </a>
+                    {% endif %}
                 </div>
             </div>
         </div>
@@ -393,6 +428,24 @@
 
                 lastScrollTop = scrollTop;
             });
+
+            // 用户下拉菜单控制
+            const userProfileBtn = document.getElementById('userProfileBtn');
+            const userDropdown = document.getElementById('userDropdown');
+
+            if (userProfileBtn && userDropdown) {
+                userProfileBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    userDropdown.style.display = userDropdown.style.display === 'none' ? 'block' : 'none';
+                });
+
+                // 点击页面其他地方关闭下拉菜单
+                document.addEventListener('click', function(e) {
+                    if (!userProfileBtn.contains(e.target) && !userDropdown.contains(e.target)) {
+                        userDropdown.style.display = 'none';
+                    }
+                });
+            }
         });
     </script>
     {% block scripts %}{% endblock %}

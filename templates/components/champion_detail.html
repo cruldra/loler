@@ -234,8 +234,8 @@
     }
 
     .skill-icon {
-        width: 48px;
-        height: 48px;
+        width: 64px;
+        height: 64px;
         border-radius: var(--radius) !important;
         border: 2px solid var(--primary) !important;
         background: var(--card) !important;
@@ -244,6 +244,28 @@
         justify-content: center;
         font-weight: 600;
         color: var(--primary) !important;
+        position: relative;
+        overflow: hidden;
+        flex-shrink: 0;
+    }
+
+    .skill-icon img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .skill-key {
+        position: absolute;
+        bottom: 2px;
+        right: 2px;
+        background: rgba(0, 0, 0, 0.8);
+        color: var(--primary);
+        font-size: 0.7rem;
+        font-weight: 700;
+        padding: 2px 6px;
+        border-radius: 3px;
+        border: 1px solid var(--primary);
     }
 
     .skill-info h3 {
@@ -486,7 +508,10 @@
                         {% for spell in champion.spells %}
                         <div class="skill-item">
                             <div class="skill-header">
-                                <div class="skill-icon">{{ ['Q', 'W', 'E', 'R'][loop.index0] }}</div>
+                                <div class="skill-icon">
+                                    <img src="https://ddragon.leagueoflegends.com/cdn/15.21.1/img/spell/{{ spell.image.full }}" alt="{{ spell.name }}" onerror="this.parentElement.innerHTML='{{ ['Q', 'W', 'E', 'R'][loop.index0] }}'">
+                                    <span class="skill-key">{{ ['Q', 'W', 'E', 'R'][loop.index0] }}</span>
+                                </div>
                                 <div class="skill-info">
                                     <h3>{{ spell.name }}</h3>
                                     <div class="skill-type">主动技能</div>
