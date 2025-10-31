@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile - Windsurf Admin</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    
+    <!-- Custom Theme -->
+    <link rel="stylesheet" href="lol_theme.css">
+    
+    <style>
+        /* Custom CSS Variables and Overrides */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: var(--font-sans) !important;
+            background-color: rgb(from var(--background) r g b) !important;
+            color: rgb(from var(--foreground) r g b) !important;
+            line-height: 1.6 !important;
+        }
+        
+        /* Sidebar Styles */
+        .sidebar {
+            background-color: rgb(from var(--sidebar) r g b);
+            border-right: 1px solid rgb(from var(--sidebar-border) r g b);
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .sidebar-section-title {
+            color: rgb(from var(--muted-foreground) r g b);
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.5rem;
+            padding: 0 1rem;
+        }
+        
+        .sidebar-item {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            margin: 0.125rem 0.5rem;
+            border-radius: var(--radius-md);
+            color: rgb(from var(--sidebar-foreground) r g b);
+            text-decoration: none;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: all 200ms ease-out;
+            cursor: pointer;
+        }
+        
+        .sidebar-item:hover {
+            background-color: rgb(from var(--sidebar-accent) r g b);
+            color: rgb(from var(--sidebar-accent-foreground) r g b);
+            transform: translateX(2px);
+        }
+        
+        .sidebar-item.active {
+            background-color: rgb(from var(--sidebar-primary) r g b);
+            color: rgb(from var(--sidebar-primary-foreground) r g b);
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .sidebar-item.active::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 3px;
+            height: 20px;
+            background-color: rgb(from var(--sidebar-primary) r g b);
+            border-radius: 0 2px 2px 0;
+        }
+        
+        /* Main Content Styles */
+        .main-content {
+            background-color: rgb(from var(--background) r g b);
+            min-height: 100vh;
+            animation: fadeInUp 400ms ease-out;
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .sidebar {
+                position: fixed;
+                left: -280px;
+                top: 0;
+                height: 100vh;
+                z-index: 50;
+                transition: left 300ms ease-out;
+            }
+            
+            .sidebar.open {
+                left: 0;
+            }
+            
+            .main-content {
+                margin-left: 0;
+            }
+        }
+        
+        /* Custom scrollbar */
+        .sidebar::-webkit-scrollbar {
+            width: 4px;
+        }
+        
+        .sidebar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        
+        .sidebar::-webkit-scrollbar-thumb {
+            background: rgb(from var(--muted-foreground) r g b / 0.3);
+            border-radius: 2px;
+        }
+        
+        .sidebar::-webkit-scrollbar-thumb:hover {
+            background: rgb(from var(--muted-foreground) r g b / 0.5);
+        }
+    </style>
+</head>
+<body>
+    <div class="flex min-h-screen">
+        <!-- Sidebar -->
+        <aside class="sidebar w-64 flex-shrink-0 overflow-y-auto">
+            <div class="p-6">
+                <!-- Account Section -->
+                <div class="mb-8">
+                    <h3 class="sidebar-section-title">Account</h3>
+                    <nav class="space-y-1">
+                        <a href="#" class="sidebar-item active relative">
+                            <i data-lucide="user" class="w-4 h-4 mr-3"></i>
+                            Profile
+                        </a>
+                        <a href="#" class="sidebar-item">
+                            <i data-lucide="bell" class="w-4 h-4 mr-3"></i>
+                            Notifications
+                        </a>
+                        <a href="#" class="sidebar-item">
+                            <i data-lucide="settings" class="w-4 h-4 mr-3"></i>
+                            Settings
+                        </a>
+                    </nav>
+                </div>
+                
+                <!-- Subscription Section -->
+                <div class="mb-8">
+                    <h3 class="sidebar-section-title">Subscription</h3>
+                    <nav class="space-y-1">
+                        <a href="#" class="sidebar-item">
+                            <i data-lucide="bar-chart-3" class="w-4 h-4 mr-3"></i>
+                            Usage
+                        </a>
+                        <a href="#" class="sidebar-item">
+                            <i data-lucide="credit-card" class="w-4 h-4 mr-3"></i>
+                            Manage Plan
+                        </a>
+                        <a href="#" class="sidebar-item">
+                            <i data-lucide="key" class="w-4 h-4 mr-3"></i>
+                            Model Provider API Keys
+                        </a>
+                    </nav>
+                </div>
+                
+                <!-- Features Section -->
+                <div class="mb-8">
+                    <h3 class="sidebar-section-title">Features</h3>
+                    <nav class="space-y-1">
+                        <a href="#" class="sidebar-item">
+                            <i data-lucide="rocket" class="w-4 h-4 mr-3"></i>
+                            Deploys
+                        </a>
+                        <a href="#" class="sidebar-item">
+                            <i data-lucide="share-2" class="w-4 h-4 mr-3"></i>
+                            Conversation Shares
+                        </a>
+                    </nav>
+                </div>
+            </div>
+        </aside>
+        
+        <!-- Main Content -->
+        <main class="main-content flex-1 p-8">
+            <!-- Empty content area - to be filled later -->
+            <div class="flex items-center justify-center h-full text-center">
+                <div class="max-w-md mx-auto">
+                    <div class="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center" style="background-color: rgb(from var(--muted) r g b);">
+                        <i data-lucide="layout-dashboard" class="w-8 h-8" style="color: rgb(from var(--muted-foreground) r g b);"></i>
+                    </div>
+                    <h2 class="text-xl font-semibold mb-2" style="color: rgb(from var(--foreground) r g b);">Profile Content</h2>
+                    <p style="color: rgb(from var(--muted-foreground) r g b);">This area is ready for your profile content. The layout and navigation are complete.</p>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <!-- Mobile Menu Toggle (hidden by default, can be shown when needed) -->
+    <button id="mobile-menu-toggle" class="fixed top-4 left-4 z-50 p-2 rounded-md md:hidden hidden" style="background-color: rgb(from var(--card) r g b); box-shadow: var(--shadow-md);">
+        <i data-lucide="menu" class="w-5 h-5" style="color: rgb(from var(--card-foreground) r g b);"></i>
+    </button>
+    
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+        
+        // Mobile menu functionality
+        const mobileToggle = document.getElementById('mobile-menu-toggle');
+        const sidebar = document.querySelector('.sidebar');
+        
+        if (mobileToggle) {
+            mobileToggle.addEventListener('click', () => {
+                sidebar.classList.toggle('open');
+            });
+        }
+        
+        // Close sidebar when clicking outside on mobile
+        document.addEventListener('click', (e) => {
+            if (window.innerWidth <= 768) {
+                if (!sidebar.contains(e.target) && !mobileToggle.contains(e.target)) {
+                    sidebar.classList.remove('open');
+                }
+            }
+        });
+        
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            if (window.innerWidth > 768) {
+                sidebar.classList.remove('open');
+            }
+        });
+        
+        // Smooth scrolling for sidebar
+        const sidebarItems = document.querySelectorAll('.sidebar-item');
+        sidebarItems.forEach(item => {
+            item.addEventListener('click', (e) => {
+                e.preventDefault();
+                
+                // Remove active class from all items
+                sidebarItems.forEach(i => i.classList.remove('active'));
+                
+                // Add active class to clicked item
+                item.classList.add('active');
+                
+                // Here you would typically handle the content switching
+                console.log('Navigating to:', item.textContent.trim());
+            });
+        });
+    </script>
+</body>
+</html>

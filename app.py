@@ -149,6 +149,35 @@ async def logout(request: Request):
     return RedirectResponse(url='/')
 
 
+@app.get("/runes", response_class=HTMLResponse)
+async def runes_page(request: Request):
+    """符文配置页面"""
+    user = request.session.get('user')
+    rune_trees = [tree.model_dump() for tree in rune_service.get_all_trees().values()]
+    return templates.TemplateResponse(
+        request=request,
+        name="runes.html",
+        context={
+            "user": user,
+            "rune_trees": rune_trees,
+            "version": rune_service.get_version()
+        }
+    )
+
+
+@app.get("/profile", response_class=HTMLResponse)
+async def profile_page(request: Request):
+    """个人资料页面"""
+    user = request.session.get('user')
+    return templates.TemplateResponse(
+        request=request,
+        name="profile.html",
+        context={
+            "user": user
+        }
+    )
+
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
