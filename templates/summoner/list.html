@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% import 'components/summoner_browser.html' as SummonerBrowser %}
+{% import 'components/summoner_detail.html' as SummonerDetail %}
+
+{% block title %}召唤师技能 - LOL助手{% endblock %}
+
+{% block styles %}
+<style>
+    /* 确保召唤师技能菜单项高亮 */
+    .nav-item[href="/summoner"] {
+        color: var(--primary) !important;
+        background: rgba(255, 215, 0, 0.15) !important;
+    }
+
+    .nav-item[href="/summoner"]::after {
+        width: 100%;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- 左侧：召唤师技能浏览器 -->
+        <div class="lg:col-span-1">
+            {{ SummonerBrowser.SummonerBrowser(summoner_spells=summoner_spells, version=version) }}
+        </div>
+
+        <!-- 右侧：召唤师技能详情 -->
+        <div class="lg:col-span-2">
+            {% if selected_spell %}
+                {{ SummonerDetail.SummonerDetail(spell=selected_spell, version=version) }}
+            {% else %}
+                <div class="flex items-center justify-center h-full">
+                    <div class="text-center">
+                        <i data-lucide="sparkles" class="w-16 h-16 mx-auto mb-4 text-muted-foreground"></i>
+                        <h2 class="text-2xl font-bold text-foreground mb-2">选择一个召唤师技能</h2>
+                        <p class="text-muted-foreground">从左侧列表中选择一个召唤师技能查看详细信息</p>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+// 监听召唤师技能选择事件
+window.addEventListener('summonerSpellSelected', function(e) {
+    const spellId = e.detail.spellId;
+    // 重定向到召唤师技能详情页
+    window.location.href = `/summoner/${spellId}`;
+});
+
+lucide.createIcons();
+</script>
+{% endblock %}
+

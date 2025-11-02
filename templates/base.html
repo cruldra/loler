@@ -111,6 +111,97 @@
             width: 100%;
         }
 
+        /* Mega Menu 样式 */
+        .mega-menu-wrapper {
+            position: relative;
+        }
+
+        .mega-menu-trigger {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .mega-menu-trigger i {
+            transition: transform 0.2s ease-out;
+        }
+
+        .mega-menu-wrapper:hover .mega-menu-trigger i {
+            transform: rotate(180deg);
+        }
+
+        .mega-menu {
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            margin-top: 0.5rem;
+            background: var(--card) !important;
+            border: 1px solid var(--border) !important;
+            border-radius: var(--radius-lg) !important;
+            box-shadow: var(--shadow-2xl) !important;
+            padding: 1.5rem;
+            min-width: 600px;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease-out;
+            z-index: 1000;
+        }
+
+        .mega-menu-wrapper:hover .mega-menu {
+            opacity: 1;
+            visibility: visible;
+            margin-top: 1rem;
+        }
+
+        .mega-menu-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+        }
+
+        .mega-menu-item {
+            display: flex;
+            flex-direction: column;
+            padding: 1rem;
+            border-radius: var(--radius) !important;
+            transition: all 0.2s ease-out;
+            text-decoration: none !important;
+            border: 1px solid transparent;
+        }
+
+        .mega-menu-item:hover {
+            background: rgba(255, 215, 0, 0.1) !important;
+            border-color: var(--primary) !important;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(255, 215, 0, 0.2) !important;
+        }
+
+        .mega-menu-item-icon {
+            width: 2.5rem;
+            height: 2.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, var(--primary), var(--accent)) !important;
+            border-radius: var(--radius) !important;
+            margin-bottom: 0.75rem;
+            color: var(--primary-foreground) !important;
+        }
+
+        .mega-menu-item-title {
+            font-weight: 600 !important;
+            font-size: 0.95rem !important;
+            color: var(--foreground) !important;
+            margin-bottom: 0.25rem;
+        }
+
+        .mega-menu-item-desc {
+            font-size: 0.85rem !important;
+            color: var(--muted-foreground) !important;
+            line-height: 1.4;
+        }
+
         .user-actions {
             display: flex;
             gap: 1rem;
@@ -263,13 +354,43 @@
 
                 <!-- Navigation Menu -->
                 <nav class="nav-menu">
-                    <a href="/champions" class="nav-item">英雄查询</a>
-                    <a href="/items" class="nav-item">装备查询</a>
+                    <!-- 游戏数据 Mega Menu -->
+                    <div class="mega-menu-wrapper">
+                        <div class="nav-item mega-menu-trigger">
+                            <span>游戏数据</span>
+                            <i data-lucide="chevron-down" class="w-4 h-4"></i>
+                        </div>
+                        <div class="mega-menu">
+                            <div class="mega-menu-grid">
+                                <a href="/champions" class="mega-menu-item">
+                                    <div class="mega-menu-item-icon">
+                                        <i data-lucide="sword" class="w-5 h-5"></i>
+                                    </div>
+                                    <div class="mega-menu-item-title">英雄查询</div>
+                                    <div class="mega-menu-item-desc">查看所有英雄的技能、属性和背景故事</div>
+                                </a>
+                                <a href="/items" class="mega-menu-item">
+                                    <div class="mega-menu-item-icon">
+                                        <i data-lucide="shopping-bag" class="w-5 h-5"></i>
+                                    </div>
+                                    <div class="mega-menu-item-title">装备查询</div>
+                                    <div class="mega-menu-item-desc">浏览所有装备的属性和合成路线</div>
+                                </a>
+                                <a href="/summoner" class="mega-menu-item">
+                                    <div class="mega-menu-item-icon">
+                                        <i data-lucide="sparkles" class="w-5 h-5"></i>
+                                    </div>
+                                    <div class="mega-menu-item-title">召唤师技能</div>
+                                    <div class="mega-menu-item-desc">了解所有召唤师技能的效果和冷却</div>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
                     <a href="/runes" class="nav-item">符文搭配</a>
                     <a href="/builds" class="nav-item">出装思路</a>
                     <a href="/team" class="nav-item">阵容B/P</a>
                     <a href="/lane" class="nav-item">对线细节</a>
-                    <a href="/jungle" class="nav-item">野区规划</a>
                 </nav>
 
                 <!-- User Actions -->
@@ -356,14 +477,38 @@
         document.addEventListener('DOMContentLoaded', function() {
             // 设置当前页面的活跃导航项
             const currentPath = window.location.pathname;
-            document.querySelectorAll('.nav-item').forEach(item => {
-                if (item.getAttribute('href') === currentPath) {
+
+            // 检查当前路径是否在 mega menu 中
+            const megaMenuPaths = ['/champions', '/items', '/summoner'];
+            const isMegaMenuActive = megaMenuPaths.some(path => currentPath.startsWith(path));
+
+            // 如果当前页面在 mega menu 中，高亮 mega menu trigger
+            if (isMegaMenuActive) {
+                const megaTrigger = document.querySelector('.mega-menu-trigger');
+                if (megaTrigger) {
+                    megaTrigger.classList.add('active');
+                }
+            }
+
+            // 高亮 mega menu 中的具体项
+            document.querySelectorAll('.mega-menu-item').forEach(item => {
+                const href = item.getAttribute('href');
+                if (href && currentPath.startsWith(href)) {
+                    item.style.background = 'rgba(255, 215, 0, 0.15)';
+                    item.style.borderColor = 'var(--primary)';
+                }
+            });
+
+            // 普通导航项的高亮
+            document.querySelectorAll('.nav-item:not(.mega-menu-trigger)').forEach(item => {
+                const href = item.getAttribute('href');
+                if (href && currentPath === href) {
                     item.classList.add('active');
                 }
 
                 item.addEventListener('click', function(e) {
                     // 移除所有活跃状态
-                    document.querySelectorAll('.nav-item').forEach(nav => {
+                    document.querySelectorAll('.nav-item:not(.mega-menu-trigger)').forEach(nav => {
                         nav.classList.remove('active');
                     });
 

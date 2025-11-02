@@ -15,6 +15,11 @@ from .rune import (
     RuneTreeModel,
     RunesReforgedModel
 )
+from .summoner import (
+    SummonerSpellModel,
+    SummonerImageModel,
+    SummonerDataModel
+)
 from .user import UserInfo
 
 __all__ = [
@@ -31,6 +36,9 @@ __all__ = [
     "RuneSlotModel",
     "RuneTreeModel",
     "RunesReforgedModel",
+    "SummonerSpellModel",
+    "SummonerImageModel",
+    "SummonerDataModel",
     "UserInfo"
 ]
 

@@ -9,6 +9,7 @@ from pathlib import Path
 from sqlmodel import Session, select
 from services.champion_service import champion_service
 from services.rune_service import rune_service
+from services.summoner_service import summoner_service
 from schemas.champion import ChampionModel
 from schemas.user import UserInfo
 from typing import Dict, List
@@ -16,6 +17,7 @@ from config import settings
 from oauth_providers import oauth
 from database import create_db_and_tables, get_session
 from models import User, RunePage
+from routes import summoner, champion
 
 
 @asynccontextmanager
@@ -34,6 +36,10 @@ async def lifespan(app: FastAPI):
     rune_service.load_runes()
     print(f"符文数据加载完成,版本: {rune_service.get_version()}")
 
+    # 加载召唤师技能数据
+    summoner_service.load_summoner_spells()
+    print(f"召唤师技能数据加载完成,版本: {summoner_service.get_version()}")
+
     yield
     print("应用关闭中...")
 
@@ -41,6 +47,10 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="LOL助手", lifespan=lifespan)
 
 app.add_middleware(SessionMiddleware, secret_key=settings.secret_key)
+
+# 注册路由
+app.include_router(champion.router)
+app.include_router(summoner.router)
 
 BASE_DIR = Path(__file__).resolve().parent
 TEMPLATES_DIR = BASE_DIR / "templates"
@@ -61,45 +71,7 @@ async def home(request: Request):
     )
 
 
-@app.get("/champions", response_class=HTMLResponse)
-async def champions_list(request: Request):
-    """英雄列表页面"""
-    champions = list(champion_service.get_all_champions().values())
-    return templates.TemplateResponse(
-        request=request,
-        name="champions.html",
-        context={
-            "champions": champions,
-            "selected_champion": None
-        }
-    )
 
-
-@app.get("/champions/{champion_id}", response_class=HTMLResponse)
-async def champion_detail(request: Request, champion_id: str):
-    """英雄详情页面"""
-    champions = list(champion_service.get_all_champions().values())
-    selected_champion = champion_service.get_champion_by_id(champion_id)
-
-    if not selected_champion:
-        return templates.TemplateResponse(
-            request=request,
-            name="champions.html",
-            context={
-                "champions": champions,
-                "selected_champion": None,
-                "error": f"未找到英雄: {champion_id}"
-            }
-        )
-
-    return templates.TemplateResponse(
-        request=request,
-        name="champions.html",
-        context={
-            "champions": champions,
-            "selected_champion": selected_champion
-        }
-    )
 
 
 @app.get("/login", response_class=HTMLResponse)

@@ -1,0 +1,321 @@
+{# 召唤师技能浏览器组件 #}
+{% macro SummonerBrowser(summoner_spells=[], version="15.21.1", max_width="400px") %}
+<style>
+    .summoner-browser {
+        max-width: {{ max_width }};
+        margin: 2rem auto;
+        background: var(--card) !important;
+        border: 1px solid var(--border) !important;
+        border-radius: var(--radius-lg) !important;
+        box-shadow: var(--shadow-xl) !important;
+        overflow: hidden;
+    }
+
+    .summoner-search-container {
+        padding: 1rem;
+        border-bottom: 1px solid var(--border) !important;
+    }
+
+    .summoner-search-box {
+        position: relative;
+        width: 100%;
+    }
+
+    .summoner-search-input {
+        width: 100% !important;
+        padding: 0.75rem 1rem 0.75rem 2.5rem !important;
+        background: var(--input) !important;
+        border: 1px solid var(--border) !important;
+        border-radius: var(--radius) !important;
+        color: var(--foreground) !important;
+        font-size: 0.9rem !important;
+        transition: all 0.2s ease-out !important;
+    }
+
+    .summoner-search-input:focus {
+        outline: none !important;
+        border-color: var(--primary) !important;
+        box-shadow: 0 0 0 2px rgba(255, 215, 0, 0.2) !important;
+    }
+
+    .summoner-search-input::placeholder {
+        color: var(--muted-foreground) !important;
+    }
+
+    .summoner-search-icon {
+        position: absolute;
+        left: 0.75rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--muted-foreground) !important;
+        width: 1rem;
+        height: 1rem;
+    }
+
+    .summoner-filter-container {
+        padding: 1rem;
+        border-bottom: 1px solid var(--border) !important;
+    }
+
+    .summoner-filter-buttons {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+
+    .summoner-filter-btn {
+        padding: 0.5rem 0.75rem !important;
+        border-radius: var(--radius) !important;
+        background: var(--muted) !important;
+        border: 1px solid var(--border) !important;
+        color: var(--muted-foreground) !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        cursor: pointer !important;
+        transition: all 0.2s ease-out !important;
+        font-size: 0.75rem !important;
+        font-weight: 600 !important;
+        white-space: nowrap;
+    }
+
+    .summoner-filter-btn:hover {
+        background: var(--accent) !important;
+        color: var(--accent-foreground) !important;
+        transform: scale(1.05) !important;
+    }
+
+    .summoner-filter-btn.active {
+        background: var(--primary) !important;
+        color: var(--primary-foreground) !important;
+        border-color: var(--primary) !important;
+    }
+
+    .summoner-spells-grid {
+        padding: 1rem;
+        max-height: 600px;
+        overflow-y: auto;
+    }
+
+    .summoner-spells-container {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 0.5rem;
+    }
+
+    .summoner-spell-card {
+        position: relative;
+        aspect-ratio: 1;
+        border-radius: var(--radius) !important;
+        overflow: hidden;
+        cursor: pointer;
+        transition: all 0.2s ease-out !important;
+        border: 2px solid transparent;
+    }
+
+    .summoner-spell-card:hover {
+        transform: scale(1.05) !important;
+        border-color: var(--primary) !important;
+        box-shadow: 0 0 15px rgba(255, 215, 0, 0.4) !important;
+    }
+
+    .summoner-spell-card.selected {
+        border-color: var(--primary) !important;
+        box-shadow: 0 0 20px rgba(255, 215, 0, 0.6) !important;
+    }
+
+    .summoner-spell-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.2s ease-out;
+    }
+
+    .summoner-spell-card:hover .summoner-spell-image {
+        transform: scale(1.1);
+    }
+
+    .summoner-spell-name {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: linear-gradient(transparent, rgba(0, 0, 0, 0.8));
+        color: white;
+        padding: 0.5rem 0.25rem 0.25rem;
+        font-size: 0.7rem;
+        font-weight: 500;
+        text-align: center;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+    }
+
+    .summoner-spells-grid::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .summoner-spells-grid::-webkit-scrollbar-track {
+        background: var(--muted);
+        border-radius: 3px;
+    }
+
+    .summoner-spells-grid::-webkit-scrollbar-thumb {
+        background: var(--muted-foreground);
+        border-radius: 3px;
+    }
+
+    .summoner-spells-grid::-webkit-scrollbar-thumb:hover {
+        background: var(--primary);
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .summoner-spell-card {
+        animation: fadeIn 0.3s ease-out;
+    }
+
+    .summoner-loading {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 200px;
+        color: var(--muted-foreground);
+    }
+</style>
+
+<div class="summoner-browser">
+    <div class="summoner-search-container">
+        <div class="summoner-search-box">
+            <i data-lucide="search" class="summoner-search-icon"></i>
+            <input type="text" class="summoner-search-input" placeholder="搜索召唤师技能" id="summonerSearchInput">
+        </div>
+    </div>
+
+    <div class="summoner-filter-container">
+        <div class="summoner-filter-buttons">
+            <button class="summoner-filter-btn active" data-mode="all" title="全部">
+                全部
+            </button>
+            <button class="summoner-filter-btn" data-mode="CLASSIC" title="召唤师峡谷">
+                峡谷
+            </button>
+            <button class="summoner-filter-btn" data-mode="ARAM" title="极地大乱斗">
+                大乱斗
+            </button>
+            <button class="summoner-filter-btn" data-mode="TUTORIAL" title="新手教程">
+                教程
+            </button>
+            <button class="summoner-filter-btn" data-mode="NEXUSBLITZ" title="极限闪击">
+                闪击
+            </button>
+            <button class="summoner-filter-btn" data-mode="ONEFORALL" title="克隆大作战">
+                克隆
+            </button>
+            <button class="summoner-filter-btn" data-mode="URF" title="无限火力">
+                无限火力
+            </button>
+        </div>
+    </div>
+
+    <div class="summoner-spells-grid">
+        <div class="summoner-spells-container" id="summonerSpellsContainer">
+            {% if summoner_spells %}
+                {% for spell in summoner_spells %}
+                <div class="summoner-spell-card"
+                     style="--index: {{ loop.index0 }}"
+                     data-spell-id="{{ spell.id }}"
+                     data-modes="{{ spell.modes|join(',') if spell.modes else '' }}">
+                    <img src="https://ddragon.leagueoflegends.com/cdn/{{ version }}/img/spell/{{ spell.image.full }}"
+                         alt="{{ spell.name }}"
+                         class="summoner-spell-image"
+                         onerror="this.src='https://via.placeholder.com/80x80/333/fff?text={{ spell.name[0] }}'">
+                    <div class="summoner-spell-name">{{ spell.name }}</div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="summoner-loading">加载中...</div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+(function() {
+    let currentFilter = 'all';
+    let searchTerm = '';
+    let selectedSpell = null;
+
+    function renderSpells() {
+        const container = document.getElementById('summonerSpellsContainer');
+        const allCards = container.querySelectorAll('.summoner-spell-card');
+
+        allCards.forEach(card => {
+            const modes = card.dataset.modes.split(',');
+            const name = card.querySelector('.summoner-spell-name').textContent;
+            const matchesMode = currentFilter === 'all' || modes.includes(currentFilter);
+            const matchesSearch = name.toLowerCase().includes(searchTerm.toLowerCase());
+
+            card.style.display = (matchesMode && matchesSearch) ? 'block' : 'none';
+        });
+    }
+
+    function selectSpell(cardElement, spellId) {
+        document.querySelectorAll('.summoner-spell-card').forEach(card => {
+            card.classList.remove('selected');
+        });
+        cardElement.classList.add('selected');
+        selectedSpell = spellId;
+
+        cardElement.style.transform = 'scale(0.95)';
+        setTimeout(() => {
+            cardElement.style.transform = '';
+        }, 150);
+
+        window.dispatchEvent(new CustomEvent('summonerSpellSelected', { detail: { spellId } }));
+    }
+
+    const searchInput = document.getElementById('summonerSearchInput');
+    if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+            searchTerm = e.target.value;
+            renderSpells();
+        });
+    }
+
+    document.querySelectorAll('.summoner-filter-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.summoner-filter-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            currentFilter = btn.dataset.mode;
+            renderSpells();
+
+            btn.style.transform = 'scale(0.9)';
+            setTimeout(() => {
+                btn.style.transform = '';
+            }, 150);
+        });
+    });
+
+    document.querySelectorAll('.summoner-spell-card').forEach(card => {
+        card.addEventListener('click', () => selectSpell(card, card.dataset.spellId));
+    });
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && searchInput) {
+            searchInput.value = '';
+            searchTerm = '';
+            renderSpells();
+        }
+    });
+})();
+</script>
+{% endmacro %}
+

@@ -1,0 +1,140 @@
+{% macro SummonerDetail(spell, version) %}
+<div class="bg-card rounded-lg shadow-lg overflow-hidden" style="border: 1px solid var(--border);">
+    <!-- 技能头部 -->
+    <div class="relative overflow-hidden">
+        <!-- 背景装饰 -->
+        <div class="absolute inset-0" style="background: linear-gradient(135deg, rgba(var(--primary), 0.1) 0%, rgba(var(--accent), 0.05) 100%);"></div>
+
+        <div class="relative p-6">
+            <div class="flex items-start gap-6">
+                <!-- 技能图标 -->
+                <div class="flex-shrink-0">
+                    <div class="w-32 h-32 rounded-2xl overflow-hidden" style="border: 3px solid var(--primary); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);">
+                        <img src="https://ddragon.leagueoflegends.com/cdn/{{ version }}/img/spell/{{ spell.image.full }}"
+                             alt="{{ spell.name }}"
+                             class="w-full h-full object-cover">
+                    </div>
+                </div>
+
+                <!-- 技能信息 -->
+                <div class="flex-1">
+                    <h1 class="text-4xl font-bold text-foreground mb-2">{{ spell.name }}</h1>
+                    <p class="text-lg text-muted-foreground mb-4">{{ spell.description }}</p>
+
+                    <!-- 技能属性 -->
+                    <div class="grid grid-cols-3 gap-4">
+                        <div class="bg-muted rounded-lg p-3" style="border: 1px solid var(--border);">
+                            <div class="text-xs text-muted-foreground mb-1">冷却时间</div>
+                            <div class="text-xl font-bold text-primary">{{ spell.cooldownBurn }}秒</div>
+                        </div>
+                        <div class="bg-muted rounded-lg p-3" style="border: 1px solid var(--border);">
+                            <div class="text-xs text-muted-foreground mb-1">施放距离</div>
+                            <div class="text-xl font-bold text-accent">{{ spell.rangeBurn }}</div>
+                        </div>
+                        <div class="bg-muted rounded-lg p-3" style="border: 1px solid var(--border);">
+                            <div class="text-xs text-muted-foreground mb-1">召唤师等级</div>
+                            <div class="text-xl font-bold text-secondary">{{ spell.summonerLevel }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 技能详情 -->
+    <div class="p-6 space-y-6">
+        <!-- 技能说明 -->
+        <div>
+            <div class="flex items-center gap-2 mb-3">
+                <i data-lucide="info" class="w-5 h-5 text-primary"></i>
+                <h2 class="text-xl font-bold text-foreground">技能说明</h2>
+            </div>
+            <div class="bg-muted rounded-lg p-4" style="border-left: 4px solid var(--primary);">
+                <div class="text-foreground leading-relaxed summoner-tooltip-content">
+                    {{ spell.tooltip | safe }}
+                </div>
+            </div>
+        </div>
+
+        <!-- 可用模式 -->
+        {% if spell.modes %}
+        <div>
+            <div class="flex items-center gap-2 mb-3">
+                <i data-lucide="gamepad-2" class="w-5 h-5 text-accent"></i>
+                <h2 class="text-xl font-bold text-foreground">可用游戏模式</h2>
+            </div>
+            <div class="flex flex-wrap gap-2">
+                {% for mode in spell.modes %}
+                <span class="px-3 py-1.5 bg-muted rounded-lg text-sm font-medium text-foreground" style="border: 1px solid var(--border);">
+                    {{ mode }}
+                </span>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- 技能数据 -->
+        <div>
+            <div class="flex items-center gap-2 mb-3">
+                <i data-lucide="database" class="w-5 h-5 text-secondary"></i>
+                <h2 class="text-xl font-bold text-foreground">技能数据</h2>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <div class="bg-muted rounded-lg p-4" style="border: 1px solid var(--border);">
+                    <div class="text-sm text-muted-foreground mb-1">消耗类型</div>
+                    <div class="font-semibold text-foreground">{{ spell.costType }}</div>
+                </div>
+                <div class="bg-muted rounded-lg p-4" style="border: 1px solid var(--border);">
+                    <div class="text-sm text-muted-foreground mb-1">消耗</div>
+                    <div class="font-semibold text-foreground">{{ spell.costBurn }}</div>
+                </div>
+                <div class="bg-muted rounded-lg p-4" style="border: 1px solid var(--border);">
+                    <div class="text-sm text-muted-foreground mb-1">最大等级</div>
+                    <div class="font-semibold text-foreground">{{ spell.maxrank }}</div>
+                </div>
+                <div class="bg-muted rounded-lg p-4" style="border: 1px solid var(--border);">
+                    <div class="text-sm text-muted-foreground mb-1">技能键值</div>
+                    <div class="font-semibold text-foreground">{{ spell.key }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* 技能说明中的特殊标签样式 */
+    .summoner-tooltip-content {
+        line-height: 1.8;
+    }
+    
+    .summoner-tooltip-content shield,
+    .summoner-tooltip-content trueDamage,
+    .summoner-tooltip-content healing,
+    .summoner-tooltip-content speed,
+    .summoner-tooltip-content moveSpeed {
+        color: var(--primary);
+        font-weight: 600;
+    }
+    
+    .summoner-tooltip-content keyword {
+        color: var(--accent);
+        font-weight: 600;
+    }
+    
+    .summoner-tooltip-content keywordMajor {
+        color: var(--secondary);
+        font-weight: 700;
+    }
+    
+    .summoner-tooltip-content rules,
+    .summoner-tooltip-content attention {
+        color: var(--muted-foreground);
+        font-style: italic;
+    }
+</style>
+
+<script>
+lucide.createIcons();
+</script>
+{% endmacro %}
+
