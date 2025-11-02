@@ -56,13 +56,22 @@
         border-bottom: 1px solid var(--border) !important;
     }
 
+    .filter-section-title {
+        font-size: 0.85rem !important;
+        font-weight: 600 !important;
+        color: var(--muted-foreground) !important;
+        margin-bottom: 0.75rem !important;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
     .item-filter-buttons {
         display: flex;
         gap: 0.5rem;
         flex-wrap: wrap;
     }
 
-    .item-filter-btn {
+    .item-filter-btn, .map-filter-btn {
         width: 2.5rem !important;
         height: 2.5rem !important;
         border-radius: var(--radius) !important;
@@ -78,13 +87,13 @@
         font-weight: 600 !important;
     }
 
-    .item-filter-btn:hover {
+    .item-filter-btn:hover, .map-filter-btn:hover {
         background: var(--accent) !important;
         color: var(--accent-foreground) !important;
         transform: scale(1.05) !important;
     }
 
-    .item-filter-btn.active {
+    .item-filter-btn.active, .map-filter-btn.active {
         background: var(--primary) !important;
         color: var(--primary-foreground) !important;
         border-color: var(--primary) !important;
@@ -229,6 +238,7 @@
 
     <!-- 筛选按钮 -->
     <div class="item-filter-container">
+        <div class="filter-section-title">按属性筛选</div>
         <div class="item-filter-buttons">
             <button class="item-filter-btn active" data-filter="all" title="全部">
                 <i data-lucide="asterisk" class="w-4 h-4"></i>
@@ -257,12 +267,39 @@
         </div>
     </div>
 
+    <!-- 地图筛选 -->
+    <div class="item-filter-container">
+        <div class="filter-section-title">按地图筛选</div>
+        <div class="item-filter-buttons">
+            <button class="map-filter-btn active" data-map="all" title="全部地图">
+                <i data-lucide="map" class="w-4 h-4"></i>
+            </button>
+            <button class="map-filter-btn" data-map="11" title="召唤师峡谷">
+                <i data-lucide="mountain" class="w-4 h-4"></i>
+            </button>
+            <button class="map-filter-btn" data-map="12" title="嚎哭深渊">
+                <i data-lucide="snowflake" class="w-4 h-4"></i>
+            </button>
+            <button class="map-filter-btn" data-map="35" title="竞技场">
+                <i data-lucide="trophy" class="w-4 h-4"></i>
+            </button>
+        </div>
+    </div>
+
     <!-- 装备网格 -->
     <div class="items-grid">
         <div class="items-container" id="itemsContainer">
             {% if items %}
                 {% for item_data in items %}
-                <a href="/items/{{ item_data.id }}" class="item-card" data-item-id="{{ item_data.id }}" data-item-name="{{ item_data.item.name }}" data-tags="{{ item_data.item.tags|join(',') }}" style="--index: {{ loop.index0 }}">
+                {% set maps_str = [] %}
+                {% if item_data.item.maps %}
+                    {% for map_id, available in item_data.item.maps.items() %}
+                        {% if available %}
+                            {% set _ = maps_str.append(map_id) %}
+                        {% endif %}
+                    {% endfor %}
+                {% endif %}
+                <a href="/items/{{ item_data.id }}" class="item-card" data-item-id="{{ item_data.id }}" data-item-name="{{ item_data.item.name }}" data-tags="{{ item_data.item.tags|join(',') }}" data-maps="{{ maps_str|join(',') }}" style="--index: {{ loop.index0 }}">
                     <img
                         src="https://ddragon.leagueoflegends.com/cdn/{{ version }}/img/item/{{ item_data.item.image.full }}"
                         alt="{{ item_data.item.name }}"
@@ -292,8 +329,10 @@
     const itemCards = document.querySelectorAll('.item-card');
     const itemCountSpan = document.getElementById('itemCount');
     const filterBtns = document.querySelectorAll('.item-filter-btn');
+    const mapFilterBtns = document.querySelectorAll('.map-filter-btn');
 
     let currentFilter = 'all';
+    let currentMapFilter = 'all';
     let searchTerm = '';
 
     // 搜索功能
@@ -304,7 +343,7 @@
         });
     }
 
-    // 筛选功能
+    // 属性筛选功能
     filterBtns.forEach(btn => {
         btn.addEventListener('click', function() {
             // 移除所有活跃状态
@@ -323,6 +362,25 @@
         });
     });
 
+    // 地图筛选功能
+    mapFilterBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            // 移除所有活跃状态
+            mapFilterBtns.forEach(b => b.classList.remove('active'));
+
+            // 添加活跃状态
+            this.classList.add('active');
+            currentMapFilter = this.dataset.map;
+            filterItems();
+
+            // 添加点击动画
+            this.style.transform = 'scale(0.9)';
+            setTimeout(() => {
+                this.style.transform = '';
+            }, 150);
+        });
+    });
+
     function filterItems() {
         const searchTermLower = searchTerm.toLowerCase();
         let visibleCount = 0;
@@ -330,11 +388,13 @@
         itemCards.forEach(card => {
             const itemName = (card.dataset.itemName || card.querySelector('.item-name').textContent).toLowerCase();
             const itemTags = card.dataset.tags || '';
+            const itemMaps = card.dataset.maps || '';
 
             const matchesSearch = itemName.includes(searchTermLower);
             const matchesFilter = currentFilter === 'all' || itemTags.includes(currentFilter);
+            const matchesMapFilter = currentMapFilter === 'all' || itemMaps.includes(currentMapFilter);
 
-            if (matchesSearch && matchesFilter) {
+            if (matchesSearch && matchesFilter && matchesMapFilter) {
                 card.style.display = 'block';
                 visibleCount++;
             } else {
