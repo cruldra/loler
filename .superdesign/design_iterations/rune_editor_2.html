@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rune Editor - Variant 2</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    
+    <!-- Custom Theme -->
+    <link rel="stylesheet" href="lol_theme.css">
+    
+    <style>
+        body {
+            font-family: 'Inter', sans-serif !important;
+            background: radial-gradient(ellipse at center, #2d1b69 0%, #11101d 70%);
+            color: #c9aa71;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+        
+        .rune-editor {
+            background-image: 
+                url('https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=1920&h=1080&fit=crop');
+            background-size: cover;
+            background-position: center;
+            position: relative;
+        }
+        
+        .rune-editor::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, 
+                rgba(45, 27, 105, 0.85) 0%, 
+                rgba(17, 16, 29, 0.9) 50%, 
+                rgba(45, 27, 105, 0.85) 100%);
+            z-index: 0;
+        }
+        
+        .content-overlay {
+            position: relative;
+            z-index: 1;
+        }
+        
+        .rune-slot {
+            transition: all 250ms ease-out;
+            position: relative;
+            cursor: pointer;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(4px);
+        }
+        
+        .rune-slot:hover {
+            transform: scale(1.12);
+            filter: brightness(1.4) drop-shadow(0 0 12px rgba(201, 170, 113, 0.7));
+            background: rgba(201, 170, 113, 0.1);
+        }
+        
+        .rune-slot.selected {
+            background: rgba(201, 170, 113, 0.2);
+            border-color: #c9aa71 !important;
+            filter: brightness(1.3) drop-shadow(0 0 18px rgba(201, 170, 113, 0.9));
+        }
+        
+        .rune-slot.keystone {
+            background: rgba(0, 0, 0, 0.6);
+        }
+        
+        .rune-slot.keystone.selected {
+            background: rgba(201, 170, 113, 0.25);
+            filter: brightness(1.5) drop-shadow(0 0 25px rgba(201, 170, 113, 1));
+        }
+        
+        .tree-connector {
+            position: absolute;
+            background: linear-gradient(to bottom, 
+                rgba(201, 170, 113, 0.8), 
+                rgba(201, 170, 113, 0.4), 
+                rgba(201, 170, 113, 0.8));
+            width: 3px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-radius: 2px;
+        }
+        
+        .rune-display-container {
+            position: relative;
+            animation: runeFloat 6s ease-in-out infinite;
+        }
+        
+        @keyframes runeFloat {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-10px) rotate(180deg); }
+        }
+        
+        .rune-glow {
+            position: absolute;
+            inset: -20px;
+            background: radial-gradient(circle, rgba(201, 170, 113, 0.3) 0%, transparent 70%);
+            border-radius: 50%;
+            animation: glowPulse 3s ease-in-out infinite;
+        }
+        
+        @keyframes glowPulse {
+            0%, 100% { opacity: 0.5; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.1); }
+        }
+        
+        .magic-particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: radial-gradient(circle, #c9aa71, transparent);
+            border-radius: 50%;
+            pointer-events: none;
+            animation: magicFloat 5s linear infinite;
+        }
+        
+        @keyframes magicFloat {
+            0% { 
+                opacity: 0;
+                transform: translateY(50px) translateX(0px) scale(0);
+            }
+            20% { 
+                opacity: 1;
+                transform: translateY(30px) translateX(10px) scale(1);
+            }
+            80% { 
+                opacity: 1;
+                transform: translateY(-30px) translateX(-10px) scale(1);
+            }
+            100% { 
+                opacity: 0;
+                transform: translateY(-50px) translateX(0px) scale(0);
+            }
+        }
+        
+        .header-glow {
+            background: linear-gradient(90deg, 
+                transparent 0%, 
+                rgba(201, 170, 113, 0.1) 50%, 
+                transparent 100%);
+            border-bottom: 1px solid rgba(201, 170, 113, 0.3);
+        }
+        
+        .toolbar-glow {
+            background: linear-gradient(90deg, 
+                transparent 0%, 
+                rgba(0, 0, 0, 0.6) 50%, 
+                transparent 100%);
+            border-top: 1px solid rgba(201, 170, 113, 0.3);
+            backdrop-filter: blur(8px);
+        }
+    </style>
+</head>
+<body>
+    <div class="rune-editor min-h-screen">
+        <div class="content-overlay h-screen flex flex-col">
+            <!-- Header -->
+            <div class="header-glow flex items-center justify-between p-6">
+                <div class="flex items-center space-x-8">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-6 h-6 text-yellow-400 animate-pulse">
+                            <i data-lucide="zap" class="w-full h-full"></i>
+                        </div>
+                        <span class="text-yellow-400 font-medium text-sm tracking-wide">推荐</span>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <div class="w-10 h-10 rounded-full bg-gradient-to-br from-yellow-400 to-yellow-600 flex items-center justify-center shadow-lg">
+                            <i data-lucide="zap" class="w-5 h-5 text-black"></i>
+                        </div>
+                        <span class="text-white font-semibold text-lg">圣枪游侠 - 强攻</span>
+                        <i data-lucide="chevron-down" class="w-5 h-5 text-gray-400 hover:text-yellow-400 transition-colors cursor-pointer"></i>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button class="px-6 py-2 border border-gray-500 rounded-lg text-gray-300 hover:bg-gray-700/50 hover:border-yellow-400 transition-all duration-300 text-sm font-medium">
+                        保存
+                    </button>
+                    <button class="w-10 h-10 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center hover:scale-110 transition-transform shadow-lg">
+                        <i data-lucide="plus" class="w-5 h-5 text-white"></i>
+                    </button>
+                    <button class="w-10 h-10 bg-gradient-to-br from-red-500 to-red-600 rounded-full flex items-center justify-center hover:scale-110 transition-transform shadow-lg">
+                        <i data-lucide="trash-2" class="w-5 h-5 text-white"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="flex-1 flex">
+                <!-- Left Panel - Rune Trees -->
+                <div class="w-1/2 p-10 flex space-x-16">
+                    <!-- Primary Tree -->
+                    <div class="flex-1 relative">
+                        <!-- Tree Connector -->
+                        <div class="tree-connector" style="top: 120px; height: calc(100% - 140px);"></div>
+                        
+                        <!-- Tree Header -->
+                        <div class="flex flex-col items-center mb-12">
+                            <div class="relative">
+                                <div class="rune-glow"></div>
+                                <div class="w-24 h-24 rounded-full border-4 border-yellow-500 bg-gradient-to-br from-yellow-500/30 to-orange-500/30 flex items-center justify-center relative z-10">
+                                    <i data-lucide="crown" class="w-12 h-12 text-yellow-400"></i>
+                                </div>
+                            </div>
+                            <span class="text-yellow-400 font-semibold text-sm tracking-widest mt-4">基石</span>
+                        </div>
+
+                        <!-- Rune Rows -->
+                        <div class="space-y-10 relative z-10">
+                            <!-- Keystone Row -->
+                            <div class="flex justify-center space-x-8">
+                                <div class="rune-slot keystone selected w-16 h-16 rounded-full border-4 border-yellow-500 flex items-center justify-center">
+                                    <i data-lucide="target" class="w-8 h-8 text-yellow-400"></i>
+                                </div>
+                                <div class="rune-slot keystone w-16 h-16 rounded-full border-4 border-gray-600 flex items-center justify-center opacity-50">
+                                    <i data-lucide="shield" class="w-8 h-8 text-gray-400"></i>
+                                </div>
+                                <div class="rune-slot keystone w-16 h-16 rounded-full border-4 border-gray-600 flex items-center justify-center opacity-50">
+                                    <i data-lucide="sword" class="w-8 h-8 text-gray-400"></i>
+                                </div>
+                                <div class="rune-slot keystone w-16 h-16 rounded-full border-4 border-gray-600 flex items-center justify-center opacity-50">
+                                    <i data-lucide="flame" class="w-8 h-8 text-gray-400"></i>
+                                </div>
+                            </div>
+
+                            <!-- Row 1 -->
+                            <div class="flex justify-center space-x-10">
+                                <div class="rune-slot w-14 h-14 rounded-full border-3 border-gray-600 flex items-center justify-center opacity-50">
+                                    <i data-lucide="eye" class="w-7 h-7 text-gray-400"></i>
+                                </div>
+                                <div class="rune-slot selected w-14 h-14 rounded-full border-3 border-cyan-500 flex items-center justify-center">
+                                    <i data-lucide="activity" class="w-7 h-7 text-cyan-400"></i>
+                                </div>
+                                <div class="rune-slot w-14 h-14 rounded-full border-3 border-gray-600 flex items-center justify-center opacity-50">
+                                    <i data-lucide="zap" class="w-7 h-7 text-gray-400"></i>
+                                </div>
+                            </div>
+
+                            <!-- Row 2 -->
+                            <div class="flex justify-center space-x-10">
+                                <div class="rune-slot w-14 h-14 rounded-full border-3 border-gray-600 flex items-center justify-center opacity-50">
+                                    <i data-lucide="heart" class="w-7 h-7 text-gray-400"></i>
+                                </div>
+                                <div class="rune-slot w-14 h-14 rounded-full border-3 border-gray-600 flex items-center justify-center opacity-50">
+                                    <i data-lucide="wind" class="w-7 h-7 text-gray-400"></i>
+                                </div>
+                                <div class="rune-slot selected w-14 h-14 rounded-full border-3 border-purple-500 flex items-center justify-center">
+                                    <i data-lucide="star" class="w-7 h-7 text-purple-400"></i>
+                                </div>
+                            </div>
+
+                            <!-- Row 3 -->
+                            <div class="flex justify-center space-x-10">
+                                <div class="rune-slot w-14 h-14 rounded-full border-3 border-gray-600 flex items-center justify-center opacity-50">
+                                    <i data-lucide="clock" class="w-7 h-7 text-gray-400"></i>
+                                </div>
+                                <div class="rune-slot w-14 h-14 rounded-full border-3 border-gray-600 flex items-center justify-center opacity-50">
+                                    <i data-lucide="crosshair" class="w-7 h-7 text-gray-400"></i>
+                                </div>
+                                <div class="rune-slot selected w-14 h-14 rounded-full border-3 border-red-500 flex items-center justify-center">
+                                    <i data-lucide="flame" class="w-7 h-7 text-red-400"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Secondary Tree -->
+                    <div class="flex-1">
+                        <!-- Tree Header -->
+                        <div class="flex flex-col items-center mb-12">
+                            <div class="relative">
+                                <div class="w-24 h-24 rounded-full border-4 border-cyan-500 bg-gradient-to-br from-cyan-500/30 to-blue-500/30 flex items-center justify-center">
+                                    <i data-lucide="shield" class="w-12 h-12 text-cyan-400"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Secondary Runes Grid -->
+                        <div class="grid grid-cols-3 gap-8 mt-20 mb-16">
+                            <div class="rune-slot w-14 h-14 rounded-full border-3 border-gray-600 flex items-center justify-center opacity-50">
+                                <i data-lucide="shield" class="w-7 h-7 text-gray-400"></i>
+                            </div>
+                            <div class="rune-slot selected w-14 h-14 rounded-full border-3 border-cyan-500 flex items-center justify-center">
+                                <i data-lucide="wind" class="w-7 h-7 text-cyan-400"></i>
+                            </div>
+                            <div class="rune-slot w-14 h-14 rounded-full border-3 border-gray-600 flex items-center justify-center opacity-50">
+                                <i data-lucide="heart" class="w-7 h-7 text-gray-400"></i>
+                            </div>
+                            <div class="rune-slot w-14 h-14 rounded-full border-3 border-gray-600 flex items-center justify-center opacity-50">
+                                <i data-lucide="eye" class="w-7 h-7 text-gray-400"></i>
+                            </div>
+                            <div class="rune-slot w-14 h-14 rounded-full border-3 border-gray-600 flex items-center justify-center opacity-50">
+                                <i data-lucide="clock" class="w-7 h-7 text-gray-400"></i>
+                            </div>
+                            <div class="rune-slot selected w-14 h-14 rounded-full border-3 border-orange-500 flex items-center justify-center">
+                                <i data-lucide="target" class="w-7 h-7 text-orange-400"></i>
+                            </div>
+                            <div class="rune-slot w-14 h-14 rounded-full border-3 border-gray-600 flex items-center justify-center opacity-50">
+                                <i data-lucide="crosshair" class="w-7 h-7 text-gray-400"></i>
+                            </div>
+                            <div class="rune-slot w-14 h-14 rounded-full border-3 border-gray-600 flex items-center justify-center opacity-50">
+                                <i data-lucide="activity" class="w-7 h-7 text-gray-400"></i>
+                            </div>
+                            <div class="rune-slot w-14 h-14 rounded-full border-3 border-gray-600 flex items-center justify-center opacity-50">
+                                <i data-lucide="zap" class="w-7 h-7 text-gray-400"></i>
+                            </div>
+                        </div>
+
+                        <!-- Stats Shards -->
+                        <div class="space-y-8">
+                            <div class="flex justify-center space-x-6">
+                                <div class="rune-slot w-12 h-12 rounded-full border-2 border-gray-600 flex items-center justify-center opacity-50">
+                                    <i data-lucide="plus" class="w-6 h-6 text-gray-400"></i>
+                                </div>
+                                <div class="rune-slot selected w-12 h-12 rounded-full border-2 border-yellow-500 flex items-center justify-center">
+                                    <i data-lucide="zap" class="w-6 h-6 text-yellow-400"></i>
+                                </div>
+                                <div class="rune-slot w-12 h-12 rounded-full border-2 border-gray-600 flex items-center justify-center opacity-50">
+                                    <i data-lucide="crosshair" class="w-6 h-6 text-gray-400"></i>
+                                </div>
+                            </div>
+                            <div class="flex justify-center space-x-6">
+                                <div class="rune-slot selected w-12 h-12 rounded-full border-2 border-blue-500 flex items-center justify-center">
+                                    <i data-lucide="droplet" class="w-6 h-6 text-blue-400"></i>
+                                </div>
+                                <div class="rune-slot w-12 h-12 rounded-full border-2 border-gray-600 flex items-center justify-center opacity-50">
+                                    <i data-lucide="wind" class="w-6 h-6 text-gray-400"></i>
+                                </div>
+                                <div class="rune-slot w-12 h-12 rounded-full border-2 border-gray-600 flex items-center justify-center opacity-50">
+                                    <i data-lucide="shield" class="w-6 h-6 text-gray-400"></i>
+                                </div>
+                            </div>
+                            <div class="flex justify-center space-x-6">
+                                <div class="rune-slot w-12 h-12 rounded-full border-2 border-gray-600 flex items-center justify-center opacity-50">
+                                    <i data-lucide="heart" class="w-6 h-6 text-gray-400"></i>
+                                </div>
+                                <div class="rune-slot w-12 h-12 rounded-full border-2 border-gray-600 flex items-center justify-center opacity-50">
+                                    <i data-lucide="shield" class="w-6 h-6 text-gray-400"></i>
+                                </div>
+                                <div class="rune-slot selected w-12 h-12 rounded-full border-2 border-green-500 flex items-center justify-center">
+                                    <i data-lucide="plus" class="w-6 h-6 text-green-400"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Panel - Rune Display -->
+                <div class="w-1/2 p-10 flex items-center justify-center relative">
+                    <div class="rune-display-container relative">
+                        <!-- Large Rune Symbol -->
+                        <div class="w-96 h-96 relative">
+                            <!-- Outer Glow -->
+                            <div class="absolute inset-0 rounded-full bg-gradient-to-br from-yellow-500/20 to-orange-500/20 blur-xl"></div>
+                            <!-- Outer Ring -->
+                            <div class="absolute inset-0 rounded-full border-4 border-yellow-500/60"></div>
+                            <!-- Middle Ring -->
+                            <div class="absolute inset-6 rounded-full border-3 border-yellow-400/40"></div>
+                            <!-- Inner Ring -->
+                            <div class="absolute inset-12 rounded-full border-2 border-yellow-300/30"></div>
+                            <!-- Inner Design -->
+                            <div class="absolute inset-16 rounded-full bg-gradient-to-br from-yellow-500/30 to-orange-500/30 flex items-center justify-center backdrop-blur-sm">
+                                <div class="w-48 h-48 relative">
+                                    <!-- Central Symbol -->
+                                    <div class="absolute inset-0 flex items-center justify-center">
+                                        <i data-lucide="crown" class="w-24 h-24 text-yellow-400 drop-shadow-lg"></i>
+                                    </div>
+                                    <!-- Decorative Elements -->
+                                    <div class="absolute -top-8 left-1/2 transform -translate-x-1/2">
+                                        <div class="w-16 h-16 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-full flex items-center justify-center shadow-lg">
+                                            <i data-lucide="star" class="w-8 h-8 text-yellow-900"></i>
+                                        </div>
+                                    </div>
+                                    <div class="absolute -bottom-8 left-1/2 transform -translate-x-1/2">
+                                        <div class="w-16 h-16 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-full flex items-center justify-center shadow-lg">
+                                            <i data-lucide="star" class="w-8 h-8 text-yellow-900"></i>
+                                        </div>
+                                    </div>
+                                    <div class="absolute -left-8 top-1/2 transform -translate-y-1/2">
+                                        <div class="w-16 h-16 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-full flex items-center justify-center shadow-lg">
+                                            <i data-lucide="star" class="w-8 h-8 text-yellow-900"></i>
+                                        </div>
+                                    </div>
+                                    <div class="absolute -right-8 top-1/2 transform -translate-y-1/2">
+                                        <div class="w-16 h-16 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-full flex items-center justify-center shadow-lg">
+                                            <i data-lucide="star" class="w-8 h-8 text-yellow-900"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bottom Toolbar -->
+            <div class="toolbar-glow p-6">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-8">
+                        <div class="flex items-center space-x-4">
+                            <i data-lucide="bookmark" class="w-6 h-6 text-gray-400 cursor-pointer hover:text-yellow-400 transition-colors"></i>
+                            <i data-lucide="crown" class="w-6 h-6 text-gray-400 cursor-pointer hover:text-yellow-400 transition-colors"></i>
+                            <i data-lucide="edit" class="w-6 h-6 text-gray-400 cursor-pointer hover:text-yellow-400 transition-colors"></i>
+                            <i data-lucide="copy" class="w-6 h-6 text-gray-400 cursor-pointer hover:text-yellow-400 transition-colors"></i>
+                            <i data-lucide="star" class="w-6 h-6 text-gray-400 cursor-pointer hover:text-yellow-400 transition-colors"></i>
+                        </div>
+                        <div class="w-px h-8 bg-gray-600"></div>
+                        <div class="flex items-center space-x-4">
+                            <div class="w-10 h-10 rounded-full bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center cursor-pointer hover:scale-110 transition-transform shadow-lg">
+                                <i data-lucide="crown" class="w-5 h-5 text-white"></i>
+                            </div>
+                            <div class="w-10 h-10 rounded-full bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center cursor-pointer hover:scale-110 transition-transform shadow-lg">
+                                <i data-lucide="zap" class="w-5 h-5 text-white"></i>
+                            </div>
+                            <div class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center cursor-pointer hover:scale-110 transition-transform shadow-lg">
+                                <i data-lucide="shield" class="w-5 h-5 text-white"></i>
+                            </div>
+                        </div>
+                        <div class="w-px h-8 bg-gray-600"></div>
+                        <div class="flex items-center space-x-4">
+                            <i data-lucide="list" class="w-6 h-6 text-gray-400 cursor-pointer hover:text-yellow-400 transition-colors"></i>
+                            <i data-lucide="grid-3x3" class="w-6 h-6 text-gray-400 cursor-pointer hover:text-yellow-400 transition-colors"></i>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <i data-lucide="check" class="w-6 h-6 text-green-400"></i>
+                        <span class="text-gray-300 text-sm font-medium">在比较时显示详细的描述(或按住SHIFT)</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+        
+        // Rune slot interactions
+        document.addEventListener('DOMContentLoaded', () => {
+            const runeSlots = document.querySelectorAll('.rune-slot');
+            
+            runeSlots.forEach(slot => {
+                slot.addEventListener('click', (e) => {
+                    // Find the parent container to determine the selection group
+                    const parent = slot.closest('.flex, .grid');
+                    if (parent) {
+                        // Remove selected class from siblings
+                        parent.querySelectorAll('.rune-slot').forEach(s => {
+                            s.classList.remove('selected');
+                        });
+                    }
+                    
+                    // Add selected class to clicked slot
+                    slot.classList.add('selected');
+                    
+                    // Visual feedback
+                    slot.style.transform = 'scale(1.25)';
+                    setTimeout(() => {
+                        slot.style.transform = '';
+                    }, 250);
+                });
+            });
+            
+            // Create magic particles
+            const runeDisplay = document.querySelector('.rune-display-container');
+            if (runeDisplay) {
+                setInterval(() => {
+                    createMagicParticle(runeDisplay);
+                }, 1500);
+            }
+        });
+        
+        function createMagicParticle(container) {
+            const particle = document.createElement('div');
+            particle.className = 'magic-particle';
+            particle.style.left = Math.random() * 100 + '%';
+            particle.style.top = Math.random() * 100 + '%';
+            
+            container.appendChild(particle);
+            
+            setTimeout(() => {
+                particle.remove();
+            }, 5000);
+        }
+    </script>
+</body>
+</html>

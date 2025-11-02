@@ -144,6 +144,72 @@
         .sidebar::-webkit-scrollbar-thumb:hover {
             background: rgb(from var(--muted-foreground) r g b / 0.5);
         }
+        
+        /* Rune Editor Styles */
+        .rune-slot {
+            position: relative;
+            transition: all 300ms ease-out;
+        }
+        
+        .rune-slot:hover {
+            transform: scale(1.1);
+            filter: brightness(1.2);
+        }
+        
+        .rune-slot.selected {
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.6);
+            animation: runeGlow 2s ease-in-out infinite alternate;
+        }
+        
+        @keyframes runeGlow {
+            from {
+                box-shadow: 0 0 20px rgba(255, 215, 0, 0.6);
+            }
+            to {
+                box-shadow: 0 0 30px rgba(255, 215, 0, 0.8);
+            }
+        }
+        
+        .rune-tree-line {
+            position: absolute;
+            background: linear-gradient(to bottom, rgba(255, 215, 0, 0.3), rgba(255, 215, 0, 0.1));
+            width: 2px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        
+        .rune-display {
+            animation: runeRotate 20s linear infinite;
+        }
+        
+        @keyframes runeRotate {
+            from {
+                transform: rotate(0deg);
+            }
+            to {
+                transform: rotate(360deg);
+            }
+        }
+        
+        .rune-particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: rgba(255, 215, 0, 0.8);
+            border-radius: 50%;
+            animation: runeParticle 3s ease-in-out infinite;
+        }
+        
+        @keyframes runeParticle {
+            0%, 100% {
+                opacity: 0;
+                transform: translateY(0) scale(0);
+            }
+            50% {
+                opacity: 1;
+                transform: translateY(-20px) scale(1);
+            }
+        }
     </style>
 </head>
 <body>
@@ -207,15 +273,263 @@
         </aside>
         
         <!-- Main Content -->
-        <main class="main-content flex-1 p-8">
-            <!-- Empty content area - to be filled later -->
-            <div class="flex items-center justify-center h-full text-center">
-                <div class="max-w-md mx-auto">
-                    <div class="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center" style="background-color: rgb(from var(--muted) r g b);">
-                        <i data-lucide="layout-dashboard" class="w-8 h-8" style="color: rgb(from var(--muted-foreground) r g b);"></i>
+        <main class="main-content flex-1 p-0 relative overflow-hidden">
+            <!-- Rune Editor Background -->
+            <div class="absolute inset-0 bg-gradient-to-br from-amber-900/20 via-purple-900/30 to-blue-900/20"></div>
+            <div class="absolute inset-0" style="background-image: url('https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=1920&h=1080&fit=crop'); background-size: cover; background-position: center; opacity: 0.3;"></div>
+            
+            <!-- Rune Editor Content -->
+            <div class="relative z-10 h-full flex">
+                <!-- Left Panel - Rune Trees -->
+                <div class="w-1/2 p-6 flex flex-col">
+                    <!-- Header -->
+                    <div class="flex items-center justify-between mb-6">
+                        <div class="flex items-center space-x-4">
+                            <div class="flex items-center space-x-2">
+                                <i data-lucide="zap" class="w-5 h-5 text-amber-400"></i>
+                                <span class="text-amber-400 font-medium">推荐</span>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <div class="w-8 h-8 rounded-full bg-amber-500 flex items-center justify-center">
+                                    <i data-lucide="zap" class="w-4 h-4 text-black"></i>
+                                </div>
+                                <span class="text-white font-medium">圣枪游侠 - 强攻</span>
+                                <i data-lucide="chevron-down" class="w-4 h-4 text-gray-400"></i>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <button class="px-4 py-2 border border-gray-600 rounded text-gray-300 hover:bg-gray-700 transition-colors">
+                                保存
+                            </button>
+                            <button class="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center hover:bg-green-500 transition-colors">
+                                <i data-lucide="plus" class="w-4 h-4 text-white"></i>
+                            </button>
+                            <button class="w-8 h-8 bg-red-600 rounded-full flex items-center justify-center hover:bg-red-500 transition-colors">
+                                <i data-lucide="trash-2" class="w-4 h-4 text-white"></i>
+                            </button>
+                        </div>
                     </div>
-                    <h2 class="text-xl font-semibold mb-2" style="color: rgb(from var(--foreground) r g b);">Profile Content</h2>
-                    <p style="color: rgb(from var(--muted-foreground) r g b);">This area is ready for your profile content. The layout and navigation are complete.</p>
+
+                    <!-- Rune Trees -->
+                    <div class="flex-1 flex space-x-8">
+                        <!-- Primary Tree -->
+                        <div class="flex-1">
+                            <!-- Tree Header -->
+                            <div class="flex items-center justify-center mb-6">
+                                <div class="w-16 h-16 rounded-full border-4 border-amber-500 bg-amber-500/20 flex items-center justify-center">
+                                    <i data-lucide="crown" class="w-8 h-8 text-amber-400"></i>
+                                </div>
+                            </div>
+                            <div class="text-center mb-4">
+                                <span class="text-amber-400 font-medium">基石</span>
+                            </div>
+
+                            <!-- Rune Rows -->
+                            <div class="space-y-6">
+                                <!-- Keystone Row -->
+                                <div class="flex justify-center space-x-4">
+                                    <div class="w-12 h-12 rounded-full border-2 border-amber-500 bg-amber-500/30 flex items-center justify-center cursor-pointer hover:scale-110 transition-transform">
+                                        <i data-lucide="target" class="w-6 h-6 text-amber-400"></i>
+                                    </div>
+                                    <div class="w-12 h-12 rounded-full border-2 border-gray-600 bg-gray-800 flex items-center justify-center cursor-pointer hover:scale-110 transition-transform opacity-60">
+                                        <i data-lucide="shield" class="w-6 h-6 text-gray-400"></i>
+                                    </div>
+                                    <div class="w-12 h-12 rounded-full border-2 border-gray-600 bg-gray-800 flex items-center justify-center cursor-pointer hover:scale-110 transition-transform opacity-60">
+                                        <i data-lucide="sword" class="w-6 h-6 text-gray-400"></i>
+                                    </div>
+                                    <div class="w-12 h-12 rounded-full border-2 border-gray-600 bg-gray-800 flex items-center justify-center cursor-pointer hover:scale-110 transition-transform opacity-60">
+                                        <i data-lucide="flame" class="w-6 h-6 text-gray-400"></i>
+                                    </div>
+                                </div>
+
+                                <!-- Row 1 -->
+                                <div class="flex justify-center space-x-4">
+                                    <div class="w-10 h-10 rounded-full border-2 border-gray-600 bg-gray-800 flex items-center justify-center cursor-pointer hover:scale-110 transition-transform opacity-60">
+                                        <i data-lucide="eye" class="w-5 h-5 text-gray-400"></i>
+                                    </div>
+                                    <div class="w-10 h-10 rounded-full border-2 border-cyan-500 bg-cyan-500/30 flex items-center justify-center cursor-pointer hover:scale-110 transition-transform">
+                                        <i data-lucide="activity" class="w-5 h-5 text-cyan-400"></i>
+                                    </div>
+                                    <div class="w-10 h-10 rounded-full border-2 border-gray-600 bg-gray-800 flex items-center justify-center cursor-pointer hover:scale-110 transition-transform opacity-60">
+                                        <i data-lucide="zap" class="w-5 h-5 text-gray-400"></i>
+                                    </div>
+                                </div>
+
+                                <!-- Row 2 -->
+                                <div class="flex justify-center space-x-4">
+                                    <div class="w-10 h-10 rounded-full border-2 border-gray-600 bg-gray-800 flex items-center justify-center cursor-pointer hover:scale-110 transition-transform opacity-60">
+                                        <i data-lucide="heart" class="w-5 h-5 text-gray-400"></i>
+                                    </div>
+                                    <div class="w-10 h-10 rounded-full border-2 border-gray-600 bg-gray-800 flex items-center justify-center cursor-pointer hover:scale-110 transition-transform opacity-60">
+                                        <i data-lucide="wind" class="w-5 h-5 text-gray-400"></i>
+                                    </div>
+                                    <div class="w-10 h-10 rounded-full border-2 border-purple-500 bg-purple-500/30 flex items-center justify-center cursor-pointer hover:scale-110 transition-transform">
+                                        <i data-lucide="star" class="w-5 h-5 text-purple-400"></i>
+                                    </div>
+                                </div>
+
+                                <!-- Row 3 -->
+                                <div class="flex justify-center space-x-4">
+                                    <div class="w-10 h-10 rounded-full border-2 border-gray-600 bg-gray-800 flex items-center justify-center cursor-pointer hover:scale-110 transition-transform opacity-60">
+                                        <i data-lucide="clock" class="w-5 h-5 text-gray-400"></i>
+                                    </div>
+                                    <div class="w-10 h-10 rounded-full border-2 border-gray-600 bg-gray-800 flex items-center justify-center cursor-pointer hover:scale-110 transition-transform opacity-60">
+                                        <i data-lucide="crosshair" class="w-5 h-5 text-gray-400"></i>
+                                    </div>
+                                    <div class="w-10 h-10 rounded-full border-2 border-red-500 bg-red-500/30 flex items-center justify-center cursor-pointer hover:scale-110 transition-transform">
+                                        <i data-lucide="flame" class="w-5 h-5 text-red-400"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Secondary Tree -->
+                        <div class="flex-1">
+                            <!-- Tree Header -->
+                            <div class="flex items-center justify-center mb-6">
+                                <div class="w-16 h-16 rounded-full border-4 border-cyan-500 bg-cyan-500/20 flex items-center justify-center">
+                                    <i data-lucide="shield" class="w-8 h-8 text-cyan-400"></i>
+                                </div>
+                            </div>
+
+                            <!-- Secondary Runes Grid -->
+                            <div class="grid grid-cols-3 gap-4 mt-12">
+                                <div class="w-10 h-10 rounded-full border-2 border-gray-600 bg-gray-800 flex items-center justify-center cursor-pointer hover:scale-110 transition-transform opacity-60">
+                                    <i data-lucide="shield" class="w-5 h-5 text-gray-400"></i>
+                                </div>
+                                <div class="w-10 h-10 rounded-full border-2 border-cyan-500 bg-cyan-500/30 flex items-center justify-center cursor-pointer hover:scale-110 transition-transform">
+                                    <i data-lucide="wind" class="w-5 h-5 text-cyan-400"></i>
+                                </div>
+                                <div class="w-10 h-10 rounded-full border-2 border-gray-600 bg-gray-800 flex items-center justify-center cursor-pointer hover:scale-110 transition-transform opacity-60">
+                                    <i data-lucide="heart" class="w-5 h-5 text-gray-400"></i>
+                                </div>
+                                <div class="w-10 h-10 rounded-full border-2 border-gray-600 bg-gray-800 flex items-center justify-center cursor-pointer hover:scale-110 transition-transform opacity-60">
+                                    <i data-lucide="eye" class="w-5 h-5 text-gray-400"></i>
+                                </div>
+                                <div class="w-10 h-10 rounded-full border-2 border-gray-600 bg-gray-800 flex items-center justify-center cursor-pointer hover:scale-110 transition-transform opacity-60">
+                                    <i data-lucide="clock" class="w-5 h-5 text-gray-400"></i>
+                                </div>
+                                <div class="w-10 h-10 rounded-full border-2 border-orange-500 bg-orange-500/30 flex items-center justify-center cursor-pointer hover:scale-110 transition-transform">
+                                    <i data-lucide="target" class="w-5 h-5 text-orange-400"></i>
+                                </div>
+                                <div class="w-10 h-10 rounded-full border-2 border-gray-600 bg-gray-800 flex items-center justify-center cursor-pointer hover:scale-110 transition-transform opacity-60">
+                                    <i data-lucide="crosshair" class="w-5 h-5 text-gray-400"></i>
+                                </div>
+                                <div class="w-10 h-10 rounded-full border-2 border-gray-600 bg-gray-800 flex items-center justify-center cursor-pointer hover:scale-110 transition-transform opacity-60">
+                                    <i data-lucide="activity" class="w-5 h-5 text-gray-400"></i>
+                                </div>
+                                <div class="w-10 h-10 rounded-full border-2 border-gray-600 bg-gray-800 flex items-center justify-center cursor-pointer hover:scale-110 transition-transform opacity-60">
+                                    <i data-lucide="zap" class="w-5 h-5 text-gray-400"></i>
+                                </div>
+                            </div>
+
+                            <!-- Stats Shards -->
+                            <div class="mt-12 space-y-4">
+                                <div class="flex justify-center space-x-2">
+                                    <div class="w-8 h-8 rounded-full border-2 border-gray-600 bg-gray-800 flex items-center justify-center cursor-pointer hover:scale-110 transition-transform opacity-60">
+                                        <i data-lucide="plus" class="w-4 h-4 text-gray-400"></i>
+                                    </div>
+                                    <div class="w-8 h-8 rounded-full border-2 border-amber-500 bg-amber-500/30 flex items-center justify-center cursor-pointer hover:scale-110 transition-transform">
+                                        <i data-lucide="zap" class="w-4 h-4 text-amber-400"></i>
+                                    </div>
+                                    <div class="w-8 h-8 rounded-full border-2 border-gray-600 bg-gray-800 flex items-center justify-center cursor-pointer hover:scale-110 transition-transform opacity-60">
+                                        <i data-lucide="crosshair" class="w-4 h-4 text-gray-400"></i>
+                                    </div>
+                                </div>
+                                <div class="flex justify-center space-x-2">
+                                    <div class="w-8 h-8 rounded-full border-2 border-blue-500 bg-blue-500/30 flex items-center justify-center cursor-pointer hover:scale-110 transition-transform">
+                                        <i data-lucide="droplet" class="w-4 h-4 text-blue-400"></i>
+                                    </div>
+                                    <div class="w-8 h-8 rounded-full border-2 border-gray-600 bg-gray-800 flex items-center justify-center cursor-pointer hover:scale-110 transition-transform opacity-60">
+                                        <i data-lucide="wind" class="w-4 h-4 text-gray-400"></i>
+                                    </div>
+                                    <div class="w-8 h-8 rounded-full border-2 border-gray-600 bg-gray-800 flex items-center justify-center cursor-pointer hover:scale-110 transition-transform opacity-60">
+                                        <i data-lucide="shield" class="w-4 h-4 text-gray-400"></i>
+                                    </div>
+                                </div>
+                                <div class="flex justify-center space-x-2">
+                                    <div class="w-8 h-8 rounded-full border-2 border-gray-600 bg-gray-800 flex items-center justify-center cursor-pointer hover:scale-110 transition-transform opacity-60">
+                                        <i data-lucide="heart" class="w-4 h-4 text-gray-400"></i>
+                                    </div>
+                                    <div class="w-8 h-8 rounded-full border-2 border-gray-600 bg-gray-800 flex items-center justify-center cursor-pointer hover:scale-110 transition-transform opacity-60">
+                                        <i data-lucide="shield" class="w-4 h-4 text-gray-400"></i>
+                                    </div>
+                                    <div class="w-8 h-8 rounded-full border-2 border-green-500 bg-green-500/30 flex items-center justify-center cursor-pointer hover:scale-110 transition-transform">
+                                        <i data-lucide="plus" class="w-4 h-4 text-green-400"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Panel - Rune Display -->
+                <div class="w-1/2 p-6 flex items-center justify-center">
+                    <div class="relative rune-display">
+                        <!-- Large Rune Symbol -->
+                        <div class="w-64 h-64 relative">
+                            <!-- Outer Ring -->
+                            <div class="absolute inset-0 rounded-full border-4 border-amber-500/50 animate-pulse"></div>
+                            <!-- Inner Design -->
+                            <div class="absolute inset-8 rounded-full bg-gradient-to-br from-amber-500/30 to-orange-500/30 flex items-center justify-center">
+                                <div class="w-32 h-32 relative">
+                                    <!-- Central Symbol -->
+                                    <div class="absolute inset-0 flex items-center justify-center">
+                                        <i data-lucide="crown" class="w-16 h-16 text-amber-400"></i>
+                                    </div>
+                                    <!-- Decorative Elements -->
+                                    <div class="absolute -top-4 left-1/2 transform -translate-x-1/2">
+                                        <div class="w-8 h-8 bg-amber-500 rounded-full opacity-80"></div>
+                                    </div>
+                                    <div class="absolute -bottom-4 left-1/2 transform -translate-x-1/2">
+                                        <div class="w-8 h-8 bg-amber-500 rounded-full opacity-80"></div>
+                                    </div>
+                                    <div class="absolute -left-4 top-1/2 transform -translate-y-1/2">
+                                        <div class="w-8 h-8 bg-amber-500 rounded-full opacity-80"></div>
+                                    </div>
+                                    <div class="absolute -right-4 top-1/2 transform -translate-y-1/2">
+                                        <div class="w-8 h-8 bg-amber-500 rounded-full opacity-80"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bottom Toolbar -->
+            <div class="absolute bottom-0 left-0 right-0 p-4 bg-black/50 backdrop-blur-sm">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-4">
+                        <div class="flex items-center space-x-2">
+                            <i data-lucide="bookmark" class="w-5 h-5 text-gray-400"></i>
+                            <i data-lucide="crown" class="w-5 h-5 text-gray-400"></i>
+                            <i data-lucide="edit" class="w-5 h-5 text-gray-400"></i>
+                            <i data-lucide="copy" class="w-5 h-5 text-gray-400"></i>
+                            <i data-lucide="star" class="w-5 h-5 text-gray-400"></i>
+                        </div>
+                        <div class="w-px h-6 bg-gray-600"></div>
+                        <div class="flex items-center space-x-2">
+                            <div class="w-8 h-8 rounded-full bg-orange-600 flex items-center justify-center">
+                                <i data-lucide="crown" class="w-4 h-4 text-white"></i>
+                            </div>
+                            <div class="w-8 h-8 rounded-full bg-red-600 flex items-center justify-center">
+                                <i data-lucide="zap" class="w-4 h-4 text-white"></i>
+                            </div>
+                            <div class="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center">
+                                <i data-lucide="shield" class="w-4 h-4 text-white"></i>
+                            </div>
+                        </div>
+                        <div class="w-px h-6 bg-gray-600"></div>
+                        <div class="flex items-center space-x-2">
+                            <i data-lucide="list" class="w-5 h-5 text-gray-400"></i>
+                            <i data-lucide="grid-3x3" class="w-5 h-5 text-gray-400"></i>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <i data-lucide="check" class="w-5 h-5 text-green-400"></i>
+                        <span class="text-gray-300 text-sm">在比较时显示详细的描述(或按住SHIFT)</span>
+                    </div>
                 </div>
             </div>
         </main>
@@ -272,6 +586,65 @@
                 console.log('Navigating to:', item.textContent.trim());
             });
         });
+        
+        // Rune Editor Interactions
+        document.addEventListener('DOMContentLoaded', () => {
+            // Add rune slot interactions
+            const runeSlots = document.querySelectorAll('[class*="rounded-full"][class*="cursor-pointer"]');
+            
+            runeSlots.forEach(slot => {
+                slot.addEventListener('click', (e) => {
+                    // Remove selected class from all slots in the same row
+                    const parent = slot.closest('.flex, .grid');
+                    if (parent) {
+                        parent.querySelectorAll('[class*="rounded-full"]').forEach(s => {
+                            s.classList.remove('selected');
+                        });
+                    }
+                    
+                    // Add selected class to clicked slot
+                    slot.classList.add('selected');
+                    
+                    // Add visual feedback
+                    slot.style.transform = 'scale(1.2)';
+                    setTimeout(() => {
+                        slot.style.transform = '';
+                    }, 200);
+                });
+                
+                // Add hover sound effect (visual feedback)
+                slot.addEventListener('mouseenter', () => {
+                    slot.style.filter = 'brightness(1.3) drop-shadow(0 0 10px rgba(255, 215, 0, 0.5))';
+                });
+                
+                slot.addEventListener('mouseleave', () => {
+                    if (!slot.classList.contains('selected')) {
+                        slot.style.filter = '';
+                    }
+                });
+            });
+            
+            // Add floating particles to the rune display
+            const runeDisplay = document.querySelector('.rune-display');
+            if (runeDisplay) {
+                setInterval(() => {
+                    createRuneParticle(runeDisplay);
+                }, 1000);
+            }
+        });
+        
+        function createRuneParticle(container) {
+            const particle = document.createElement('div');
+            particle.className = 'rune-particle';
+            particle.style.left = Math.random() * 100 + '%';
+            particle.style.top = Math.random() * 100 + '%';
+            
+            container.appendChild(particle);
+            
+            setTimeout(() => {
+                particle.remove();
+            }, 3000);
+        }
     </script>
 </body>
 </html>

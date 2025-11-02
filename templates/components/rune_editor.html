@@ -1,0 +1,693 @@
+{% macro rune_editor(rune_trees, version, edit_page=None, user=None) %}
+<style>
+    .rune-editor-container {
+        background-image: 
+            radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+            radial-gradient(circle at 80% 20%, rgba(255, 177, 153, 0.3) 0%, transparent 50%),
+            radial-gradient(circle at 40% 40%, rgba(120, 119, 198, 0.2) 0%, transparent 50%);
+        position: relative;
+        min-height: 100vh;
+    }
+    
+    .rune-editor-container::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-image: url('https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=1920&h=1080&fit=crop');
+        background-size: cover;
+        background-position: center;
+        opacity: 0.15;
+        z-index: 0;
+    }
+    
+    .rune-content-overlay {
+        position: relative;
+        z-index: 1;
+    }
+    
+    .rune-slot {
+        transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        cursor: pointer;
+    }
+    
+    .rune-slot:hover {
+        transform: scale(1.15);
+        filter: brightness(1.3) drop-shadow(0 0 15px rgba(201, 170, 113, 0.6));
+    }
+    
+    .rune-slot.selected {
+        transform: scale(1.1);
+        filter: brightness(1.4) drop-shadow(0 0 20px rgba(201, 170, 113, 0.8));
+    }
+    
+    .rune-slot.keystone {
+        filter: drop-shadow(0 0 10px rgba(201, 170, 113, 0.5));
+    }
+    
+    .rune-slot.keystone.selected {
+        filter: drop-shadow(0 0 25px rgba(201, 170, 113, 1));
+    }
+    
+    .rune-tree-connector {
+        position: absolute;
+        background: linear-gradient(to bottom, rgba(201, 170, 113, 0.6), rgba(201, 170, 113, 0.2));
+        width: 2px;
+        left: 50%;
+        transform: translateX(-50%);
+    }
+    
+    .tree-header::after {
+        content: '';
+        position: absolute;
+        bottom: -10px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 60px;
+        height: 2px;
+        background: linear-gradient(to right, transparent, rgba(201, 170, 113, 0.6), transparent);
+    }
+
+    .save-form-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.8);
+        backdrop-filter: blur(4px);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+    }
+
+    .save-form-modal.active {
+        display: flex;
+    }
+
+    .save-form-content {
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+        border: 1px solid rgba(201, 170, 113, 0.3);
+        border-radius: 12px;
+        padding: 2rem;
+        max-width: 500px;
+        width: 90%;
+    }
+
+    .form-input {
+        width: 100%;
+        padding: 0.75rem;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(201, 170, 113, 0.3);
+        border-radius: 8px;
+        color: #c9aa71;
+        font-size: 0.95rem;
+    }
+
+    .form-input:focus {
+        outline: none;
+        border-color: #c9aa71;
+        box-shadow: 0 0 0 2px rgba(201, 170, 113, 0.2);
+    }
+
+    .rune-tooltip {
+        position: absolute;
+        bottom: 120%;
+        left: 50%;
+        transform: translateX(-50%) scale(0.95);
+        background: #16213e;
+        border: 2px solid #c9aa71;
+        border-radius: 8px;
+        padding: 0.75rem;
+        min-width: 250px;
+        max-width: 300px;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.3s ease, visibility 0.3s ease, transform 0.3s ease;
+        z-index: 10000;
+        pointer-events: none;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.95), 0 0 0 1px rgba(0, 0, 0, 0.9);
+    }
+
+    .rune-tooltip::after {
+        content: '';
+        position: absolute;
+        top: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        border: 8px solid transparent;
+        border-top-color: #c9aa71;
+        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+    }
+
+    .rune-slot:hover > .rune-tooltip {
+        opacity: 1 !important;
+        visibility: visible !important;
+        transform: translateX(-50%) scale(1) !important;
+    }
+
+    .rune-tooltip-title {
+        color: #c9aa71;
+        font-weight: 600;
+        font-size: 0.95rem;
+        margin-bottom: 0.5rem;
+        text-align: center;
+    }
+
+    .rune-tooltip-desc {
+        color: #d1d5db;
+        font-size: 0.85rem;
+        line-height: 1.5;
+        text-align: left;
+    }
+</style>
+
+<div class="rune-editor-container">
+    <div class="rune-content-overlay" style="display: flex; flex-direction: column; min-height: 100vh;">
+        <!-- Header -->
+        <div style="display: flex; align-items: center; justify-content: space-between; padding: 1.5rem; border-bottom: 1px solid rgba(107, 114, 128, 0.5);">
+            <div style="display: flex; align-items: center; gap: 1.5rem;">
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                    <div style="width: 2rem; height: 2rem; border-radius: 50%; background: #eab308; display: flex; align-items: center; justify-content: center;">
+                        <i data-lucide="zap" style="width: 1rem; height: 1rem; color: black;"></i>
+                    </div>
+                    <span style="color: white; font-weight: 500;" id="runePageTitle">
+                        {% if edit_page %}{{ edit_page.name }}{% else %}新建符文页{% endif %}
+                    </span>
+                </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                {% if user %}
+                <button onclick="showSaveForm()" style="padding: 0.5rem 1rem; border: 1px solid #4b5563; border-radius: 4px; color: #d1d5db; background: transparent; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='rgba(75, 85, 99, 0.5)'" onmouseout="this.style.background='transparent'">
+                    保存
+                </button>
+                {% endif %}
+                <button onclick="window.location.href='/profile'" style="width: 2rem; height: 2rem; background: #dc2626; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: none; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='#ef4444'" onmouseout="this.style.background='#dc2626'">
+                    <i data-lucide="x" style="width: 1rem; height: 1rem; color: white;"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div style="flex: 1; display: flex;">
+            <!-- Left Panel - Primary Tree -->
+            <div style="width: 50%; padding: 2rem; border-right: 1px solid rgba(107, 114, 128, 0.3);">
+                <div style="text-align: center; margin-bottom: 2rem;">
+                    <h2 style="color: #facc15; font-size: 1.25rem; font-weight: 600; margin-bottom: 1rem;">主系符文</h2>
+                    <p style="color: #9ca3af; font-size: 0.875rem;">选择一个符文系作为主系</p>
+                </div>
+
+                <!-- Primary Tree Selector -->
+                <div id="primaryTreeSelector" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 2rem; max-width: 450px; margin-left: auto; margin-right: auto;">
+                    {% for tree in rune_trees %}
+                    <div class="primary-tree-option" data-tree-id="{{ tree.id }}" data-tree-key="{{ tree.key }}"
+                         style="display: flex; flex-direction: column; align-items: center; gap: 0.5rem; padding: 0.75rem; background: rgba(31, 41, 55, 0.5); border: 2px solid transparent; border-radius: 12px; cursor: pointer; transition: all 0.3s;">
+                        <div style="width: 3rem; height: 3rem; border-radius: 50%; overflow: hidden;">
+                            <img src="https://ddragon.leagueoflegends.com/cdn/img/{{ tree.icon }}" alt="{{ tree.name }}" style="width: 100%; height: 100%; object-fit: cover;">
+                        </div>
+                        <span style="color: #c9aa71; font-weight: 500; font-size: 0.75rem; text-align: center;">{{ tree.name }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <!-- Primary Runes Display -->
+                <div id="primaryRunesContainer" style="display: none;">
+                    <div class="tree-header" style="display: flex; flex-direction: column; align-items: center; margin-bottom: 2rem; position: relative;">
+                        <div id="primaryTreeIcon" style="width: 5rem; height: 5rem; border-radius: 50%; border: 4px solid #eab308; background: rgba(234, 179, 8, 0.2); display: flex; align-items: center; justify-content: center; margin-bottom: 1rem; position: relative;">
+                            <img id="primaryTreeIconImg" src="" alt="" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">
+                        </div>
+                        <span id="primaryTreeName" style="color: #facc15; font-weight: 600; font-size: 1rem;"></span>
+                    </div>
+
+                    <div style="position: relative;">
+                        <div class="rune-tree-connector" style="top: 0; height: 100%;"></div>
+                        <div id="primaryRunes"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Panel - Secondary Tree -->
+            <div style="width: 50%; padding: 2rem;">
+                <div style="text-align: center; margin-bottom: 2rem;">
+                    <h2 style="color: #22d3ee; font-size: 1.25rem; font-weight: 600; margin-bottom: 1rem;">副系符文</h2>
+                    <p style="color: #9ca3af; font-size: 0.875rem;">选择另一个符文系作为副系</p>
+                </div>
+
+                <!-- Secondary Tree Selector -->
+                <div id="secondaryTreeSelector" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 2rem; max-width: 450px; margin-left: auto; margin-right: auto;">
+                    {% for tree in rune_trees %}
+                    <div class="secondary-tree-option" data-tree-id="{{ tree.id }}" data-tree-key="{{ tree.key }}"
+                         style="display: flex; flex-direction: column; align-items: center; gap: 0.5rem; padding: 0.75rem; background: rgba(31, 41, 55, 0.5); border: 2px solid transparent; border-radius: 12px; cursor: pointer; transition: all 0.3s;">
+                        <div style="width: 3rem; height: 3rem; border-radius: 50%; overflow: hidden;">
+                            <img src="https://ddragon.leagueoflegends.com/cdn/img/{{ tree.icon }}" alt="{{ tree.name }}" style="width: 100%; height: 100%; object-fit: cover;">
+                        </div>
+                        <span style="color: #c9aa71; font-weight: 500; font-size: 0.75rem; text-align: center;">{{ tree.name }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <!-- Secondary Runes Display -->
+                <div id="secondaryRunesContainer" style="display: none;">
+                    <div class="tree-header" style="display: flex; flex-direction: column; align-items: center; margin-bottom: 2rem; position: relative;">
+                        <div id="secondaryTreeIcon" style="width: 5rem; height: 5rem; border-radius: 50%; border: 4px solid #06b6d4; background: rgba(6, 182, 212, 0.2); display: flex; align-items: center; justify-content: center; margin-bottom: 1rem;">
+                            <img id="secondaryTreeIconImg" src="" alt="" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">
+                        </div>
+                        <span id="secondaryTreeName" style="color: #22d3ee; font-weight: 600; font-size: 1rem;"></span>
+                    </div>
+
+                    <div id="secondaryRunes"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if user %}
+    <!-- Save Form Modal -->
+    <div class="save-form-modal" id="saveFormModal">
+        <div class="save-form-content">
+            <h2 style="color: #c9aa71; font-size: 1.5rem; font-weight: 700; margin-bottom: 1.5rem; text-align: center;">保存符文页</h2>
+            
+            <form id="saveForm" method="POST" action="/runes/save">
+                <input type="hidden" name="edit_id" id="editId" value="{% if edit_page %}{{ edit_page.id }}{% endif %}">
+                <input type="hidden" name="primary_tree_id" id="primaryTreeId">
+                <input type="hidden" name="primary_keystone_id" id="primaryKeystoneId">
+                <input type="hidden" name="primary_slot1_id" id="primarySlot1Id">
+                <input type="hidden" name="primary_slot2_id" id="primarySlot2Id">
+                <input type="hidden" name="primary_slot3_id" id="primarySlot3Id">
+                <input type="hidden" name="secondary_tree_id" id="secondaryTreeId">
+                <input type="hidden" name="secondary_slot1_id" id="secondarySlot1Id">
+                <input type="hidden" name="secondary_slot2_id" id="secondarySlot2Id">
+
+                <div style="margin-bottom: 1rem;">
+                    <label style="display: block; color: #c9aa71; font-weight: 500; margin-bottom: 0.5rem;">符文页名称</label>
+                    <input type="text" class="form-input" name="name" id="runeName" 
+                           placeholder="例如: ADC通用配置" 
+                           value="{% if edit_page %}{{ edit_page.name }}{% endif %}" 
+                           required>
+                </div>
+
+                <div style="margin-bottom: 1.5rem;">
+                    <label style="display: block; color: #c9aa71; font-weight: 500; margin-bottom: 0.5rem;">关联英雄 (可选)</label>
+                    <input type="text" class="form-input" name="champion_id" id="championId" 
+                           placeholder="英雄ID"
+                           value="{% if edit_page %}{{ edit_page.champion_id or '' }}{% endif %}">
+                </div>
+
+                <div style="display: flex; gap: 1rem;">
+                    <button type="button" onclick="closeSaveForm()" style="flex: 1; padding: 0.75rem; background: #4b5563; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 500;">
+                        取消
+                    </button>
+                    <button type="submit" id="saveBtn" disabled style="flex: 1; padding: 0.75rem; background: #c9aa71; color: #1a1a2e; border: none; border-radius: 8px; cursor: pointer; font-weight: 500;">
+                        保存
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+    const runeTreesData = {{ rune_trees | tojson }};
+    const version = "{{ version }}";
+    {% if edit_page %}
+    const editPageData = {{ edit_page | tojson }};
+    {% else %}
+    const editPageData = null;
+    {% endif %}
+    
+    let selectedPrimary = null;
+    let selectedSecondary = null;
+    let selectedRunes = {
+        primary: [null, null, null, null],
+        secondary: [null, null, null]
+    };
+
+    function showSaveForm() {
+        if (checkRuneSelection()) {
+            document.getElementById('saveFormModal').classList.add('active');
+        } else {
+            alert('请先完成符文配置');
+        }
+    }
+
+    function closeSaveForm() {
+        document.getElementById('saveFormModal').classList.remove('active');
+    }
+
+    function checkRuneSelection() {
+        const primaryComplete = selectedPrimary && selectedRunes.primary.every(r => r !== null);
+        const secondaryComplete = selectedSecondary && selectedRunes.secondary.slice(0, 2).every(r => r !== null);
+
+        const saveBtn = document.getElementById('saveBtn');
+        if (saveBtn && primaryComplete && secondaryComplete) {
+            saveBtn.disabled = false;
+
+            document.getElementById('primaryTreeId').value = selectedPrimary;
+            document.getElementById('primaryKeystoneId').value = selectedRunes.primary[0];
+            document.getElementById('primarySlot1Id').value = selectedRunes.primary[1];
+            document.getElementById('primarySlot2Id').value = selectedRunes.primary[2];
+            document.getElementById('primarySlot3Id').value = selectedRunes.primary[3];
+            document.getElementById('secondaryTreeId').value = selectedSecondary;
+            document.getElementById('secondarySlot1Id').value = selectedRunes.secondary[0];
+            document.getElementById('secondarySlot2Id').value = selectedRunes.secondary[1];
+
+            return true;
+        }
+
+        if (saveBtn) {
+            saveBtn.disabled = true;
+        }
+        return false;
+    }
+
+    function init() {
+        setupTreeSelector();
+
+        if (editPageData) {
+            loadEditData();
+        }
+    }
+
+    function setupTreeSelector() {
+        // 主系符文树选择
+        const primaryTreeOptions = document.querySelectorAll('.primary-tree-option');
+        primaryTreeOptions.forEach(option => {
+            option.addEventListener('click', function() {
+                const treeId = parseInt(this.dataset.treeId);
+
+                // 如果点击已选中的主系，取消选择
+                if (selectedPrimary === treeId) {
+                    selectedPrimary = null;
+                    selectedRunes.primary = [null, null, null, null];
+                    this.style.borderColor = 'transparent';
+                    this.style.background = 'rgba(31, 41, 55, 0.5)';
+                    document.getElementById('primaryRunesContainer').style.display = 'none';
+                    updateSecondaryTreeOptions();
+                    checkRuneSelection();
+                    return;
+                }
+
+                // 清除之前的选择
+                primaryTreeOptions.forEach(opt => {
+                    opt.style.borderColor = 'transparent';
+                    opt.style.background = 'rgba(31, 41, 55, 0.5)';
+                });
+
+                // 选择新的主系
+                selectedPrimary = treeId;
+                selectedRunes.primary = [null, null, null, null];
+                this.style.borderColor = '#eab308';
+                this.style.background = 'rgba(234, 179, 8, 0.1)';
+
+                // 如果副系和主系相同，清除副系
+                if (selectedSecondary === treeId) {
+                    selectedSecondary = null;
+                    selectedRunes.secondary = [null, null, null];
+                    document.getElementById('secondaryRunesContainer').style.display = 'none';
+                    const secondaryTreeOptions = document.querySelectorAll('.secondary-tree-option');
+                    secondaryTreeOptions.forEach(opt => {
+                        opt.style.borderColor = 'transparent';
+                        opt.style.background = 'rgba(31, 41, 55, 0.5)';
+                    });
+                }
+
+                updateSecondaryTreeOptions();
+                renderPrimaryRunes();
+                checkRuneSelection();
+            });
+        });
+
+        // 副系符文树选择
+        const secondaryTreeOptions = document.querySelectorAll('.secondary-tree-option');
+        secondaryTreeOptions.forEach(option => {
+            option.addEventListener('click', function() {
+                const treeId = parseInt(this.dataset.treeId);
+
+                // 不能选择主系
+                if (treeId === selectedPrimary) {
+                    return;
+                }
+
+                // 如果点击已选中的副系，取消选择
+                if (selectedSecondary === treeId) {
+                    selectedSecondary = null;
+                    selectedRunes.secondary = [null, null, null];
+                    this.style.borderColor = 'transparent';
+                    this.style.background = 'rgba(31, 41, 55, 0.5)';
+                    document.getElementById('secondaryRunesContainer').style.display = 'none';
+                    checkRuneSelection();
+                    return;
+                }
+
+                // 清除之前的选择
+                secondaryTreeOptions.forEach(opt => {
+                    opt.style.borderColor = 'transparent';
+                    opt.style.background = 'rgba(31, 41, 55, 0.5)';
+                });
+
+                // 选择新的副系
+                selectedSecondary = treeId;
+                selectedRunes.secondary = [null, null, null];
+                this.style.borderColor = '#06b6d4';
+                this.style.background = 'rgba(6, 182, 212, 0.1)';
+
+                renderSecondaryRunes();
+                checkRuneSelection();
+            });
+        });
+    }
+
+    function updateSecondaryTreeOptions() {
+        const secondaryTreeOptions = document.querySelectorAll('.secondary-tree-option');
+        secondaryTreeOptions.forEach(option => {
+            const treeId = parseInt(option.dataset.treeId);
+            if (treeId === selectedPrimary) {
+                option.style.opacity = '0.3';
+                option.style.cursor = 'not-allowed';
+            } else {
+                option.style.opacity = '1';
+                option.style.cursor = 'pointer';
+            }
+        });
+    }
+
+    function renderPrimaryRunes() {
+        const tree = runeTreesData.find(t => t.id === selectedPrimary);
+        if (!tree) return;
+
+        // 显示容器
+        document.getElementById('primaryRunesContainer').style.display = 'block';
+
+        // 更新树图标和名称
+        document.getElementById('primaryTreeIconImg').src = `https://ddragon.leagueoflegends.com/cdn/img/${tree.icon}`;
+        document.getElementById('primaryTreeName').textContent = tree.name;
+
+        const container = document.getElementById('primaryRunes');
+        let html = '';
+
+        tree.slots.forEach((slot, slotIndex) => {
+            html += `<div style="margin-bottom: 2rem; position: relative; z-index: 10;">`;
+            if (slotIndex === 0) {
+                html += `<div style="text-align: center; margin-bottom: 1rem;">
+                    <span style="color: #facc15; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">基石符文</span>
+                </div>`;
+            }
+            html += `<div style="display: flex; justify-content: center; gap: ${slotIndex === 0 ? '1.5rem' : '2rem'}; flex-wrap: wrap;">`;
+
+            slot.runes.forEach(rune => {
+                const size = slotIndex === 0 ? '3.5rem' : '3rem';
+                const isKeystone = slotIndex === 0;
+                html += `
+                    <div class="rune-slot ${isKeystone ? 'keystone' : ''}"
+                         data-rune-id="${rune.id}"
+                         data-slot-index="${slotIndex}"
+                         onclick="selectPrimaryRune(${rune.id}, ${slotIndex})"
+                         style="width: ${size}; height: ${size}; border-radius: 50%; border: ${isKeystone ? '3px' : '2px'} solid #4b5563; background: rgba(31, 41, 55, 0.5); display: flex; align-items: center; justify-content: center; position: relative;">
+                        <img src="https://ddragon.leagueoflegends.com/cdn/img/${rune.icon}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%; opacity: 0.6;">
+                        <div class="rune-tooltip">
+                            <div class="rune-tooltip-title">${rune.name}</div>
+                            <div class="rune-tooltip-desc">${rune.shortDesc}</div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            html += `</div></div>`;
+        });
+
+        container.innerHTML = html;
+    }
+
+    function renderSecondaryRunes() {
+        const tree = runeTreesData.find(t => t.id === selectedSecondary);
+        if (!tree) return;
+
+        // 显示容器
+        document.getElementById('secondaryRunesContainer').style.display = 'block';
+
+        // 更新树图标和名称
+        document.getElementById('secondaryTreeIconImg').src = `https://ddragon.leagueoflegends.com/cdn/img/${tree.icon}`;
+        document.getElementById('secondaryTreeName').textContent = tree.name;
+
+        const container = document.getElementById('secondaryRunes');
+        let html = '';
+
+        // 副系只显示后3层符文（跳过基石）
+        tree.slots.slice(1).forEach((slot, slotIndex) => {
+            html += `<div style="margin-bottom: 2rem;">`;
+            html += `<div style="display: flex; justify-content: center; gap: 2rem; flex-wrap: wrap;">`;
+
+            slot.runes.forEach(rune => {
+                html += `
+                    <div class="rune-slot"
+                         data-rune-id="${rune.id}"
+                         data-slot-index="${slotIndex}"
+                         onclick="selectSecondaryRune(${rune.id}, ${slotIndex})"
+                         style="width: 3rem; height: 3rem; border-radius: 50%; border: 2px solid #4b5563; background: rgba(31, 41, 55, 0.5); display: flex; align-items: center; justify-content: center; position: relative;">
+                        <img src="https://ddragon.leagueoflegends.com/cdn/img/${rune.icon}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%; opacity: 0.6;">
+                        <div class="rune-tooltip">
+                            <div class="rune-tooltip-title">${rune.name}</div>
+                            <div class="rune-tooltip-desc">${rune.shortDesc}</div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            html += `</div></div>`;
+        });
+
+        container.innerHTML = html;
+    }
+
+    function selectPrimaryRune(runeId, slotIndex) {
+        selectedRunes.primary[slotIndex] = runeId;
+
+        document.querySelectorAll(`[data-slot-index="${slotIndex}"]`).forEach(slot => {
+            if (slot.closest('#primaryRunes')) {
+                slot.classList.remove('selected');
+                const img = slot.querySelector('img');
+                if (img) img.style.opacity = '0.6';
+                slot.style.borderColor = '#4b5563';
+            }
+        });
+
+        const selectedSlot = document.querySelector(`#primaryRunes [data-rune-id="${runeId}"]`);
+        if (selectedSlot) {
+            selectedSlot.classList.add('selected');
+            const img = selectedSlot.querySelector('img');
+            if (img) img.style.opacity = '1';
+            selectedSlot.style.borderColor = '#eab308';
+        }
+
+        checkRuneSelection();
+    }
+
+    function selectSecondaryRune(runeId, slotIndex) {
+        const selectedCount = selectedRunes.secondary.filter(r => r !== null).length;
+        const alreadySelected = selectedRunes.secondary.includes(runeId);
+
+        if (alreadySelected) {
+            const index = selectedRunes.secondary.indexOf(runeId);
+            selectedRunes.secondary[index] = null;
+
+            const slot = document.querySelector(`#secondaryRunes [data-rune-id="${runeId}"]`);
+            if (slot) {
+                slot.classList.remove('selected');
+                const img = slot.querySelector('img');
+                if (img) img.style.opacity = '0.6';
+                slot.style.borderColor = '#4b5563';
+            }
+        } else if (selectedCount < 2) {
+            const emptyIndex = selectedRunes.secondary.findIndex(r => r === null);
+            selectedRunes.secondary[emptyIndex] = runeId;
+
+            const slot = document.querySelector(`#secondaryRunes [data-rune-id="${runeId}"]`);
+            if (slot) {
+                slot.classList.add('selected');
+                const img = slot.querySelector('img');
+                if (img) img.style.opacity = '1';
+                slot.style.borderColor = '#06b6d4';
+            }
+        }
+
+        checkRuneSelection();
+    }
+
+    function loadEditData() {
+        selectedPrimary = editPageData.primary_tree_id;
+        selectedSecondary = editPageData.secondary_tree_id;
+
+        selectedRunes.primary = [
+            editPageData.primary_keystone_id,
+            editPageData.primary_slot1_id,
+            editPageData.primary_slot2_id,
+            editPageData.primary_slot3_id
+        ];
+        selectedRunes.secondary = [
+            editPageData.secondary_slot1_id,
+            editPageData.secondary_slot2_id,
+            null
+        ];
+
+        // 标记选中的主系
+        const primaryTreeOptions = document.querySelectorAll('.primary-tree-option');
+        primaryTreeOptions.forEach(option => {
+            const treeId = parseInt(option.dataset.treeId);
+            if (treeId === selectedPrimary) {
+                option.style.borderColor = '#eab308';
+                option.style.background = 'rgba(234, 179, 8, 0.1)';
+            }
+        });
+
+        // 标记选中的副系
+        const secondaryTreeOptions = document.querySelectorAll('.secondary-tree-option');
+        secondaryTreeOptions.forEach(option => {
+            const treeId = parseInt(option.dataset.treeId);
+            if (treeId === selectedSecondary) {
+                option.style.borderColor = '#06b6d4';
+                option.style.background = 'rgba(6, 182, 212, 0.1)';
+            }
+        });
+
+        updateSecondaryTreeOptions();
+        renderPrimaryRunes();
+        renderSecondaryRunes();
+
+        setTimeout(() => {
+            selectedRunes.primary.forEach((runeId, index) => {
+                if (runeId) {
+                    const slot = document.querySelector(`#primaryRunes [data-rune-id="${runeId}"]`);
+                    if (slot) {
+                        slot.classList.add('selected');
+                        const img = slot.querySelector('img');
+                        if (img) img.style.opacity = '1';
+                        slot.style.borderColor = '#eab308';
+                    }
+                }
+            });
+
+            selectedRunes.secondary.forEach((runeId, index) => {
+                if (runeId) {
+                    const slot = document.querySelector(`#secondaryRunes [data-rune-id="${runeId}"]`);
+                    if (slot) {
+                        slot.classList.add('selected');
+                        const img = slot.querySelector('img');
+                        if (img) img.style.opacity = '1';
+                        slot.style.borderColor = '#06b6d4';
+                    }
+                }
+            });
+
+            checkRuneSelection();
+        }, 100);
+    }
+
+    document.addEventListener('DOMContentLoaded', init);
+</script>
+{% endmacro %}
+

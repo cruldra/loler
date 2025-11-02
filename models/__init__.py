@@ -1,24 +1,10 @@
-from .champion import (
-    ChampionDataModel,
-    ChampionModel,
-    ImageModel,
-    SkinModel,
-    InfoModel,
-    StatsModel,
-    SpellModel,
-    PassiveModel,
-    LevelTipModel
-)
+"""
+数据库模型定义
+"""
+from .user import User
+from .rune_page import RunePage
 
 __all__ = [
-    "ChampionDataModel",
-    "ChampionModel",
-    "ImageModel",
-    "SkinModel",
-    "InfoModel",
-    "StatsModel",
-    "SpellModel",
-    "PassiveModel",
-    "LevelTipModel"
+    "User",
+    "RunePage"
 ]
-

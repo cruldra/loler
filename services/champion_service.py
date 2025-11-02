@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 from typing import Dict, Optional
-from models.champion import ChampionDataModel, ChampionModel
+from schemas.champion import ChampionDataModel, ChampionModel
 
 
 class ChampionService:

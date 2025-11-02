@@ -4,7 +4,7 @@
 import json
 from pathlib import Path
 from typing import Dict, List, Optional
-from models.rune import RuneTreeModel, RuneModel
+from schemas.rune import RuneTreeModel, RuneModel
 
 
 class RuneService:
