@@ -20,6 +20,13 @@ from .summoner import (
     SummonerImageModel,
     SummonerDataModel
 )
+from .item import (
+    ItemModel,
+    ItemDataModel,
+    ItemImageModel,
+    ItemGoldModel,
+    ItemStatsModel
+)
 from .user import UserInfo
 
 __all__ = [
@@ -39,6 +46,11 @@ __all__ = [
     "SummonerSpellModel",
     "SummonerImageModel",
     "SummonerDataModel",
+    "ItemModel",
+    "ItemDataModel",
+    "ItemImageModel",
+    "ItemGoldModel",
+    "ItemStatsModel",
     "UserInfo"
 ]
 

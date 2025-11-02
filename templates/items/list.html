@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% import 'components/item_browser.html' as ItemBrowser %}
+{% import 'components/item_detail.html' as ItemDetail %}
+
+{% block title %}装备查询 - LOL助手{% endblock %}
+
+{% block styles %}
+<style>
+    /* 确保装备查询菜单项高亮 */
+    .mega-menu-item[href="/items"] {
+        background: rgba(255, 215, 0, 0.15) !important;
+        border-color: var(--primary) !important;
+    }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // 高亮选中的装备
+    document.addEventListener('DOMContentLoaded', function() {
+        const selectedItemId = "{{ selected_item_id }}";
+        if (selectedItemId && selectedItemId !== "None") {
+            const selectedCard = document.querySelector(`.item-card[data-item-id="${selectedItemId}"]`);
+            if (selectedCard) {
+                selectedCard.classList.add('selected');
+            }
+        }
+    });
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- 左侧：装备浏览器 -->
+        <div class="lg:col-span-1">
+            {{ ItemBrowser.ItemBrowser(items=items, version=version) }}
+        </div>
+
+        <!-- 右侧：装备详情 -->
+        <div class="lg:col-span-2">
+            {% if selected_item %}
+                {{ ItemDetail.ItemDetail(item=selected_item, item_id=selected_item_id, all_items=all_items, version=version) }}
+            {% else %}
+                <div class="flex items-center justify-center h-full">
+                    <div class="text-center">
+                        <i data-lucide="shopping-bag" class="w-16 h-16 mx-auto mb-4 text-muted-foreground"></i>
+                        <h2 class="text-2xl font-bold text-foreground mb-2">选择一个装备</h2>
+                        <p class="text-muted-foreground">从左侧列表中选择一个装备查看详细信息</p>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+

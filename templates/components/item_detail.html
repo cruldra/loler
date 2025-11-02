@@ -1,0 +1,613 @@
+{# 装备详情组件 #}
+{% macro ItemDetail(item=None, item_id=None, all_items=None, version="15.21.1") %}
+<style>
+    .item-detail {
+        background: var(--card) !important;
+        border: 1px solid var(--border) !important;
+        border-radius: var(--radius-lg) !important;
+        box-shadow: var(--shadow-xl) !important;
+        overflow: hidden;
+    }
+
+    .item-header {
+        padding: 2rem;
+        background: linear-gradient(135deg, rgba(255, 215, 0, 0.1), rgba(255, 215, 0, 0.05)) !important;
+        border-bottom: 1px solid var(--border) !important;
+    }
+
+    /* Tab页样式 */
+    .item-tabs {
+        display: flex;
+        gap: 0;
+        border-bottom: 2px solid var(--border) !important;
+        background: var(--muted) !important;
+        padding: 0 2rem;
+    }
+
+    .item-tab {
+        padding: 1rem 2rem;
+        background: transparent;
+        border: none;
+        color: var(--muted-foreground) !important;
+        font-size: 0.95rem !important;
+        font-weight: 600 !important;
+        cursor: pointer;
+        transition: all 0.2s ease-out !important;
+        border-bottom: 3px solid transparent;
+        margin-bottom: -2px;
+        position: relative;
+    }
+
+    .item-tab:hover {
+        color: var(--foreground) !important;
+        background: rgba(255, 215, 0, 0.05) !important;
+    }
+
+    .item-tab.active {
+        color: var(--primary) !important;
+        border-bottom-color: var(--primary) !important;
+        background: var(--card) !important;
+    }
+
+    .item-tab-content {
+        display: none;
+        padding: 2rem;
+    }
+
+    .item-tab-content.active {
+        display: block;
+    }
+
+    .item-header-content {
+        display: flex;
+        align-items: center;
+        gap: 2rem;
+    }
+
+    .item-large-icon {
+        width: 96px;
+        height: 96px;
+        border-radius: var(--radius-lg) !important;
+        border: 3px solid var(--primary) !important;
+        box-shadow: 0 8px 24px rgba(255, 215, 0, 0.3) !important;
+    }
+
+    .item-header-info {
+        flex: 1;
+    }
+
+    .item-title {
+        font-size: 2rem !important;
+        font-weight: 700 !important;
+        color: var(--foreground) !important;
+        margin-bottom: 0.5rem;
+    }
+
+    .item-subtitle {
+        font-size: 1rem !important;
+        color: var(--muted-foreground) !important;
+        margin-bottom: 1rem;
+    }
+
+    .item-price-info {
+        display: flex;
+        gap: 2rem;
+        align-items: center;
+    }
+
+    .item-price-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 1.1rem !important;
+        color: var(--primary) !important;
+        font-weight: 600 !important;
+    }
+
+    .item-body {
+        padding: 2rem;
+    }
+
+    .item-section {
+        margin-bottom: 2rem;
+    }
+
+    .item-section-title {
+        font-size: 1.2rem !important;
+        font-weight: 600 !important;
+        color: var(--foreground) !important;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .item-stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 1rem;
+    }
+
+    .item-stat {
+        padding: 1rem;
+        background: var(--background) !important;
+        border: 1px solid var(--border) !important;
+        border-radius: var(--radius) !important;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .item-stat-icon {
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, var(--primary), var(--accent)) !important;
+        border-radius: var(--radius) !important;
+        color: var(--primary-foreground) !important;
+    }
+
+    .item-stat-info {
+        flex: 1;
+    }
+
+    .item-stat-label {
+        font-size: 0.85rem !important;
+        color: var(--muted-foreground) !important;
+    }
+
+    .item-stat-value {
+        font-size: 1.1rem !important;
+        font-weight: 600 !important;
+        color: var(--foreground) !important;
+    }
+
+    .item-description {
+        padding: 1.5rem;
+        background: var(--background) !important;
+        border: 1px solid var(--border) !important;
+        border-radius: var(--radius) !important;
+        color: var(--foreground) !important;
+        line-height: 1.6;
+    }
+
+    .item-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .item-tag {
+        padding: 0.5rem 1rem !important;
+        background: rgba(255, 215, 0, 0.1) !important;
+        border: 1px solid var(--primary) !important;
+        border-radius: var(--radius) !important;
+        color: var(--primary) !important;
+        font-size: 0.85rem !important;
+        font-weight: 500 !important;
+    }
+
+    .item-recipe {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        align-items: center;
+    }
+
+    .item-recipe-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .item-recipe-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: var(--radius) !important;
+        border: 2px solid var(--border) !important;
+    }
+
+    .item-recipe-name {
+        font-size: 0.75rem !important;
+        color: var(--muted-foreground) !important;
+        text-align: center;
+    }
+
+    .item-recipe-arrow {
+        color: var(--muted-foreground) !important;
+    }
+
+    /* 合成路线样式 */
+    .recipe-section {
+        margin-bottom: 2rem;
+    }
+
+    .recipe-section-title {
+        font-size: 1.1rem !important;
+        font-weight: 600 !important;
+        color: var(--primary) !important;
+        margin-bottom: 1rem !important;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .recipe-items {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        align-items: center;
+    }
+
+    .recipe-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 1rem;
+        background: var(--muted) !important;
+        border: 2px solid var(--border) !important;
+        border-radius: var(--radius) !important;
+        transition: all 0.2s ease-out !important;
+        text-decoration: none;
+        min-width: 100px;
+    }
+
+    .recipe-item:hover {
+        transform: translateY(-4px);
+        border-color: var(--primary) !important;
+        box-shadow: 0 4px 12px rgba(255, 215, 0, 0.3) !important;
+    }
+
+    .recipe-item-image {
+        width: 64px;
+        height: 64px;
+        border-radius: var(--radius) !important;
+        border: 2px solid var(--border) !important;
+    }
+
+    .recipe-item-name {
+        font-size: 0.85rem !important;
+        font-weight: 500 !important;
+        color: var(--foreground) !important;
+        text-align: center;
+        max-width: 100px;
+        word-wrap: break-word;
+    }
+
+    .recipe-item-price {
+        font-size: 0.75rem !important;
+        color: var(--primary) !important;
+        font-weight: 600 !important;
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    .recipe-arrow {
+        color: var(--muted-foreground) !important;
+        font-size: 2rem !important;
+        margin: 0 0.5rem;
+    }
+
+    .recipe-current-item {
+        border-color: var(--primary) !important;
+        background: rgba(255, 215, 0, 0.1) !important;
+        box-shadow: 0 0 20px rgba(255, 215, 0, 0.3) !important;
+    }
+
+    .recipe-current-item .recipe-item-image {
+        width: 80px;
+        height: 80px;
+        border-color: var(--primary) !important;
+    }
+
+    .recipe-total-cost {
+        margin-top: 1rem;
+        padding: 1rem;
+        background: var(--muted) !important;
+        border-radius: var(--radius) !important;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .recipe-cost-label {
+        font-size: 1rem !important;
+        font-weight: 600 !important;
+        color: var(--foreground) !important;
+    }
+
+    .recipe-cost-value {
+        font-size: 1.2rem !important;
+        font-weight: 700 !important;
+        color: var(--primary) !important;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .no-recipe {
+        padding: 3rem 2rem;
+        text-align: center;
+        color: var(--muted-foreground) !important;
+    }
+</style>
+
+<div class="item-detail">
+    {% if item %}
+    <!-- 装备头部 -->
+    <div class="item-header">
+        <div class="item-header-content">
+            <img
+                src="https://ddragon.leagueoflegends.com/cdn/{{ version }}/img/item/{{ item.image.full }}"
+                alt="{{ item.name }}"
+                class="item-large-icon"
+            >
+            <div class="item-header-info">
+                <h1 class="item-title">{{ item.name }}</h1>
+                {% if item.plaintext %}
+                <p class="item-subtitle">{{ item.plaintext }}</p>
+                {% endif %}
+                <div class="item-price-info">
+                    <div class="item-price-item">
+                        <i data-lucide="coins" class="w-5 h-5"></i>
+                        <span>总价: {{ item.gold.total }}</span>
+                    </div>
+                    <div class="item-price-item">
+                        <i data-lucide="shopping-cart" class="w-5 h-5"></i>
+                        <span>合成: {{ item.gold.base }}</span>
+                    </div>
+                    <div class="item-price-item">
+                        <i data-lucide="arrow-down-up" class="w-5 h-5"></i>
+                        <span>出售: {{ item.gold.sell }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tab页导航 -->
+    <div class="item-tabs">
+        <button class="item-tab active" data-tab="details">
+            <i data-lucide="info" class="w-4 h-4 inline mr-2"></i>
+            装备详情
+        </button>
+        <button class="item-tab" data-tab="recipe">
+            <i data-lucide="git-branch" class="w-4 h-4 inline mr-2"></i>
+            合成路线
+        </button>
+    </div>
+
+    <!-- Tab页内容 - 装备详情 -->
+    <div class="item-tab-content active" id="details-tab">
+    <div class="item-body">
+        <!-- 属性加成 -->
+        {% if item.stats %}
+        <div class="item-section">
+            <h2 class="item-section-title">
+                <i data-lucide="trending-up" class="w-5 h-5"></i>
+                属性加成
+            </h2>
+            <div class="item-stats-grid">
+                {% if item.stats.FlatPhysicalDamageMod %}
+                <div class="item-stat">
+                    <div class="item-stat-icon">
+                        <i data-lucide="sword" class="w-4 h-4"></i>
+                    </div>
+                    <div class="item-stat-info">
+                        <div class="item-stat-label">攻击力</div>
+                        <div class="item-stat-value">+{{ item.stats.FlatPhysicalDamageMod }}</div>
+                    </div>
+                </div>
+                {% endif %}
+                
+                {% if item.stats.FlatMagicDamageMod %}
+                <div class="item-stat">
+                    <div class="item-stat-icon">
+                        <i data-lucide="sparkles" class="w-4 h-4"></i>
+                    </div>
+                    <div class="item-stat-info">
+                        <div class="item-stat-label">法术强度</div>
+                        <div class="item-stat-value">+{{ item.stats.FlatMagicDamageMod }}</div>
+                    </div>
+                </div>
+                {% endif %}
+                
+                {% if item.stats.FlatHPPoolMod %}
+                <div class="item-stat">
+                    <div class="item-stat-icon">
+                        <i data-lucide="heart" class="w-4 h-4"></i>
+                    </div>
+                    <div class="item-stat-info">
+                        <div class="item-stat-label">生命值</div>
+                        <div class="item-stat-value">+{{ item.stats.FlatHPPoolMod }}</div>
+                    </div>
+                </div>
+                {% endif %}
+                
+                {% if item.stats.FlatArmorMod %}
+                <div class="item-stat">
+                    <div class="item-stat-icon">
+                        <i data-lucide="shield" class="w-4 h-4"></i>
+                    </div>
+                    <div class="item-stat-info">
+                        <div class="item-stat-label">护甲</div>
+                        <div class="item-stat-value">+{{ item.stats.FlatArmorMod }}</div>
+                    </div>
+                </div>
+                {% endif %}
+                
+                {% if item.stats.FlatSpellBlockMod %}
+                <div class="item-stat">
+                    <div class="item-stat-icon">
+                        <i data-lucide="shield-check" class="w-4 h-4"></i>
+                    </div>
+                    <div class="item-stat-info">
+                        <div class="item-stat-label">魔法抗性</div>
+                        <div class="item-stat-value">+{{ item.stats.FlatSpellBlockMod }}</div>
+                    </div>
+                </div>
+                {% endif %}
+                
+                {% if item.stats.PercentAttackSpeedMod %}
+                <div class="item-stat">
+                    <div class="item-stat-icon">
+                        <i data-lucide="zap" class="w-4 h-4"></i>
+                    </div>
+                    <div class="item-stat-info">
+                        <div class="item-stat-label">攻击速度</div>
+                        <div class="item-stat-value">+{{ (item.stats.PercentAttackSpeedMod * 100)|round(1) }}%</div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- 装备描述 -->
+        {% if item.description %}
+        <div class="item-section">
+            <h2 class="item-section-title">
+                <i data-lucide="file-text" class="w-5 h-5"></i>
+                装备效果
+            </h2>
+            <div class="item-description">
+                {{ item.description|safe }}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- 标签 -->
+        {% if item.tags %}
+        <div class="item-section">
+            <h2 class="item-section-title">
+                <i data-lucide="tags" class="w-5 h-5"></i>
+                装备标签
+            </h2>
+            <div class="item-tags">
+                {% for tag in item.tags %}
+                <span class="item-tag">{{ tag }}</span>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    </div>
+
+    <!-- Tab页内容 - 合成路线 -->
+    <div class="item-tab-content" id="recipe-tab">
+        {% if item.from_ %}
+        <!-- 合成材料 -->
+        <div class="recipe-section">
+            <div class="recipe-section-title">
+                <i data-lucide="package" class="w-5 h-5"></i>
+                合成材料
+            </div>
+            <div class="recipe-items">
+                {% for material_id in item.from_ %}
+                    {% if all_items and material_id in all_items %}
+                        {% set material = all_items[material_id] %}
+                        <div class="recipe-item">
+                            <img
+                                src="https://ddragon.leagueoflegends.com/cdn/{{ version }}/img/item/{{ material.image.full }}"
+                                alt="{{ material.name }}"
+                                class="recipe-item-image"
+                            >
+                            <div class="recipe-item-name">{{ material.name }}</div>
+                            <div class="recipe-item-price">
+                                <i data-lucide="coins" class="w-3 h-3"></i>
+                                {{ material.gold.total }}
+                            </div>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+
+                <div class="recipe-arrow">
+                    <i data-lucide="arrow-right" class="w-8 h-8"></i>
+                </div>
+
+                <!-- 当前装备 -->
+                <div class="recipe-item recipe-current-item">
+                    <img
+                        src="https://ddragon.leagueoflegends.com/cdn/{{ version }}/img/item/{{ item.image.full }}"
+                        alt="{{ item.name }}"
+                        class="recipe-item-image"
+                    >
+                    <div class="recipe-item-name">{{ item.name }}</div>
+                    <div class="recipe-item-price">
+                        <i data-lucide="coins" class="w-3 h-3"></i>
+                        {{ item.gold.total }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- 合成价格 -->
+            <div class="recipe-total-cost">
+                <div class="recipe-cost-label">合成价格</div>
+                <div class="recipe-cost-value">
+                    <i data-lucide="hammer" class="w-5 h-5"></i>
+                    {{ item.gold.base }} 金币
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="no-recipe">
+            <i data-lucide="info" class="w-12 h-12 mx-auto mb-2"></i>
+            <p>此装备为基础装备，无需合成</p>
+        </div>
+        {% endif %}
+
+        {% if item.into %}
+        <!-- 可合成装备 -->
+        <div class="recipe-section">
+            <div class="recipe-section-title">
+                <i data-lucide="arrow-up-right" class="w-5 h-5"></i>
+                可合成装备
+            </div>
+            <div class="recipe-items">
+                {% for upgrade_id in item.into %}
+                    {% if all_items and upgrade_id in all_items %}
+                        {% set upgrade = all_items[upgrade_id] %}
+                        <div class="recipe-item">
+                            <img
+                                src="https://ddragon.leagueoflegends.com/cdn/{{ version }}/img/item/{{ upgrade.image.full }}"
+                                alt="{{ upgrade.name }}"
+                                class="recipe-item-image"
+                            >
+                            <div class="recipe-item-name">{{ upgrade.name }}</div>
+                            <div class="recipe-item-price">
+                                <i data-lucide="coins" class="w-3 h-3"></i>
+                                {{ upgrade.gold.total }}
+                            </div>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    {% endif %}
+</div>
+
+<script>
+    // Tab页切换
+    document.querySelectorAll('.item-tab').forEach(tab => {
+        tab.addEventListener('click', function() {
+            // 移除所有活跃状态
+            document.querySelectorAll('.item-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.item-tab-content').forEach(c => c.classList.remove('active'));
+
+            // 添加活跃状态
+            this.classList.add('active');
+            const tabName = this.dataset.tab;
+            document.getElementById(`${tabName}-tab`).classList.add('active');
+        });
+    });
+</script>
+{% endmacro %}
+

@@ -1,0 +1,360 @@
+{# 装备浏览器组件 #}
+{% macro ItemBrowser(items=[], version="15.21.1", max_width="400px") %}
+<style>
+    .item-browser {
+        max-width: {{ max_width }};
+        margin: 2rem auto;
+        background: var(--card) !important;
+        border: 1px solid var(--border) !important;
+        border-radius: var(--radius-lg) !important;
+        box-shadow: var(--shadow-xl) !important;
+        overflow: hidden;
+    }
+
+    .item-search-container {
+        padding: 1rem;
+        border-bottom: 1px solid var(--border) !important;
+    }
+
+    .item-search-box {
+        position: relative;
+        width: 100%;
+    }
+
+    .item-search-input {
+        width: 100% !important;
+        padding: 0.75rem 1rem 0.75rem 2.5rem !important;
+        background: var(--input) !important;
+        border: 1px solid var(--border) !important;
+        border-radius: var(--radius) !important;
+        color: var(--foreground) !important;
+        font-size: 0.9rem !important;
+        transition: all 0.2s ease-out !important;
+    }
+
+    .item-search-input:focus {
+        outline: none !important;
+        border-color: var(--primary) !important;
+        box-shadow: 0 0 0 2px rgba(255, 215, 0, 0.2) !important;
+    }
+
+    .item-search-input::placeholder {
+        color: var(--muted-foreground) !important;
+    }
+
+    .item-search-icon {
+        position: absolute;
+        left: 0.75rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--muted-foreground) !important;
+        pointer-events: none;
+    }
+
+    .item-filter-container {
+        padding: 1rem;
+        border-bottom: 1px solid var(--border) !important;
+    }
+
+    .item-filter-buttons {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+
+    .item-filter-btn {
+        width: 2.5rem !important;
+        height: 2.5rem !important;
+        border-radius: var(--radius) !important;
+        background: var(--muted) !important;
+        border: 1px solid var(--border) !important;
+        color: var(--muted-foreground) !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        cursor: pointer !important;
+        transition: all 0.2s ease-out !important;
+        font-size: 0.8rem !important;
+        font-weight: 600 !important;
+    }
+
+    .item-filter-btn:hover {
+        background: var(--accent) !important;
+        color: var(--accent-foreground) !important;
+        transform: scale(1.05) !important;
+    }
+
+    .item-filter-btn.active {
+        background: var(--primary) !important;
+        color: var(--primary-foreground) !important;
+        border-color: var(--primary) !important;
+    }
+
+    .items-grid {
+        padding: 1rem;
+        max-height: 600px;
+        overflow-y: auto;
+    }
+
+    .items-container {
+        display: grid;
+        grid-template-columns: repeat(6, 1fr);
+        gap: 0.5rem;
+    }
+
+    .item-card {
+        position: relative;
+        aspect-ratio: 1;
+        border-radius: var(--radius) !important;
+        overflow: hidden;
+        cursor: pointer;
+        transition: all 0.2s ease-out !important;
+        border: 2px solid transparent;
+        text-decoration: none !important;
+    }
+
+    .item-card:hover {
+        transform: scale(1.05) !important;
+        border-color: var(--primary) !important;
+        box-shadow: 0 0 15px rgba(255, 215, 0, 0.4) !important;
+    }
+
+    .item-card.selected {
+        border-color: var(--primary) !important;
+        box-shadow: 0 0 20px rgba(255, 215, 0, 0.6) !important;
+    }
+
+    .item-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.2s ease-out;
+    }
+
+    .item-card:hover .item-image {
+        transform: scale(1.1);
+    }
+
+    .item-name {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: linear-gradient(transparent, rgba(0, 0, 0, 0.8));
+        color: white;
+        padding: 0.5rem 0.25rem 0.25rem;
+        font-size: 0.7rem;
+        font-weight: 500;
+        text-align: center;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+    }
+
+
+
+    /* 滚动条样式 */
+    .items-grid::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .items-grid::-webkit-scrollbar-track {
+        background: var(--muted);
+        border-radius: 3px;
+    }
+
+    .items-grid::-webkit-scrollbar-thumb {
+        background: var(--muted-foreground);
+        border-radius: 3px;
+    }
+
+    .items-grid::-webkit-scrollbar-thumb:hover {
+        background: var(--primary);
+    }
+
+    /* 动画效果 */
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .item-card {
+        animation: fadeIn 0.3s ease-out;
+    }
+
+    .item-card:nth-child(n) {
+        animation-delay: calc(var(--index) * 0.02s);
+    }
+
+    .item-count {
+        padding: 0.5rem 1rem;
+        text-align: center;
+        font-size: 0.85rem !important;
+        color: var(--muted-foreground) !important;
+        border-top: 1px solid var(--border) !important;
+    }
+
+    .no-items {
+        padding: 3rem 1rem;
+        text-align: center;
+        color: var(--muted-foreground) !important;
+    }
+
+    .loading {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 200px;
+        color: var(--muted-foreground);
+    }
+</style>
+
+<div class="item-browser">
+    <!-- 搜索框 -->
+    <div class="item-search-container">
+        <div class="item-search-box">
+            <input 
+                type="text" 
+                class="item-search-input" 
+                placeholder="搜索装备..."
+                id="itemSearchInput"
+            >
+            <i data-lucide="search" class="item-search-icon w-5 h-5"></i>
+        </div>
+    </div>
+
+    <!-- 筛选按钮 -->
+    <div class="item-filter-container">
+        <div class="item-filter-buttons">
+            <button class="item-filter-btn active" data-filter="all" title="全部">
+                <i data-lucide="asterisk" class="w-4 h-4"></i>
+            </button>
+            <button class="item-filter-btn" data-filter="Damage" title="攻击">
+                <i data-lucide="sword" class="w-4 h-4"></i>
+            </button>
+            <button class="item-filter-btn" data-filter="SpellDamage" title="法术">
+                <i data-lucide="sparkles" class="w-4 h-4"></i>
+            </button>
+            <button class="item-filter-btn" data-filter="Armor" title="护甲">
+                <i data-lucide="shield" class="w-4 h-4"></i>
+            </button>
+            <button class="item-filter-btn" data-filter="SpellBlock" title="魔抗">
+                <i data-lucide="shield-check" class="w-4 h-4"></i>
+            </button>
+            <button class="item-filter-btn" data-filter="AttackSpeed" title="攻速">
+                <i data-lucide="zap" class="w-4 h-4"></i>
+            </button>
+            <button class="item-filter-btn" data-filter="LifeSteal" title="吸血">
+                <i data-lucide="heart" class="w-4 h-4"></i>
+            </button>
+            <button class="item-filter-btn" data-filter="Boots" title="鞋子">
+                <i data-lucide="footprints" class="w-4 h-4"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- 装备网格 -->
+    <div class="items-grid">
+        <div class="items-container" id="itemsContainer">
+            {% if items %}
+                {% for item_data in items %}
+                <a href="/items/{{ item_data.id }}" class="item-card" data-item-id="{{ item_data.id }}" data-item-name="{{ item_data.item.name }}" data-tags="{{ item_data.item.tags|join(',') }}" style="--index: {{ loop.index0 }}">
+                    <img
+                        src="https://ddragon.leagueoflegends.com/cdn/{{ version }}/img/item/{{ item_data.item.image.full }}"
+                        alt="{{ item_data.item.name }}"
+                        class="item-image"
+                    >
+                    <div class="item-name">{{ item_data.item.name }}</div>
+                </a>
+                {% endfor %}
+            {% else %}
+                <div class="no-items">
+                    <i data-lucide="package-x" class="w-12 h-12 mx-auto mb-2"></i>
+                    <p>暂无装备数据</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- 装备数量 -->
+    <div class="item-count">
+        共 <span id="itemCount">{{ items|length }}</span> 件装备
+    </div>
+</div>
+
+<script>
+    // 装备搜索和筛选功能
+    const itemSearchInput = document.getElementById('itemSearchInput');
+    const itemCards = document.querySelectorAll('.item-card');
+    const itemCountSpan = document.getElementById('itemCount');
+    const filterBtns = document.querySelectorAll('.item-filter-btn');
+
+    let currentFilter = 'all';
+    let searchTerm = '';
+
+    // 搜索功能
+    if (itemSearchInput) {
+        itemSearchInput.addEventListener('input', function(e) {
+            searchTerm = e.target.value;
+            filterItems();
+        });
+    }
+
+    // 筛选功能
+    filterBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            // 移除所有活跃状态
+            filterBtns.forEach(b => b.classList.remove('active'));
+
+            // 添加活跃状态
+            this.classList.add('active');
+            currentFilter = this.dataset.filter;
+            filterItems();
+
+            // 添加点击动画
+            this.style.transform = 'scale(0.9)';
+            setTimeout(() => {
+                this.style.transform = '';
+            }, 150);
+        });
+    });
+
+    function filterItems() {
+        const searchTermLower = searchTerm.toLowerCase();
+        let visibleCount = 0;
+
+        itemCards.forEach(card => {
+            const itemName = (card.dataset.itemName || card.querySelector('.item-name').textContent).toLowerCase();
+            const itemTags = card.dataset.tags || '';
+
+            const matchesSearch = itemName.includes(searchTermLower);
+            const matchesFilter = currentFilter === 'all' || itemTags.includes(currentFilter);
+
+            if (matchesSearch && matchesFilter) {
+                card.style.display = 'block';
+                visibleCount++;
+            } else {
+                card.style.display = 'none';
+            }
+        });
+
+        if (itemCountSpan) {
+            itemCountSpan.textContent = visibleCount;
+        }
+    }
+
+    // 键盘导航
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && itemSearchInput) {
+            itemSearchInput.value = '';
+            searchTerm = '';
+            filterItems();
+        }
+    });
+</script>
+{% endmacro %}
+

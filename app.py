@@ -10,6 +10,7 @@ from sqlmodel import Session, select
 from services.champion_service import champion_service
 from services.rune_service import rune_service
 from services.summoner_service import summoner_service
+from services.item_service import item_service
 from schemas.champion import ChampionModel
 from schemas.user import UserInfo
 from typing import Dict, List
@@ -17,7 +18,7 @@ from config import settings
 from oauth_providers import oauth
 from database import create_db_and_tables, get_session
 from models import User, RunePage
-from routes import summoner, champion
+from routes import summoner, champion, item
 
 
 @asynccontextmanager
@@ -40,6 +41,10 @@ async def lifespan(app: FastAPI):
     summoner_service.load_summoner_spells()
     print(f"召唤师技能数据加载完成,版本: {summoner_service.get_version()}")
 
+    # 加载装备数据
+    item_service.load_items()
+    print(f"装备数据加载完成,版本: {item_service.get_version()}")
+
     yield
     print("应用关闭中...")
 
@@ -51,6 +56,7 @@ app.add_middleware(SessionMiddleware, secret_key=settings.secret_key)
 # 注册路由
 app.include_router(champion.router)
 app.include_router(summoner.router)
+app.include_router(item.router)
 
 BASE_DIR = Path(__file__).resolve().parent
 TEMPLATES_DIR = BASE_DIR / "templates"
