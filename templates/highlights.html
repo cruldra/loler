@@ -1,0 +1,416 @@
+{% extends "base.html" %}
+
+{% block title %}高亮导入 - LOL助手{% endblock %}
+
+{% block content %}
+<style>
+    .highlights-container {
+        max-width: 1400px;
+        margin: 2rem auto;
+        padding: 0 2rem;
+    }
+
+    .page-header {
+        margin-bottom: 2rem;
+    }
+
+    .page-title {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--foreground);
+        margin-bottom: 0.5rem;
+    }
+
+    .page-description {
+        color: var(--muted-foreground);
+        font-size: 1rem;
+    }
+
+    .alert {
+        padding: 1rem;
+        border-radius: var(--radius-lg);
+        margin-bottom: 2rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .alert-warning {
+        background-color: rgba(255, 193, 7, 0.1);
+        border: 1px solid rgba(255, 193, 7, 0.3);
+        color: #ffc107;
+    }
+
+    .alert-info {
+        background-color: rgba(33, 150, 243, 0.1);
+        border: 1px solid rgba(33, 150, 243, 0.3);
+        color: #2196f3;
+    }
+
+    .import-section {
+        background-color: var(--card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        padding: 2rem;
+        margin-bottom: 2rem;
+    }
+
+    .import-button {
+        background: linear-gradient(135deg, var(--primary) 0%, #c89b3c 100%);
+        color: var(--primary-foreground);
+        padding: 0.75rem 1.5rem;
+        border-radius: var(--radius-lg);
+        border: none;
+        font-weight: 600;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.2s;
+    }
+
+    .import-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(200, 155, 60, 0.3);
+    }
+
+    .import-button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .videos-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .video-card {
+        background-color: var(--card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        overflow: hidden;
+        transition: all 0.3s;
+    }
+
+    .video-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+        border-color: var(--primary);
+    }
+
+    .video-thumbnail {
+        width: 100%;
+        aspect-ratio: 16/9;
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        cursor: pointer;
+    }
+
+    .video-thumbnail video {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .play-overlay {
+        position: absolute;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.4);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        transition: opacity 0.3s;
+    }
+
+    .video-thumbnail:hover .play-overlay {
+        opacity: 1;
+    }
+
+    .play-icon {
+        width: 64px;
+        height: 64px;
+        background: var(--primary);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--primary-foreground);
+    }
+
+    .video-info {
+        padding: 1rem;
+    }
+
+    .video-name {
+        font-weight: 600;
+        color: var(--foreground);
+        margin-bottom: 0.5rem;
+        font-size: 1rem;
+    }
+
+    .video-meta {
+        display: flex;
+        gap: 1rem;
+        color: var(--muted-foreground);
+        font-size: 0.875rem;
+        margin-bottom: 1rem;
+    }
+
+    .video-actions {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .btn-delete {
+        padding: 0.5rem 1rem;
+        background-color: rgba(239, 68, 68, 0.1);
+        color: #ef4444;
+        border: 1px solid rgba(239, 68, 68, 0.3);
+        border-radius: var(--radius-md);
+        cursor: pointer;
+        font-size: 0.875rem;
+        transition: all 0.2s;
+    }
+
+    .btn-delete:hover {
+        background-color: rgba(239, 68, 68, 0.2);
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        color: var(--muted-foreground);
+    }
+
+    .empty-state i {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        opacity: 0.3;
+    }
+
+    .loading {
+        display: inline-block;
+        width: 1rem;
+        height: 1rem;
+        border: 2px solid var(--primary-foreground);
+        border-top-color: transparent;
+        border-radius: 50%;
+        animation: spin 0.6s linear infinite;
+    }
+
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+
+    .video-modal {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.9);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .video-modal.active {
+        display: flex;
+    }
+
+    .video-modal-content {
+        max-width: 90vw;
+        max-height: 90vh;
+        position: relative;
+    }
+
+    .video-modal video {
+        max-width: 100%;
+        max-height: 90vh;
+    }
+
+    .close-modal {
+        position: absolute;
+        top: -40px;
+        right: 0;
+        background: none;
+        border: none;
+        color: white;
+        font-size: 2rem;
+        cursor: pointer;
+        padding: 0.5rem;
+    }
+</style>
+
+<div class="highlights-container">
+    <div class="page-header">
+        <h1 class="page-title">高亮导入</h1>
+        <p class="page-description">导入和管理您的英雄联盟高光时刻</p>
+    </div>
+
+    {% if not ffmpeg_installed %}
+    <div class="alert alert-warning">
+        <i data-lucide="alert-triangle" class="w-5 h-5"></i>
+        <div>
+            <strong>FFmpeg未安装</strong><br>
+            高亮导入功能需要FFmpeg支持。请先安装FFmpeg后再使用此功能。
+        </div>
+    </div>
+    {% else %}
+    <div class="alert alert-info">
+        <i data-lucide="info" class="w-5 h-5"></i>
+        <div>
+            高亮视频目录: <strong>{{ highlights_dir }}</strong>
+        </div>
+    </div>
+
+    <div class="import-section">
+        <h2 style="margin-bottom: 1rem; font-size: 1.25rem; font-weight: 600;">导入高亮视频</h2>
+        <p style="color: var(--muted-foreground); margin-bottom: 1.5rem;">
+            点击下方按钮从英雄联盟高亮目录导入视频。系统会自动将webm格式转换为mp4格式。
+        </p>
+        <button id="importBtn" class="import-button">
+            <i data-lucide="upload" class="w-5 h-5"></i>
+            开始导入
+        </button>
+        <div id="importStatus" style="margin-top: 1rem; display: none;"></div>
+    </div>
+
+    <div id="videosContainer">
+        {% if videos %}
+        <div class="videos-grid">
+            {% for video in videos %}
+            <div class="video-card" data-video-id="{{ video.id }}">
+                <div class="video-thumbnail" onclick="playVideo({{ video.id }})">
+                    <video preload="metadata">
+                        <source src="/highlights/video/{{ video.id }}" type="video/mp4">
+                    </video>
+                    <div class="play-overlay">
+                        <div class="play-icon">
+                            <i data-lucide="play" class="w-8 h-8"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="video-info">
+                    <div class="video-name">{{ video.name }}</div>
+                    <div class="video-meta">
+                        <span><i data-lucide="clock" class="w-4 h-4" style="display: inline; vertical-align: middle;"></i> 
+                            {% if video.duration %}{{ "%.1f"|format(video.duration) }}秒{% else %}未知{% endif %}
+                        </span>
+                        <span><i data-lucide="hard-drive" class="w-4 h-4" style="display: inline; vertical-align: middle;"></i> 
+                            {{ "%.2f"|format(video.file_size / 1024 / 1024) }}MB
+                        </span>
+                    </div>
+                    <div class="video-actions">
+                        <button class="btn-delete" onclick="deleteVideo({{ video.id }})">
+                            <i data-lucide="trash-2" class="w-4 h-4" style="display: inline; vertical-align: middle;"></i>
+                            删除
+                        </button>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i data-lucide="video-off"></i>
+            <h3>暂无高亮视频</h3>
+            <p>点击上方"开始导入"按钮导入您的高光时刻</p>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+
+<div id="videoModal" class="video-modal">
+    <div class="video-modal-content">
+        <button class="close-modal" onclick="closeVideoModal()">×</button>
+        <video id="modalVideo" controls></video>
+    </div>
+</div>
+
+<script>
+    lucide.createIcons();
+
+    async function importHighlights() {
+        const btn = document.getElementById('importBtn');
+        const status = document.getElementById('importStatus');
+        
+        btn.disabled = true;
+        btn.innerHTML = '<span class="loading"></span> 导入中...';
+        status.style.display = 'block';
+        status.innerHTML = '<p style="color: var(--muted-foreground);">正在扫描和转换视频，请稍候...</p>';
+        
+        const response = await fetch('/highlights/import', {
+            method: 'POST'
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            status.innerHTML = `<p style="color: #10b981;">${result.message}</p>`;
+            setTimeout(() => {
+                window.location.reload();
+            }, 2000);
+        } else {
+            status.innerHTML = `<p style="color: #ef4444;">导入失败: ${result.message}</p>`;
+            btn.disabled = false;
+            btn.innerHTML = '<i data-lucide="upload" class="w-5 h-5"></i> 开始导入';
+            lucide.createIcons();
+        }
+    }
+
+    async function deleteVideo(videoId) {
+        if (!confirm('确定要删除这个视频吗？')) {
+            return;
+        }
+        
+        const response = await fetch(`/highlights/${videoId}`, {
+            method: 'DELETE'
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            document.querySelector(`[data-video-id="${videoId}"]`).remove();
+            
+            const videosGrid = document.querySelector('.videos-grid');
+            if (videosGrid && videosGrid.children.length === 0) {
+                window.location.reload();
+            }
+        } else {
+            alert('删除失败');
+        }
+    }
+
+    function playVideo(videoId) {
+        const modal = document.getElementById('videoModal');
+        const video = document.getElementById('modalVideo');
+        
+        video.src = `/highlights/video/${videoId}`;
+        modal.classList.add('active');
+        video.play();
+    }
+
+    function closeVideoModal() {
+        const modal = document.getElementById('videoModal');
+        const video = document.getElementById('modalVideo');
+        
+        video.pause();
+        video.src = '';
+        modal.classList.remove('active');
+    }
+
+    document.getElementById('importBtn')?.addEventListener('click', importHighlights);
+    
+    document.getElementById('videoModal')?.addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeVideoModal();
+        }
+    });
+</script>
+{% endblock %}
+

@@ -28,6 +28,11 @@ from .item import (
     ItemStatsModel
 )
 from .user import UserInfo
+from .highlight import (
+    HighlightVideoResponse,
+    HighlightImportRequest,
+    HighlightImportResponse
+)
 
 __all__ = [
     "ChampionDataModel",
@@ -51,6 +56,9 @@ __all__ = [
     "ItemImageModel",
     "ItemGoldModel",
     "ItemStatsModel",
-    "UserInfo"
+    "UserInfo",
+    "HighlightVideoResponse",
+    "HighlightImportRequest",
+    "HighlightImportResponse"
 ]
 

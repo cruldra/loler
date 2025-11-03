@@ -499,6 +499,18 @@
                 </a>
             </nav>
         </div>
+
+        {% if ffmpeg_installed %}
+        <div class="sidebar-section">
+            <h3 class="sidebar-section-title">工具</h3>
+            <nav>
+                <a href="/highlights/page" class="sidebar-item">
+                    <i data-lucide="video" class="w-4 h-4"></i>
+                    高亮导入
+                </a>
+            </nav>
+        </div>
+        {% endif %}
     </aside>
 
     <!-- Main Content -->

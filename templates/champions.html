@@ -21,6 +21,19 @@
 
 {% block content %}
 <div class="container mx-auto px-4 py-8">
+    <!-- 成功/错误消息 -->
+    {% if success %}
+    <div class="mb-4 p-4 bg-primary text-primary-foreground rounded-lg shadow-lg">
+        {{ success }}
+    </div>
+    {% endif %}
+
+    {% if error %}
+    <div class="mb-4 p-4 bg-destructive text-destructive-foreground rounded-lg shadow-lg">
+        {{ error }}
+    </div>
+    {% endif %}
+
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <!-- 左侧：英雄浏览器 -->
         <div class="lg:col-span-1">
@@ -30,7 +43,7 @@
         <!-- 右侧：英雄详情 -->
         <div class="lg:col-span-2">
             {% if selected_champion %}
-                {{ ChampionDetail.ChampionDetail(champion=selected_champion) }}
+                {{ ChampionDetail.ChampionDetail(champion=selected_champion, is_favorited=is_favorited, user=user) }}
             {% else %}
                 <div class="flex items-center justify-center h-full">
                     <div class="text-center">

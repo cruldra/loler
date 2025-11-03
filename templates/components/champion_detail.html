@@ -1,5 +1,5 @@
 {# 英雄详情组件 #}
-{% macro ChampionDetail(champion) %}
+{% macro ChampionDetail(champion, is_favorited=False, user=None) %}
 {# 标签翻译映射 #}
 {% set tag_translations = {
     'Fighter': '战士',
@@ -59,11 +59,18 @@
         object-fit: cover;
     }
 
+    .champion-info-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 0.5rem;
+    }
+
     .champion-info h1 {
         font-size: 2.5rem !important;
         font-weight: 700 !important;
         color: var(--primary) !important;
-        margin-bottom: 0.5rem !important;
+        margin-bottom: 0 !important;
         background: linear-gradient(135deg, var(--primary), var(--accent));
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
@@ -406,6 +413,15 @@
             gap: 1rem;
         }
 
+        .champion-info-header {
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .champion-info h1 {
+            font-size: 2rem !important;
+        }
+
         .champion-stats {
             grid-template-columns: repeat(4, 1fr);
         }
@@ -419,6 +435,50 @@
             min-width: 120px;
         }
     }
+
+    .favorite-btn {
+        background: var(--card) !important;
+        border: 2px solid var(--border) !important;
+        border-radius: var(--radius-lg) !important;
+        padding: 0.5rem 1rem !important;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-size: 0.9rem !important;
+        font-weight: 500 !important;
+        color: var(--foreground) !important;
+        box-shadow: var(--shadow) !important;
+        white-space: nowrap;
+    }
+
+    .favorite-btn:hover {
+        background: var(--accent) !important;
+        border-color: var(--primary) !important;
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-lg) !important;
+    }
+
+    .favorite-btn.favorited {
+        background: var(--primary) !important;
+        border-color: var(--primary) !important;
+        color: var(--primary-foreground) !important;
+    }
+
+    .favorite-btn.favorited:hover {
+        background: var(--accent) !important;
+        border-color: var(--accent) !important;
+    }
+
+    .favorite-btn i {
+        width: 18px;
+        height: 18px;
+    }
+
+    .favorite-btn.favorited i {
+        fill: currentColor;
+    }
 </style>
 
 <div class="champion-detail">
@@ -427,7 +487,17 @@
             <img src="https://ddragon.leagueoflegends.com/cdn/15.21.1/img/champion/{{ champion.image.full }}" alt="{{ champion.name }}" class="champion-avatar">
 
             <div class="champion-info">
-                <h1>{{ champion.name }}</h1>
+                <div class="champion-info-header">
+                    <h1>{{ champion.name }}</h1>
+                    {% if user %}
+                    <form method="post" action="/champions/{{ champion.id }}/favorite" style="display: inline;">
+                        <button type="submit" class="favorite-btn {% if is_favorited %}favorited{% endif %}">
+                            <i data-lucide="{% if is_favorited %}heart{% else %}heart{% endif %}"
+                               {% if is_favorited %}style="fill: currentColor;"{% endif %}></i>
+                        </button>
+                    </form>
+                    {% endif %}
+                </div>
                 <div class="champion-title">{{ champion.title }}</div>
                 <div class="champion-tags">
                     {% for tag in champion.tags %}

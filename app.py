@@ -17,8 +17,9 @@ from typing import Dict, List
 from config import settings
 from oauth_providers import oauth
 from database import create_db_and_tables, get_session
-from models import User, RunePage, TeamComposition
-from routes import summoner, champion, item, team_composition
+from models import User, RunePage, TeamComposition, ChampionFavorite, HighlightVideo
+from routes import summoner, champion, item, team_composition, highlight
+from services.ffmpeg_service import ffmpeg_service
 
 
 @asynccontextmanager
@@ -45,6 +46,12 @@ async def lifespan(app: FastAPI):
     item_service.load_items()
     print(f"装备数据加载完成,版本: {item_service.get_version()}")
 
+    # 检测ffmpeg
+    if ffmpeg_service.is_ffmpeg_installed():
+        print(f"FFmpeg已安装: {ffmpeg_service.get_ffmpeg_version()}")
+    else:
+        print("FFmpeg未安装，高亮导入功能将不可用")
+
     yield
     print("应用关闭中...")
 
@@ -58,6 +65,7 @@ app.include_router(champion.router)
 app.include_router(summoner.router)
 app.include_router(item.router)
 app.include_router(team_composition.router)
+app.include_router(highlight.router)
 
 BASE_DIR = Path(__file__).resolve().parent
 TEMPLATES_DIR = BASE_DIR / "templates"
@@ -242,12 +250,15 @@ async def profile_page(request: Request, session: Session = Depends(get_session)
                 select(RunePage).where(RunePage.user_id == db_user.id)
             ).all()
 
+    ffmpeg_installed = ffmpeg_service.is_ffmpeg_installed()
+
     return templates.TemplateResponse(
         request=request,
         name="profile.html",
         context={
             "user": user,
-            "rune_pages": rune_pages
+            "rune_pages": rune_pages,
+            "ffmpeg_installed": ffmpeg_installed
         }
     )
 

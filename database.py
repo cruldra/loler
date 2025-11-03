@@ -11,7 +11,14 @@ DB_PATH = DB_DIR / "loler.db"
 
 # 创建数据库引擎
 DATABASE_URL = f"sqlite:///{DB_PATH}"
-engine = create_engine(DATABASE_URL, echo=True)
+engine = create_engine(
+    DATABASE_URL,
+    echo=True,
+    connect_args={
+        "check_same_thread": False,
+        "isolation_level": None  # 使用autocommit模式，避免事务隔离问题
+    }
+)
 
 
 def create_db_and_tables():
