@@ -35,13 +35,13 @@
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <!-- 左侧：装备浏览器 -->
         <div class="lg:col-span-1">
-            {{ ItemBrowser.ItemBrowser(items=items, version=version) }}
+            {{ ItemBrowser.ItemBrowser(items=items, version=version, tag_translations=tag_translations) }}
         </div>
 
         <!-- 右侧：装备详情 -->
         <div class="lg:col-span-2">
             {% if selected_item %}
-                {{ ItemDetail.ItemDetail(item=selected_item, item_id=selected_item_id, all_items=all_items, version=version) }}
+                {{ ItemDetail.ItemDetail(item=selected_item, item_id=selected_item_id, all_items=all_items, version=version, tag_translations=tag_translations) }}
             {% else %}
                 <div class="flex items-center justify-center h-full">
                     <div class="text-center">

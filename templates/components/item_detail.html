@@ -1,5 +1,5 @@
 {# 装备详情组件 #}
-{% macro ItemDetail(item=None, item_id=None, all_items=None, version="15.21.1") %}
+{% macro ItemDetail(item=None, item_id=None, all_items=None, version="15.21.1", tag_translations=None) %}
 <style>
     .item-detail {
         background: var(--card) !important;
@@ -490,7 +490,7 @@
             </h2>
             <div class="item-tags">
                 {% for tag in item.tags %}
-                <span class="item-tag">{{ tag }}</span>
+                <span class="item-tag">{{ tag_translations.get(tag, tag) if tag_translations else tag }}</span>
                 {% endfor %}
             </div>
         </div>

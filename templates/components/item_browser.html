@@ -1,5 +1,5 @@
 {# 装备浏览器组件 #}
-{% macro ItemBrowser(items=[], version="15.21.1", max_width="400px") %}
+{% macro ItemBrowser(items=[], version="15.21.1", max_width="400px", tag_translations=None) %}
 <style>
     .item-browser {
         max-width: {{ max_width }};
@@ -238,32 +238,67 @@
 
     <!-- 筛选按钮 -->
     <div class="item-filter-container">
-        <div class="filter-section-title">按属性筛选</div>
+        <div class="filter-section-title">按标签筛选</div>
         <div class="item-filter-buttons">
             <button class="item-filter-btn active" data-filter="all" title="全部">
                 <i data-lucide="asterisk" class="w-4 h-4"></i>
             </button>
-            <button class="item-filter-btn" data-filter="Damage" title="攻击">
+            {% if tag_translations %}
+                {% set tag_icons = {
+                    'Damage': 'sword',
+                    'SpellDamage': 'sparkles',
+                    'Armor': 'shield',
+                    'SpellBlock': 'shield-check',
+                    'AttackSpeed': 'zap',
+                    'LifeSteal': 'heart',
+                    'Boots': 'footprints',
+                    'Health': 'heart-pulse',
+                    'Mana': 'droplet',
+                    'CriticalStrike': 'target',
+                    'Jungle': 'trees',
+                    'Lane': 'route',
+                    'OnHit': 'crosshair',
+                    'ManaRegen': 'droplets',
+                    'HealthRegen': 'activity',
+                    'AbilityHaste': 'timer',
+                    'Trinket': 'eye',
+                    'Vision': 'eye',
+                    'Consumable': 'flask-conical',
+                    'Active': 'zap-off',
+                    'ArmorPenetration': 'shield-off',
+                    'MagicPenetration': 'shield-ban'
+                } %}
+                {% set common_tags = ['Damage', 'SpellDamage', 'Armor', 'SpellBlock', 'AttackSpeed', 'LifeSteal', 'Boots', 'Health', 'Mana', 'CriticalStrike', 'Jungle', 'AbilityHaste'] %}
+                {% for tag in common_tags %}
+                    {% if tag in tag_translations %}
+                    <button class="item-filter-btn" data-filter="{{ tag }}" title="{{ tag_translations[tag] }}">
+                        <i data-lucide="{{ tag_icons.get(tag, 'tag') }}" class="w-4 h-4"></i>
+                    </button>
+                    {% endif %}
+                {% endfor %}
+            {% else %}
+            <button class="item-filter-btn" data-filter="Damage" title="伤害">
                 <i data-lucide="sword" class="w-4 h-4"></i>
             </button>
-            <button class="item-filter-btn" data-filter="SpellDamage" title="法术">
+            <button class="item-filter-btn" data-filter="SpellDamage" title="法术伤害">
                 <i data-lucide="sparkles" class="w-4 h-4"></i>
             </button>
             <button class="item-filter-btn" data-filter="Armor" title="护甲">
                 <i data-lucide="shield" class="w-4 h-4"></i>
             </button>
-            <button class="item-filter-btn" data-filter="SpellBlock" title="魔抗">
+            <button class="item-filter-btn" data-filter="SpellBlock" title="魔法抗性">
                 <i data-lucide="shield-check" class="w-4 h-4"></i>
             </button>
-            <button class="item-filter-btn" data-filter="AttackSpeed" title="攻速">
+            <button class="item-filter-btn" data-filter="AttackSpeed" title="攻击速度">
                 <i data-lucide="zap" class="w-4 h-4"></i>
             </button>
-            <button class="item-filter-btn" data-filter="LifeSteal" title="吸血">
+            <button class="item-filter-btn" data-filter="LifeSteal" title="生命偷取">
                 <i data-lucide="heart" class="w-4 h-4"></i>
             </button>
             <button class="item-filter-btn" data-filter="Boots" title="鞋子">
                 <i data-lucide="footprints" class="w-4 h-4"></i>
             </button>
+            {% endif %}
         </div>
     </div>
 

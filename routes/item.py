@@ -29,7 +29,8 @@ async def items_list(request: Request):
             "user": user,
             "items": items_list,
             "version": version,
-            "selected_item": None
+            "selected_item": None,
+            "tag_translations": item_service.get_tag_translations()
         }
     )
 
@@ -59,6 +60,7 @@ async def item_detail(request: Request, item_id: str):
                 "selected_item": None,
                 "selected_item_id": None,
                 "all_items": all_items,
+                "tag_translations": item_service.get_tag_translations(),
                 "error": f"未找到装备: {item_id}"
             }
         )
@@ -72,7 +74,8 @@ async def item_detail(request: Request, item_id: str):
             "version": version,
             "selected_item": selected_item,
             "selected_item_id": item_id,
-            "all_items": all_items
+            "all_items": all_items,
+            "tag_translations": item_service.get_tag_translations()
         }
     )
 

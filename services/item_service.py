@@ -11,7 +11,27 @@ class ItemService:
     def __init__(self):
         self._item_data: Optional[ItemDataModel] = None
         self._items: Dict[str, ItemModel] = {}
-    
+        self._tag_translations: Dict[str, str] = {}
+        self._load_tag_translations()
+
+    def _load_tag_translations(self, file_path: str = "data/item_tag_translations.json"):
+        """
+        加载标签翻译
+
+        Args:
+            file_path: 标签翻译文件路径
+        """
+        json_path = Path(file_path)
+
+        if not json_path.exists():
+            print(f"警告: 标签翻译文件不存在: {file_path}")
+            return
+
+        with open(json_path, "r", encoding="utf-8") as f:
+            self._tag_translations = json.load(f)
+
+        print(f"成功加载 {len(self._tag_translations)} 个标签翻译")
+
     def load_items(self, file_path: str = "dragontail/15.21.1/data/zh_CN/item.json"):
         """
         加载装备数据
@@ -206,11 +226,32 @@ class ItemService:
     def get_version(self) -> str:
         """
         获取数据版本
-        
+
         Returns:
             版本号
         """
         return self._item_data.version if self._item_data else ""
+
+    def translate_tag(self, tag: str) -> str:
+        """
+        翻译标签
+
+        Args:
+            tag: 英文标签
+
+        Returns:
+            中文标签
+        """
+        return self._tag_translations.get(tag, tag)
+
+    def get_tag_translations(self) -> Dict[str, str]:
+        """
+        获取所有标签翻译
+
+        Returns:
+            标签翻译字典
+        """
+        return self._tag_translations
 
 
 item_service = ItemService()
