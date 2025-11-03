@@ -61,8 +61,11 @@
 // 监听英雄选择事件
 window.addEventListener('championSelected', function(e) {
     const championId = e.detail.championId;
-    // 重定向到英雄详情页
-    window.location.href = `/champions/${championId}`;
+    // 保留当前的筛选条件
+    const currentParams = new URLSearchParams(window.location.search);
+    const queryString = currentParams.toString();
+    // 重定向到英雄详情页，带上筛选条件
+    window.location.href = `/champions/${championId}${queryString ? '?' + queryString : ''}`;
 });
 </script>
 {% endblock %}

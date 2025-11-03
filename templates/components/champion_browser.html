@@ -242,10 +242,27 @@
 </div>
 
 <script>
-(function() {
-    let currentFilter = 'all';
-    let searchTerm = '';
+document.addEventListener('DOMContentLoaded', function() {
+    // 从URL参数恢复筛选条件
+    const urlParams = new URLSearchParams(window.location.search);
+    let currentFilter = urlParams.get('role') || 'all';
+    let searchTerm = urlParams.get('search') || '';
     let selectedChampion = null;
+
+    // 恢复搜索框的值
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput && searchTerm) {
+        searchInput.value = searchTerm;
+    }
+
+    // 恢复筛选按钮的激活状态
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+        if (btn.dataset.role === currentFilter) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    });
 
     function renderChampions() {
         const container = document.getElementById('championsContainer');
@@ -276,11 +293,27 @@
         window.dispatchEvent(new CustomEvent('championSelected', { detail: { championId } }));
     }
 
-    const searchInput = document.getElementById('searchInput');
+    // 更新URL参数
+    function updateURLParams() {
+        const url = new URL(window.location);
+        if (currentFilter !== 'all') {
+            url.searchParams.set('role', currentFilter);
+        } else {
+            url.searchParams.delete('role');
+        }
+        if (searchTerm) {
+            url.searchParams.set('search', searchTerm);
+        } else {
+            url.searchParams.delete('search');
+        }
+        window.history.replaceState({}, '', url);
+    }
+
     if (searchInput) {
         searchInput.addEventListener('input', (e) => {
             searchTerm = e.target.value;
             renderChampions();
+            updateURLParams();
         });
     }
 
@@ -290,6 +323,7 @@
             btn.classList.add('active');
             currentFilter = btn.dataset.role;
             renderChampions();
+            updateURLParams();
 
             btn.style.transform = 'scale(0.9)';
             setTimeout(() => {
@@ -307,9 +341,13 @@
             searchInput.value = '';
             searchTerm = '';
             renderChampions();
+            updateURLParams();
         }
     });
-})();
+
+    // 页面加载时应用筛选条件
+    renderChampions();
+});
 </script>
 {% endmacro %}
 
