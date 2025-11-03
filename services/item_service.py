@@ -12,7 +12,9 @@ class ItemService:
         self._item_data: Optional[ItemDataModel] = None
         self._items: Dict[str, ItemModel] = {}
         self._tag_translations: Dict[str, str] = {}
+        self._map_translations: Dict[str, str] = {}
         self._load_tag_translations()
+        self._load_map_translations()
 
     def _load_tag_translations(self, file_path: str = "data/item_tag_translations.json"):
         """
@@ -31,6 +33,24 @@ class ItemService:
             self._tag_translations = json.load(f)
 
         print(f"成功加载 {len(self._tag_translations)} 个标签翻译")
+
+    def _load_map_translations(self, file_path: str = "data/map_translations.json"):
+        """
+        加载地图翻译
+
+        Args:
+            file_path: 地图翻译文件路径
+        """
+        json_path = Path(file_path)
+
+        if not json_path.exists():
+            print(f"警告: 地图翻译文件不存在: {file_path}")
+            return
+
+        with open(json_path, "r", encoding="utf-8") as f:
+            self._map_translations = json.load(f)
+
+        print(f"成功加载 {len(self._map_translations)} 个地图翻译")
 
     def load_items(self, file_path: str = "dragontail/15.21.1/data/zh_CN/item.json"):
         """
@@ -252,6 +272,15 @@ class ItemService:
             标签翻译字典
         """
         return self._tag_translations
+
+    def get_map_translations(self) -> Dict[str, str]:
+        """
+        获取所有地图翻译
+
+        Returns:
+            地图翻译字典
+        """
+        return self._map_translations
 
 
 item_service = ItemService()

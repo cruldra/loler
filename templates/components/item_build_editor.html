@@ -1,0 +1,859 @@
+{# 装备配置方案编辑器组件 #}
+{% macro ItemBuildEditor(items=[], version="15.21.1", edit_build=None, tag_translations=None, map_translations=None) %}
+<style>
+    .item-build-editor {
+        display: grid;
+        grid-template-columns: 250px 1fr 350px;
+        gap: 1rem;
+        padding: 1rem;
+        min-height: calc(100vh - 200px);
+    }
+
+    /* 左侧过滤器 */
+    .build-filters {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        padding: 1rem;
+        overflow-y: auto;
+        max-height: calc(100vh - 220px);
+    }
+
+    .build-clear-btn {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: var(--destructive);
+        cursor: pointer;
+        margin-bottom: 1.5rem;
+        font-size: 0.9rem;
+        transition: all 200ms ease;
+    }
+
+    .build-clear-btn:hover {
+        opacity: 0.8;
+    }
+
+    .build-filter-section {
+        margin-bottom: 1.5rem;
+    }
+
+    .build-filter-section-title {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: var(--primary);
+        margin-bottom: 0.75rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .build-filter-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.75rem;
+        cursor: pointer;
+        transition: all 250ms ease;
+    }
+
+    .build-filter-item:hover {
+        color: var(--primary);
+    }
+
+    .build-checkbox {
+        width: 16px;
+        height: 16px;
+        border: 2px solid var(--border);
+        border-radius: 3px;
+        position: relative;
+        transition: all 250ms ease;
+    }
+
+    .build-checkbox.checked {
+        background: var(--primary);
+        border-color: var(--primary);
+    }
+
+    .build-checkbox.checked::after {
+        content: '✓';
+        position: absolute;
+        top: -2px;
+        left: 1px;
+        color: var(--primary-foreground);
+        font-size: 12px;
+        font-weight: bold;
+    }
+
+    /* 中央装备区域 */
+    .build-equipment-area {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        padding: 1rem;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .build-search-bar {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .build-search-input {
+        flex: 1;
+        background: var(--input);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 0.75rem;
+        padding-left: 2.5rem;
+        color: var(--foreground);
+        font-size: 0.9rem;
+        transition: all 200ms ease;
+    }
+
+    .build-search-input:focus {
+        outline: none;
+        border-color: var(--ring);
+        box-shadow: 0 0 0 2px rgba(255, 215, 0, 0.2);
+    }
+
+    .build-search-wrapper {
+        position: relative;
+        flex: 1;
+    }
+
+    .build-search-icon {
+        position: absolute;
+        left: 0.75rem;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 1rem;
+        height: 1rem;
+        color: var(--muted-foreground);
+        pointer-events: none;
+    }
+
+    .build-sort-select {
+        background: var(--input);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 0.75rem;
+        color: var(--foreground);
+        cursor: pointer;
+        min-width: 120px;
+    }
+
+    .build-equipment-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, 80px);
+        gap: 0.75rem;
+        overflow-y: auto;
+        flex: 1;
+        padding: 0.5rem;
+        align-content: start;
+    }
+
+    .build-equipment-item {
+        background: var(--muted);
+        border: 2px solid var(--border);
+        border-radius: var(--radius);
+        padding: 0.5rem;
+        text-align: center;
+        cursor: grab;
+        transition: all 300ms ease;
+        position: relative;
+        height: fit-content;
+    }
+
+    .build-equipment-item:hover {
+        transform: translateY(-4px) scale(1.05);
+        box-shadow: var(--shadow-lg);
+        border-color: var(--primary);
+    }
+
+    .build-equipment-item:active {
+        cursor: grabbing;
+        transform: scale(0.95);
+        opacity: 0.8;
+    }
+
+    .build-equipment-icon {
+        width: 48px;
+        height: 48px;
+        margin: 0 auto 0.5rem;
+        border-radius: var(--radius);
+        overflow: hidden;
+    }
+
+    .build-equipment-icon img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .build-equipment-price {
+        font-weight: 600;
+        color: var(--primary);
+        font-size: 0.85rem;
+    }
+
+    .build-equipment-name {
+        font-size: 0.75rem;
+        color: var(--muted-foreground);
+        margin-top: 0.25rem;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    /* 装备详情提示框 */
+    .item-tooltip {
+        position: fixed;
+        background: var(--popover);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        padding: 1rem;
+        box-shadow: var(--shadow-xl);
+        z-index: 9999;
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 200ms ease;
+        max-width: 350px;
+        min-width: 280px;
+    }
+
+    .item-tooltip.show {
+        opacity: 1;
+    }
+
+    .tooltip-header {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 0.75rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .tooltip-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: var(--radius);
+        border: 2px solid var(--primary);
+    }
+
+    .tooltip-title {
+        flex: 1;
+    }
+
+    .tooltip-name {
+        font-size: 1rem;
+        font-weight: 700;
+        color: var(--foreground);
+        margin-bottom: 0.25rem;
+    }
+
+    .tooltip-price {
+        font-size: 0.875rem;
+        color: var(--primary);
+        font-weight: 600;
+    }
+
+    .tooltip-description {
+        font-size: 0.875rem;
+        color: var(--muted-foreground);
+        line-height: 1.6;
+        margin-bottom: 0.75rem;
+    }
+
+    .tooltip-description br {
+        display: block;
+        content: "";
+        margin: 0.25rem 0;
+    }
+
+    .tooltip-description passive,
+    .tooltip-description active,
+    .tooltip-description unique {
+        color: var(--primary);
+        font-weight: 600;
+    }
+
+    .tooltip-stats {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .tooltip-stat {
+        font-size: 0.8rem;
+        color: var(--foreground);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .tooltip-stat-value {
+        color: var(--primary);
+        font-weight: 600;
+    }
+
+    .tooltip-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .tooltip-tag {
+        padding: 0.25rem 0.5rem;
+        background: var(--secondary);
+        color: var(--secondary-foreground);
+        border-radius: var(--radius-sm);
+        font-size: 0.7rem;
+        font-weight: 500;
+    }
+
+    /* 右侧配置区域 */
+    .build-config-area {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        padding: 1.5rem;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .build-config-header {
+        margin-bottom: 1.5rem;
+    }
+
+    .build-config-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--foreground);
+        margin-bottom: 0.5rem;
+    }
+
+    .build-name-input {
+        width: 100%;
+        background: var(--input);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 0.75rem;
+        color: var(--foreground);
+        font-size: 0.9rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .build-name-input:focus {
+        outline: none;
+        border-color: var(--ring);
+        box-shadow: 0 0 0 2px rgba(255, 215, 0, 0.2);
+    }
+
+    .build-slots-container {
+        margin-top: 1rem;
+    }
+
+    .build-slots-title {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: var(--muted-foreground);
+        margin-bottom: 0.75rem;
+    }
+
+    .build-slots {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.75rem;
+    }
+
+    .build-slot {
+        aspect-ratio: 1;
+        border: 2px dashed var(--border);
+        border-radius: var(--radius);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 400ms ease;
+        position: relative;
+        background: var(--muted);
+        cursor: pointer;
+    }
+
+    .build-slot:hover {
+        border-color: var(--primary);
+        background: var(--accent);
+    }
+
+    .build-slot.filled {
+        border-style: solid;
+        border-color: var(--primary);
+        background: var(--card);
+        padding: 0.25rem;
+    }
+
+    .build-slot.filled:hover {
+        transform: scale(1.05);
+    }
+
+    .build-slot img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: calc(var(--radius) - 2px);
+    }
+
+    .build-slot-remove {
+        position: absolute;
+        top: -8px;
+        right: -8px;
+        width: 20px;
+        height: 20px;
+        background: var(--destructive);
+        color: var(--destructive-foreground);
+        border-radius: 50%;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        font-size: 12px;
+        z-index: 10;
+    }
+
+    .build-slot.filled:hover .build-slot-remove {
+        display: flex;
+    }
+
+    .build-stats {
+        margin-top: 1.5rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid var(--border);
+    }
+
+    .build-stats-title {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: var(--muted-foreground);
+        margin-bottom: 0.75rem;
+    }
+
+    .build-stat-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.5rem 0;
+        font-size: 0.85rem;
+    }
+
+    .build-stat-label {
+        color: var(--muted-foreground);
+    }
+
+    .build-stat-value {
+        color: var(--primary);
+        font-weight: 600;
+    }
+
+    /* 响应式设计 */
+    @media (max-width: 1200px) {
+        .item-build-editor {
+            grid-template-columns: 200px 1fr 300px;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .item-build-editor {
+            grid-template-columns: 1fr;
+            grid-template-rows: auto auto auto;
+        }
+
+        .build-equipment-grid {
+            grid-template-columns: repeat(auto-fill, 70px);
+        }
+
+        .build-slots {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+</style>
+
+<div class="item-build-editor">
+    <!-- 左侧过滤器 -->
+    <aside class="build-filters">
+        <div class="build-clear-btn" onclick="clearBuildFilters()">
+            <i data-lucide="x" class="w-4 h-4"></i>
+            <span>清空筛选</span>
+        </div>
+
+        <!-- 地图筛选 -->
+        <div class="build-filter-section">
+            <div class="build-filter-section-title">地图</div>
+            <div class="space-y-2">
+                {% for map_id, map_name in map_translations.items() %}
+                <div class="build-filter-item" onclick="toggleBuildMapFilter(this, '{{ map_id }}')">
+                    <div class="build-checkbox"></div>
+                    <span>{{ map_name }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- 装备类型筛选 -->
+        <div class="build-filter-section">
+            <div class="build-filter-section-title">装备类型</div>
+            <div class="space-y-2">
+                {% for tag_key, tag_name in tag_translations.items() %}
+                <div class="build-filter-item" onclick="toggleBuildFilter(this, '{{ tag_key }}')">
+                    <div class="build-checkbox"></div>
+                    <span>{{ tag_name }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </aside>
+
+    <!-- 中央装备区域 -->
+    <section class="build-equipment-area">
+        <div class="build-search-bar">
+            <div class="build-search-wrapper">
+                <i data-lucide="search" class="build-search-icon"></i>
+                <input type="text" class="build-search-input" placeholder="搜索装备..." oninput="searchBuildEquipment(this.value)">
+            </div>
+            <select class="build-sort-select" onchange="sortBuildEquipment(this.value)">
+                <option value="price">金币 ▲</option>
+                <option value="price-desc">金币 ▼</option>
+                <option value="name">名称</option>
+            </select>
+        </div>
+
+        <div class="build-equipment-grid" id="buildEquipmentGrid">
+            {% for item_data in items %}
+            {% set available_maps = [] %}
+            {% if item_data.item.maps %}
+                {% for map_id, available in item_data.item.maps.items() %}
+                    {% if available %}
+                        {% set _ = available_maps.append(map_id) %}
+                    {% endif %}
+                {% endfor %}
+            {% endif %}
+            <div class="build-equipment-item"
+                 draggable="true"
+                 ondragstart="buildDragStart(event)"
+                 onmouseenter="showItemTooltip(event, this)"
+                 onmouseleave="hideItemTooltip()"
+                 data-item-id="{{ item_data.id }}"
+                 data-item-name="{{ item_data.item.name }}"
+                 data-item-price="{{ item_data.item.gold.total }}"
+                 data-item-tags="{{ item_data.item.tags|join(',') }}"
+                 data-item-maps="{{ available_maps|join(',') }}"
+                 data-item-description="{{ item_data.item.description|escape }}"
+                 data-item-plaintext="{{ item_data.item.plaintext|escape }}"
+                 data-item-hp="{{ item_data.item.stats.FlatHPPoolMod or 0 }}"
+                 data-item-mp="{{ item_data.item.stats.FlatMPPoolMod or 0 }}"
+                 data-item-armor="{{ item_data.item.stats.FlatArmorMod or 0 }}"
+                 data-item-mr="{{ item_data.item.stats.FlatSpellBlockMod or 0 }}"
+                 data-item-ad="{{ item_data.item.stats.FlatPhysicalDamageMod or 0 }}"
+                 data-item-ap="{{ item_data.item.stats.FlatMagicDamageMod or 0 }}"
+                 data-item-ms="{{ item_data.item.stats.FlatMovementSpeedMod or 0 }}"
+                 data-item-as="{{ item_data.item.stats.PercentAttackSpeedMod or 0 }}"
+                 data-item-crit="{{ item_data.item.stats.FlatCritChanceMod or 0 }}"
+                 data-item-lifesteal="{{ item_data.item.stats.PercentLifeStealMod or 0 }}"
+                 data-item-mspercent="{{ item_data.item.stats.PercentMovementSpeedMod or 0 }}">
+                <div class="build-equipment-icon">
+                    <img src="https://ddragon.leagueoflegends.com/cdn/{{ version }}/img/item/{{ item_data.item.image.full }}"
+                         alt="{{ item_data.item.name }}">
+                </div>
+                <div class="build-equipment-price">{{ item_data.item.gold.total }}</div>
+                <div class="build-equipment-name">{{ item_data.item.name }}</div>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <!-- 右侧配置区域 -->
+    <aside class="build-config-area">
+        <form action="/items/builds/save" method="post" id="buildForm">
+            <div class="build-config-header">
+                <div class="build-config-title">配装方案</div>
+                <input type="text"
+                       class="build-name-input"
+                       name="name"
+                       id="buildName"
+                       placeholder="方案名称"
+                       value="{{ edit_build.name if edit_build else '新的配装方案' }}"
+                       required>
+                <input type="hidden" name="build_id" value="{{ edit_build.id if edit_build else '' }}">
+            </div>
+
+            <div class="build-slots-container">
+                <div class="build-slots-title">装备槽位 (拖拽装备到此处)</div>
+                <div class="build-slots" id="buildSlots">
+                    {% for i in range(1, 7) %}
+                    <div class="build-slot"
+                         data-slot="{{ i }}"
+                         ondrop="buildDropToSlot(event, this)"
+                         ondragover="buildAllowDrop(event)"
+                         onclick="clearBuildSlot(this)">
+                        {% if edit_build %}
+                            {% set item_id = edit_build['item_slot' ~ i] %}
+                            {% if item_id %}
+                            <img src="https://ddragon.leagueoflegends.com/cdn/{{ version }}/img/item/{{ item_id }}.png"
+                                 alt="装备{{ i }}"
+                                 data-item-id="{{ item_id }}">
+                            <div class="build-slot-remove">×</div>
+                            {% endif %}
+                        {% endif %}
+                        <input type="hidden" name="item_slot{{ i }}" value="{{ edit_build['item_slot' ~ i] if edit_build and edit_build['item_slot' ~ i] else '' }}">
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="build-stats">
+                <div class="build-stats-title">总计</div>
+                <div class="build-stat-item">
+                    <span class="build-stat-label">总价格</span>
+                    <span class="build-stat-value" id="totalPrice">0</span>
+                </div>
+                <div class="build-stat-item">
+                    <span class="build-stat-label">装备数量</span>
+                    <span class="build-stat-value" id="itemCount">0</span>
+                </div>
+            </div>
+
+            <button type="submit" class="mt-4 w-full bg-primary text-primary-foreground py-3 px-4 rounded-lg font-semibold hover:opacity-90 transition-all">
+                保存配置
+            </button>
+        </form>
+    </aside>
+</div>
+
+<!-- 装备详情提示框 -->
+<div id="itemTooltip" class="item-tooltip">
+    <div class="tooltip-header">
+        <img id="tooltipIcon" class="tooltip-icon" src="" alt="">
+        <div class="tooltip-title">
+            <div id="tooltipName" class="tooltip-name"></div>
+            <div id="tooltipPrice" class="tooltip-price"></div>
+        </div>
+    </div>
+    <div id="tooltipPlaintext" class="tooltip-description"></div>
+    <div id="tooltipStats" class="tooltip-stats"></div>
+    <div id="tooltipTags" class="tooltip-tags"></div>
+</div>
+
+<script>
+// 初始化 Lucide 图标
+if (typeof lucide !== 'undefined') {
+    lucide.createIcons();
+}
+
+// 当前选中的过滤标签和地图
+let selectedTags = new Set();
+let selectedMaps = new Set();
+
+// 装备类型过滤器功能
+function toggleBuildFilter(element, tag) {
+    const checkbox = element.querySelector('.build-checkbox');
+    checkbox.classList.toggle('checked');
+
+    if (selectedTags.has(tag)) {
+        selectedTags.delete(tag);
+    } else {
+        selectedTags.add(tag);
+    }
+
+    filterBuildEquipment();
+}
+
+// 地图过滤器功能
+function toggleBuildMapFilter(element, mapId) {
+    const checkbox = element.querySelector('.build-checkbox');
+    checkbox.classList.toggle('checked');
+
+    if (selectedMaps.has(mapId)) {
+        selectedMaps.delete(mapId);
+    } else {
+        selectedMaps.add(mapId);
+    }
+
+    filterBuildEquipment();
+}
+
+function clearBuildFilters() {
+    selectedTags.clear();
+    selectedMaps.clear();
+    document.querySelectorAll('.build-checkbox').forEach(checkbox => {
+        checkbox.classList.remove('checked');
+    });
+    filterBuildEquipment();
+}
+
+function filterBuildEquipment() {
+    const items = document.querySelectorAll('.build-equipment-item');
+    items.forEach(item => {
+        let showItem = true;
+
+        // 检查装备类型筛选
+        if (selectedTags.size > 0) {
+            const itemTags = item.dataset.itemTags.split(',');
+            const hasTag = itemTags.some(tag => selectedTags.has(tag));
+            if (!hasTag) {
+                showItem = false;
+            }
+        }
+
+        // 检查地图筛选
+        if (selectedMaps.size > 0 && showItem) {
+            const itemMaps = item.dataset.itemMaps ? item.dataset.itemMaps.split(',') : [];
+            const hasMap = itemMaps.some(map => selectedMaps.has(map));
+            if (!hasMap) {
+                showItem = false;
+            }
+        }
+
+        item.style.display = showItem ? 'block' : 'none';
+    });
+}
+
+// 搜索功能
+function searchBuildEquipment(query) {
+    const items = document.querySelectorAll('.build-equipment-item');
+    items.forEach(item => {
+        const name = item.dataset.itemName.toLowerCase();
+        if (name.includes(query.toLowerCase())) {
+            item.style.display = 'block';
+        } else {
+            item.style.display = 'none';
+        }
+    });
+}
+
+// 排序功能
+function sortBuildEquipment(sortBy) {
+    const grid = document.getElementById('buildEquipmentGrid');
+    const items = Array.from(grid.children);
+    
+    items.sort((a, b) => {
+        switch(sortBy) {
+            case 'price':
+                return parseInt(a.dataset.itemPrice) - parseInt(b.dataset.itemPrice);
+            case 'price-desc':
+                return parseInt(b.dataset.itemPrice) - parseInt(a.dataset.itemPrice);
+            case 'name':
+                return a.dataset.itemName.localeCompare(b.dataset.itemName);
+            default:
+                return 0;
+        }
+    });
+    
+    items.forEach(item => grid.appendChild(item));
+}
+
+// 拖拽功能
+function buildDragStart(event) {
+    event.dataTransfer.setData('itemId', event.currentTarget.dataset.itemId);
+    event.dataTransfer.setData('itemName', event.currentTarget.dataset.itemName);
+    event.dataTransfer.setData('itemPrice', event.currentTarget.dataset.itemPrice);
+    event.currentTarget.style.opacity = '0.5';
+}
+
+function buildAllowDrop(event) {
+    event.preventDefault();
+}
+
+function buildDropToSlot(event, slot) {
+    event.preventDefault();
+    event.stopPropagation();
+
+    const itemId = event.dataTransfer.getData('itemId');
+    const itemName = event.dataTransfer.getData('itemName');
+
+    if (!itemId) return;
+
+    // 清空槽位（保留隐藏的input）
+    const hiddenInput = slot.querySelector('input[type="hidden"]');
+    slot.innerHTML = '';
+    if (hiddenInput) {
+        slot.appendChild(hiddenInput);
+    }
+
+    // 添加装备图片
+    const img = document.createElement('img');
+    img.src = `https://ddragon.leagueoflegends.com/cdn/{{ version }}/img/item/${itemId}.png`;
+    img.alt = itemName;
+    img.dataset.itemId = itemId;
+
+    // 添加删除按钮
+    const removeBtn = document.createElement('div');
+    removeBtn.className = 'build-slot-remove';
+    removeBtn.textContent = '×';
+
+    slot.appendChild(img);
+    slot.appendChild(removeBtn);
+    slot.classList.add('filled');
+
+    updateBuildStats();
+    updateFormFields();
+}
+
+function clearBuildSlot(slot) {
+    if (slot.classList.contains('filled')) {
+        const hiddenInput = slot.querySelector('input[type="hidden"]');
+        slot.innerHTML = '';
+        if (hiddenInput) {
+            slot.appendChild(hiddenInput);
+        }
+        slot.classList.remove('filled');
+        updateBuildStats();
+        updateFormFields();
+    }
+}
+
+// 更新统计信息
+function updateBuildStats() {
+    const slots = document.querySelectorAll('.build-slot.filled');
+    const itemCount = slots.length;
+    
+    let totalPrice = 0;
+    slots.forEach(slot => {
+        const img = slot.querySelector('img');
+        if (img) {
+            const itemId = img.dataset.itemId;
+            const item = document.querySelector(`[data-item-id="${itemId}"]`);
+            if (item) {
+                totalPrice += parseInt(item.dataset.itemPrice || 0);
+            }
+        }
+    });
+    
+    document.getElementById('totalPrice').textContent = totalPrice;
+    document.getElementById('itemCount').textContent = itemCount;
+}
+
+// 更新隐藏的表单字段
+function updateFormFields() {
+    const slots = document.querySelectorAll('.build-slot');
+    slots.forEach((slot, index) => {
+        const img = slot.querySelector('img');
+        const itemId = img ? img.dataset.itemId : '';
+        const input = slot.querySelector('input[type="hidden"]');
+        if (input) {
+            input.value = itemId;
+        }
+    });
+}
+
+// 重置拖拽元素透明度
+document.addEventListener('dragend', function(event) {
+    event.target.style.opacity = '1';
+});
+
+// 初始化统计信息
+updateBuildStats();
+</script>
+{% endmacro %}
+

@@ -1,0 +1,245 @@
+{# 我的配装方案组件 #}
+{% macro MyBuilds(builds=[], version="15.21.1") %}
+<div class="my-builds-container">
+    {% if builds %}
+    <div class="builds-grid">
+        {% for build in builds %}
+        <div class="build-card">
+            <div class="build-card-header">
+                <div class="build-card-info">
+                    <h3 class="build-card-title">{{ build.name }}</h3>
+                    {% if build.description %}
+                    <p class="build-card-desc">{{ build.description }}</p>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- 装备图标 -->
+            <div class="build-card-items">
+                {% for slot in [build.item_slot1, build.item_slot2, build.item_slot3, build.item_slot4, build.item_slot5, build.item_slot6] %}
+                    {% if slot %}
+                    <img src="https://ddragon.leagueoflegends.com/cdn/{{ version }}/img/item/{{ slot }}.png" 
+                         class="build-item-icon"
+                         alt="装备">
+                    {% else %}
+                    <div class="build-item-empty"></div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+            
+            <!-- 操作按钮 -->
+            <div class="build-card-actions">
+                <a href="/items/builds?edit={{ build.id }}" 
+                   class="build-btn build-btn-edit">
+                    <i data-lucide="edit" class="w-4 h-4"></i>
+                    编辑
+                </a>
+                <form action="/items/builds/delete/{{ build.id }}" method="post" class="build-delete-form" onsubmit="return confirm('确定要删除这个配装方案吗？')">
+                    <button type="submit" class="build-btn build-btn-delete">
+                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                        删除
+                    </button>
+                </form>
+            </div>
+            
+            <!-- 时间信息 -->
+            <div class="build-card-footer">
+                创建于 {{ build.created_at.strftime('%Y-%m-%d %H:%M') }}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <!-- 空状态 -->
+    <div class="builds-empty">
+        <i data-lucide="inbox" class="builds-empty-icon"></i>
+        <h3 class="builds-empty-title">还没有保存的配装方案</h3>
+        <p class="builds-empty-desc">创建你的第一个装备配置方案吧！</p>
+        <a href="/items/builds" class="builds-empty-btn">
+            <i data-lucide="plus" class="w-5 h-5"></i>
+            创建方案
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+    .my-builds-container {
+        width: 100%;
+    }
+
+    .builds-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .build-card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        padding: 1.25rem;
+        transition: all 200ms ease;
+    }
+
+    .build-card:hover {
+        box-shadow: var(--shadow-lg);
+        transform: translateY(-2px);
+    }
+
+    .build-card-header {
+        margin-bottom: 1rem;
+    }
+
+    .build-card-title {
+        font-size: 1.125rem;
+        font-weight: 700;
+        color: var(--foreground);
+        margin-bottom: 0.25rem;
+    }
+
+    .build-card-desc {
+        font-size: 0.875rem;
+        color: var(--muted-foreground);
+    }
+
+    .build-card-items {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .build-item-icon {
+        width: 3rem;
+        height: 3rem;
+        border-radius: var(--radius);
+        border: 1px solid var(--border);
+        transition: all 200ms ease;
+    }
+
+    .build-item-icon:hover {
+        transform: scale(1.1);
+        box-shadow: var(--shadow-md);
+    }
+
+    .build-item-empty {
+        width: 3rem;
+        height: 3rem;
+        border-radius: var(--radius);
+        border: 1px dashed var(--border);
+        background: var(--muted);
+    }
+
+    .build-card-actions {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .build-delete-form {
+        flex: 1;
+    }
+
+    .build-btn {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        padding: 0.625rem 1rem;
+        border-radius: var(--radius);
+        font-size: 0.875rem;
+        font-weight: 500;
+        transition: all 200ms ease;
+        text-decoration: none;
+        border: none;
+        cursor: pointer;
+        width: 100%;
+    }
+
+    .build-btn-edit {
+        background: var(--primary);
+        color: var(--primary-foreground);
+    }
+
+    .build-btn-edit:hover {
+        opacity: 0.9;
+    }
+
+    .build-btn-delete {
+        background: var(--destructive);
+        color: var(--destructive-foreground);
+    }
+
+    .build-btn-delete:hover {
+        opacity: 0.9;
+    }
+
+    .build-card-footer {
+        padding-top: 0.75rem;
+        border-top: 1px solid var(--border);
+        font-size: 0.75rem;
+        color: var(--muted-foreground);
+    }
+
+    /* 空状态样式 */
+    .builds-empty {
+        text-align: center;
+        padding: 4rem 2rem;
+    }
+
+    .builds-empty-icon {
+        width: 6rem;
+        height: 6rem;
+        margin: 0 auto 1.5rem;
+        color: var(--muted-foreground);
+        opacity: 0.5;
+    }
+
+    .builds-empty-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--foreground);
+        margin-bottom: 0.5rem;
+    }
+
+    .builds-empty-desc {
+        color: var(--muted-foreground);
+        margin-bottom: 1.5rem;
+    }
+
+    .builds-empty-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1.5rem;
+        background: var(--primary);
+        color: var(--primary-foreground);
+        border-radius: var(--radius-lg);
+        text-decoration: none;
+        font-weight: 500;
+        transition: all 200ms ease;
+    }
+
+    .builds-empty-btn:hover {
+        opacity: 0.9;
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-lg);
+    }
+
+    @media (max-width: 768px) {
+        .builds-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<script>
+// 初始化 Lucide 图标
+if (typeof lucide !== 'undefined') {
+    lucide.createIcons();
+}
+</script>
+{% endmacro %}
+

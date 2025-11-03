@@ -389,7 +389,7 @@
 
                     <a href="/runes" class="nav-item">符文搭配</a>
                     <a href="/team-composition" class="nav-item">阵容配置</a>
-                    <a href="/builds" class="nav-item">出装思路</a>
+                    <a href="/items/builds" class="nav-item">出装思路</a>
                     <a href="/lane" class="nav-item">对线细节</a>
                 </nav>
 
@@ -478,9 +478,10 @@
             // 设置当前页面的活跃导航项
             const currentPath = window.location.pathname;
 
-            // 检查当前路径是否在 mega menu 中
-            const megaMenuPaths = ['/champions', '/items', '/summoner'];
-            const isMegaMenuActive = megaMenuPaths.some(path => currentPath.startsWith(path));
+            // 检查当前路径是否在 mega menu 中（排除 /items/builds）
+            const megaMenuPaths = ['/champions', '/summoner'];
+            const isItemsPath = currentPath.startsWith('/items') && !currentPath.startsWith('/items/builds');
+            const isMegaMenuActive = megaMenuPaths.some(path => currentPath.startsWith(path)) || isItemsPath;
 
             // 如果当前页面在 mega menu 中，高亮 mega menu trigger
             if (isMegaMenuActive) {
@@ -490,10 +491,10 @@
                 }
             }
 
-            // 高亮 mega menu 中的具体项
+            // 高亮 mega menu 中的具体项（排除 /items/builds）
             document.querySelectorAll('.mega-menu-item').forEach(item => {
                 const href = item.getAttribute('href');
-                if (href && currentPath.startsWith(href)) {
+                if (href && currentPath.startsWith(href) && !currentPath.startsWith('/items/builds')) {
                     item.style.background = 'rgba(255, 215, 0, 0.15)';
                     item.style.borderColor = 'var(--primary)';
                 }

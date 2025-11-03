@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% block title %}我的配装方案 - LOL助手{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-6">
+    <!-- 页面头部 -->
+    <div class="flex justify-between items-center mb-6">
+        <div>
+            <h1 class="text-3xl font-bold text-foreground mb-2">
+                <i data-lucide="folder" class="inline-block w-8 h-8 mr-2"></i>
+                我的配装方案
+            </h1>
+            <p class="text-muted-foreground">管理你保存的装备配置方案</p>
+        </div>
+        
+        <a href="/items/builds" 
+           class="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-all">
+            <i data-lucide="plus" class="w-4 h-4"></i>
+            新建方案
+        </a>
+    </div>
+
+    <!-- 方案列表 -->
+    {% if builds %}
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {% for build in builds %}
+        <div class="bg-card border border-border rounded-lg p-4 hover:shadow-lg transition-all">
+            <div class="flex justify-between items-start mb-3">
+                <div class="flex-1">
+                    <h3 class="text-lg font-bold text-foreground mb-1">{{ build.name }}</h3>
+                    {% if build.description %}
+                    <p class="text-sm text-muted-foreground">{{ build.description }}</p>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- 装备图标 -->
+            <div class="flex gap-2 mb-4 flex-wrap">
+                {% for slot in [build.item_slot1, build.item_slot2, build.item_slot3, build.item_slot4, build.item_slot5, build.item_slot6] %}
+                    {% if slot %}
+                    <img src="https://ddragon.leagueoflegends.com/cdn/{{ version }}/img/item/{{ slot }}.png" 
+                         class="w-12 h-12 rounded border border-border"
+                         alt="装备">
+                    {% endif %}
+                {% endfor %}
+            </div>
+            
+            <!-- 操作按钮 -->
+            <div class="flex gap-2">
+                <a href="/items/builds?edit={{ build.id }}" 
+                   class="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-primary text-primary-foreground rounded hover:opacity-90 transition-all">
+                    <i data-lucide="edit" class="w-4 h-4"></i>
+                    编辑
+                </a>
+                <form action="/items/builds/delete/{{ build.id }}" method="post" class="flex-1" onsubmit="return confirm('确定要删除这个配装方案吗？')">
+                    <button type="submit" 
+                            class="w-full flex items-center justify-center gap-2 px-3 py-2 bg-destructive text-destructive-foreground rounded hover:opacity-90 transition-all">
+                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                        删除
+                    </button>
+                </form>
+            </div>
+            
+            <!-- 时间信息 -->
+            <div class="mt-3 pt-3 border-t border-border text-xs text-muted-foreground">
+                创建于 {{ build.created_at.strftime('%Y-%m-%d %H:%M') }}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <!-- 空状态 -->
+    <div class="text-center py-16">
+        <i data-lucide="inbox" class="w-24 h-24 mx-auto mb-4 text-muted-foreground opacity-50"></i>
+        <h3 class="text-xl font-bold text-foreground mb-2">还没有保存的配装方案</h3>
+        <p class="text-muted-foreground mb-6">创建你的第一个装备配置方案吧！</p>
+        <a href="/items/builds" 
+           class="inline-flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-all">
+            <i data-lucide="plus" class="w-5 h-5"></i>
+            创建方案
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+// 初始化 Lucide 图标
+if (typeof lucide !== 'undefined') {
+    lucide.createIcons();
+}
+</script>
+{% endblock %}
+

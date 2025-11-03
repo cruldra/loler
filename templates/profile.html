@@ -626,6 +626,10 @@
                     <i data-lucide="sparkles" class="w-4 h-4"></i>
                     我的符文页
                 </a>
+                <a href="#" class="sidebar-item" data-section="item-builds">
+                    <i data-lucide="zap" class="w-4 h-4"></i>
+                    我的配装方案
+                </a>
                 <a href="#" class="sidebar-item" data-section="favorites">
                     <i data-lucide="star" class="w-4 h-4"></i>
                     收藏的英雄
@@ -881,6 +885,23 @@
                 <div class="empty-description">你还没有收藏任何英雄，去<a href="/champions" style="color: var(--primary); text-decoration: underline;">英雄列表</a>收藏你喜欢的英雄吧</div>
             </div>
             {% endif %}
+        </div>
+
+        <!-- Item Builds Section -->
+        <div id="item-builds-section" class="content-section" style="display: none;">
+            <div class="content-header" style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h1 class="content-title">我的配装方案</h1>
+                    <p class="content-description">管理和组织您的装备配置</p>
+                </div>
+                <a href="/items/builds" class="action-button">
+                    <i data-lucide="plus" class="w-4 h-4"></i>
+                    新建配装方案
+                </a>
+            </div>
+
+            {% from 'components/my_builds.html' import MyBuilds %}
+            {{ MyBuilds(builds=item_builds, version=item_version) }}
         </div>
     </main>
 </div>

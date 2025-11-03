@@ -1,0 +1,188 @@
+{% extends "base.html" %}
+
+{% block title %}装备配置方案 - LOL助手{% endblock %}
+
+{% block content %}
+{% import 'components/item_build_editor.html' as ItemBuildEditor %}
+
+<div class="container mx-auto px-4 py-6">
+    <!-- 页面头部 -->
+    <div class="flex justify-between items-center mb-6">
+        <div>
+            <h1 class="text-3xl font-bold text-foreground mb-2">
+                <i data-lucide="zap" class="inline-block w-8 h-8 mr-2"></i>
+                {% if edit_build %}编辑{% else %}新建{% endif %}装备配置方案
+            </h1>
+            <p class="text-muted-foreground">创建和管理你的装备配置方案</p>
+        </div>
+
+        <div class="flex gap-2">
+            {% if user %}
+            <a href="/items/builds/list"
+               class="flex items-center gap-2 px-4 py-2 bg-secondary text-secondary-foreground rounded-lg hover:opacity-90 transition-all">
+                <i data-lucide="folder" class="w-4 h-4"></i>
+                我的方案
+            </a>
+            <a href="/items/builds"
+               class="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-all">
+                <i data-lucide="plus" class="w-4 h-4"></i>
+                新建方案
+            </a>
+            {% else %}
+            <a href="/login"
+               class="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-all">
+                <i data-lucide="log-in" class="w-4 h-4"></i>
+                登录以保存方案
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- 装备配置编辑器 -->
+    {{ ItemBuildEditor.ItemBuildEditor(
+        items=items,
+        version=version,
+        edit_build=edit_build,
+        tag_translations=tag_translations,
+        map_translations=map_translations
+    ) }}
+</div>
+
+<script>
+// 全局变量
+window.itemTooltipVersion = '{{ version }}';
+window.itemTagTranslations = {{ tag_translations|tojson|safe }};
+
+// 装备提示框全局函数
+(function() {
+    const statConfigs = [
+        { key: 'hp', name: '生命值', isPercent: false },
+        { key: 'mp', name: '法力值', isPercent: false },
+        { key: 'armor', name: '护甲', isPercent: false },
+        { key: 'mr', name: '魔法抗性', isPercent: false },
+        { key: 'ad', name: '攻击力', isPercent: false },
+        { key: 'ap', name: '法术强度', isPercent: false },
+        { key: 'ms', name: '移动速度', isPercent: false },
+        { key: 'as', name: '攻击速度', isPercent: true },
+        { key: 'crit', name: '暴击几率', isPercent: false },
+        { key: 'lifesteal', name: '生命偷取', isPercent: true },
+        { key: 'mspercent', name: '移动速度', isPercent: true }
+    ];
+
+    let tooltipTimeout = null;
+
+    window.showItemTooltip = function(event, element) {
+        const tooltip = document.getElementById('itemTooltip');
+        if (!tooltip) return;
+        clearTimeout(tooltipTimeout);
+
+        tooltipTimeout = setTimeout(() => {
+            const itemId = element.dataset.itemId;
+            const itemName = element.dataset.itemName;
+            const itemPrice = element.dataset.itemPrice;
+            const itemDescription = element.dataset.itemDescription;
+            const itemPlaintext = element.dataset.itemPlaintext;
+            const itemTags = element.dataset.itemTags.split(',').filter(t => t);
+
+            // 设置提示框内容
+            const version = window.itemTooltipVersion || '{{ version }}';
+            document.getElementById('tooltipIcon').src = `https://ddragon.leagueoflegends.com/cdn/${version}/img/item/${itemId}.png`;
+            document.getElementById('tooltipName').textContent = itemName;
+            document.getElementById('tooltipPrice').textContent = `${itemPrice} 金币`;
+
+            // 使用 innerHTML 显示描述（支持 HTML 标签）
+            const descContainer = document.getElementById('tooltipPlaintext');
+            if (itemDescription) {
+                descContainer.innerHTML = itemDescription;
+            } else if (itemPlaintext) {
+                descContainer.textContent = itemPlaintext;
+            } else {
+                descContainer.textContent = '暂无描述';
+            }
+
+            // 显示属性
+            const statsContainer = document.getElementById('tooltipStats');
+            statsContainer.innerHTML = '';
+
+            statConfigs.forEach(config => {
+                const value = parseFloat(element.dataset[`item${config.key.charAt(0).toUpperCase() + config.key.slice(1)}`] || 0);
+                if (value && value !== 0) {
+                    const statDiv = document.createElement('div');
+                    statDiv.className = 'tooltip-stat';
+
+                    let displayValue;
+                    if (config.isPercent) {
+                        displayValue = `+${(value * 100).toFixed(0)}%`;
+                    } else {
+                        displayValue = `+${value}`;
+                    }
+
+                    statDiv.innerHTML = `<span class="tooltip-stat-value">${displayValue}</span> ${config.name}`;
+                    statsContainer.appendChild(statDiv);
+                }
+            });
+
+            // 显示标签
+            const tagsContainer = document.getElementById('tooltipTags');
+            tagsContainer.innerHTML = '';
+
+            const tagTranslations = window.itemTagTranslations || {};
+            itemTags.forEach(tag => {
+                if (tag && tagTranslations[tag]) {
+                    const tagSpan = document.createElement('span');
+                    tagSpan.className = 'tooltip-tag';
+                    tagSpan.textContent = tagTranslations[tag];
+                    tagsContainer.appendChild(tagSpan);
+                }
+            });
+
+            // 定位提示框
+            positionTooltip(event, tooltip);
+
+            // 显示提示框
+            tooltip.classList.add('show');
+        }, 100);
+    };
+
+    window.hideItemTooltip = function() {
+        const tooltip = document.getElementById('itemTooltip');
+        if (!tooltip) return;
+        clearTimeout(tooltipTimeout);
+        tooltip.classList.remove('show');
+    };
+
+    function positionTooltip(event, tooltip) {
+        if (!tooltip) return;
+        const tooltipRect = tooltip.getBoundingClientRect();
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+
+        let left = event.clientX + 15;
+        let top = event.clientY + 15;
+
+        // 防止提示框超出右边界
+        if (left + tooltipRect.width > viewportWidth) {
+            left = event.clientX - tooltipRect.width - 15;
+        }
+
+        // 防止提示框超出下边界
+        if (top + tooltipRect.height > viewportHeight) {
+            top = event.clientY - tooltipRect.height - 15;
+        }
+
+        tooltip.style.left = `${left}px`;
+        tooltip.style.top = `${top}px`;
+    }
+
+    // 鼠标移动时更新提示框位置
+    document.addEventListener('mousemove', (event) => {
+        const tooltip = document.getElementById('itemTooltip');
+        if (tooltip && tooltip.classList.contains('show')) {
+            positionTooltip(event, tooltip);
+        }
+    });
+})();
+</script>
+
+{% endblock %}
+
