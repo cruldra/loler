@@ -1,0 +1,438 @@
+{# 英雄技巧组件 #}
+{% macro ChampionTips(champion, tips, user) %}
+<style>
+    .tips-container {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        padding: 1.5rem;
+    }
+
+    .tips-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+
+    .tips-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--foreground);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .add-tip-btn {
+        background: var(--primary);
+        color: var(--primary-foreground);
+        border: none;
+        padding: 0.5rem 1rem;
+        border-radius: var(--radius);
+        cursor: pointer;
+        font-size: 0.875rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.2s;
+    }
+
+    .add-tip-btn:hover {
+        opacity: 0.9;
+        transform: translateY(-1px);
+    }
+
+    .tips-list {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .tip-card {
+        background: var(--background);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 1rem;
+        transition: all 0.2s;
+    }
+
+    .tip-card:hover {
+        box-shadow: var(--shadow-md);
+    }
+
+    .tip-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: start;
+        margin-bottom: 0.75rem;
+    }
+
+    .tip-title-section {
+        flex: 1;
+    }
+
+    .tip-category {
+        display: inline-block;
+        padding: 0.25rem 0.5rem;
+        background: var(--secondary);
+        color: var(--secondary-foreground);
+        border-radius: var(--radius-sm);
+        font-size: 0.75rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .tip-title {
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--foreground);
+        margin: 0;
+    }
+
+    .tip-actions {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .tip-action-btn {
+        background: transparent;
+        border: 1px solid var(--border);
+        padding: 0.25rem 0.5rem;
+        border-radius: var(--radius-sm);
+        cursor: pointer;
+        font-size: 0.75rem;
+        color: var(--muted-foreground);
+        transition: all 0.2s;
+    }
+
+    .tip-action-btn:hover {
+        background: var(--accent);
+        color: var(--accent-foreground);
+    }
+
+    .tip-content {
+        color: var(--muted-foreground);
+        line-height: 1.6;
+        font-size: 0.875rem;
+    }
+
+    .tip-content p {
+        margin: 0.5rem 0;
+    }
+
+    .tip-content ul, .tip-content ol {
+        margin: 0.5rem 0;
+        padding-left: 1.5rem;
+    }
+
+    .tip-content code {
+        background: var(--muted);
+        padding: 0.125rem 0.25rem;
+        border-radius: var(--radius-sm);
+        font-family: var(--font-mono);
+        font-size: 0.875em;
+    }
+
+    .empty-tips {
+        text-align: center;
+        padding: 3rem 1rem;
+        color: var(--muted-foreground);
+    }
+
+    .empty-tips i {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+
+    .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .modal.active {
+        display: flex;
+    }
+
+    .modal-content {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        padding: 2rem;
+        max-width: 600px;
+        width: 90%;
+        max-height: 80vh;
+        overflow-y: auto;
+    }
+
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+
+    .modal-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--foreground);
+    }
+
+    .modal-close {
+        background: transparent;
+        border: none;
+        cursor: pointer;
+        color: var(--muted-foreground);
+        font-size: 1.5rem;
+        padding: 0;
+        width: 2rem;
+        height: 2rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .form-group {
+        margin-bottom: 1rem;
+    }
+
+    .form-label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+        color: var(--foreground);
+        font-size: 0.875rem;
+    }
+
+    .form-input, .form-select, .form-textarea {
+        width: 100%;
+        padding: 0.5rem;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        background: var(--background);
+        color: var(--foreground);
+        font-size: 0.875rem;
+    }
+
+    .form-textarea {
+        min-height: 200px;
+        font-family: var(--font-mono);
+        resize: vertical;
+    }
+
+    .form-actions {
+        display: flex;
+        gap: 0.5rem;
+        justify-content: flex-end;
+        margin-top: 1.5rem;
+    }
+
+    .btn {
+        padding: 0.5rem 1rem;
+        border-radius: var(--radius);
+        cursor: pointer;
+        font-size: 0.875rem;
+        border: none;
+        transition: all 0.2s;
+    }
+
+    .btn-primary {
+        background: var(--primary);
+        color: var(--primary-foreground);
+    }
+
+    .btn-primary:hover {
+        opacity: 0.9;
+    }
+
+    .btn-secondary {
+        background: var(--secondary);
+        color: var(--secondary-foreground);
+    }
+
+    .btn-secondary:hover {
+        opacity: 0.9;
+    }
+</style>
+
+<div class="tips-container">
+    <div class="tips-header">
+        <h2 class="tips-title">
+            <i data-lucide="lightbulb" class="w-5 h-5"></i>
+            英雄技巧
+        </h2>
+        {% if user %}
+        <button class="add-tip-btn" onclick="openTipModal()">
+            <i data-lucide="plus" class="w-4 h-4"></i>
+            添加技巧
+        </button>
+        {% endif %}
+    </div>
+
+    {% if tips %}
+    <div class="tips-list">
+        {% for tip in tips %}
+        <div class="tip-card">
+            <div class="tip-header">
+                <div class="tip-title-section">
+                    <span class="tip-category">{{ tip.category }}</span>
+                    <h3 class="tip-title">{{ tip.title }}</h3>
+                </div>
+                {% if user %}
+                <div class="tip-actions">
+                    <button class="tip-action-btn" data-tip-id="{{ tip.id }}" data-tip-title="{{ tip.title }}" data-tip-content="{{ tip.content }}" data-tip-category="{{ tip.category }}" onclick="editTipFromData(this)">
+                        <i data-lucide="edit-2" class="w-3 h-3"></i>
+                    </button>
+                    <form method="post" action="/champions/{{ champion.id }}/tips/{{ tip.id }}/delete" style="display: inline;">
+                        <button type="submit" class="tip-action-btn" onclick="return confirm('确定要删除这个技巧吗？')">
+                            <i data-lucide="trash-2" class="w-3 h-3"></i>
+                        </button>
+                    </form>
+                </div>
+                {% endif %}
+            </div>
+            <div class="tip-content" data-markdown="{{ tip.content|e }}">
+                {{ tip.content }}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-tips">
+        <i data-lucide="lightbulb-off"></i>
+        <p>还没有添加任何技巧</p>
+        {% if user %}
+        <p style="font-size: 0.875rem; margin-top: 0.5rem;">点击上方"添加技巧"按钮开始记录你的英雄心得</p>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+
+<!-- 添加/编辑技巧模态框 -->
+<div id="tipModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title" id="modalTitle">添加技巧</h3>
+            <button class="modal-close" onclick="closeTipModal()">×</button>
+        </div>
+        <form id="tipForm" method="post" action="/champions/{{ champion.id }}/tips">
+            <div class="form-group">
+                <label class="form-label">分类</label>
+                <select name="category" class="form-select" required>
+                    <option value="通用">通用</option>
+                    <option value="对线">对线</option>
+                    <option value="打团">打团</option>
+                    <option value="出装">出装</option>
+                    <option value="连招">连招</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">标题</label>
+                <input type="text" name="title" class="form-input" required placeholder="例如：对线期压制技巧">
+            </div>
+            <div class="form-group">
+                <label class="form-label">内容 (支持Markdown)</label>
+                <textarea name="content" class="form-textarea" required placeholder="在这里输入技巧内容，支持Markdown格式..."></textarea>
+            </div>
+            <div class="form-actions">
+                <button type="button" class="btn btn-secondary" onclick="closeTipModal()">取消</button>
+                <button type="submit" class="btn btn-primary">保存</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function openTipModal() {
+        document.getElementById('tipModal').classList.add('active');
+        document.getElementById('modalTitle').textContent = '添加技巧';
+        document.getElementById('tipForm').action = '/champions/{{ champion.id }}/tips';
+        document.getElementById('tipForm').reset();
+    }
+
+    function closeTipModal() {
+        document.getElementById('tipModal').classList.remove('active');
+    }
+
+    function editTipFromData(button) {
+        const tipId = button.getAttribute('data-tip-id');
+        const title = button.getAttribute('data-tip-title');
+        const content = button.getAttribute('data-tip-content');
+        const category = button.getAttribute('data-tip-category');
+
+        document.getElementById('tipModal').classList.add('active');
+        document.getElementById('modalTitle').textContent = '编辑技巧';
+        document.getElementById('tipForm').action = '/champions/{{ champion.id }}/tips/' + tipId;
+
+        const form = document.getElementById('tipForm');
+        form.querySelector('[name="title"]').value = title;
+        form.querySelector('[name="content"]').value = content;
+        form.querySelector('[name="category"]').value = category;
+    }
+
+    // 点击模态框外部关闭
+    document.getElementById('tipModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeTipModal();
+        }
+    });
+
+    // 加载marked.js库
+    function loadMarked(callback) {
+        if (window.marked) {
+            callback();
+            return;
+        }
+
+        const script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/npm/marked/marked.min.js';
+        script.onload = callback;
+        document.head.appendChild(script);
+    }
+
+    // 使用marked.js渲染Markdown
+    function renderMarkdown() {
+        if (!window.marked) {
+            console.log('Marked.js not loaded yet');
+            return;
+        }
+
+        const tipContents = document.querySelectorAll('.tip-content[data-markdown]');
+        tipContents.forEach(content => {
+            const markdown = content.getAttribute('data-markdown');
+            if (markdown && !content.hasAttribute('data-rendered')) {
+                try {
+                    content.innerHTML = marked.parse(markdown);
+                    content.setAttribute('data-rendered', 'true');
+                } catch (error) {
+                    console.error('Markdown rendering error:', error);
+                    content.textContent = markdown;
+                }
+            }
+        });
+    }
+
+    // 加载库并渲染
+    loadMarked(function() {
+        // 初始渲染
+        setTimeout(renderMarkdown, 100);
+
+        // 当切换到技巧tab时也渲染
+        const tipsTab = document.querySelector('[data-tab="tips"]');
+        if (tipsTab) {
+            tipsTab.addEventListener('click', function() {
+                setTimeout(renderMarkdown, 50);
+            });
+        }
+    });
+</script>
+{% endmacro %}
+

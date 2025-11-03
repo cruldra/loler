@@ -33,6 +33,11 @@ from .highlight import (
     HighlightImportRequest,
     HighlightImportResponse
 )
+from .champion_tip import (
+    ChampionTipCreate,
+    ChampionTipUpdate,
+    ChampionTipResponse
+)
 
 __all__ = [
     "ChampionDataModel",
@@ -59,6 +64,9 @@ __all__ = [
     "UserInfo",
     "HighlightVideoResponse",
     "HighlightImportRequest",
-    "HighlightImportResponse"
+    "HighlightImportResponse",
+    "ChampionTipCreate",
+    "ChampionTipUpdate",
+    "ChampionTipResponse"
 ]
 

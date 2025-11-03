@@ -1,5 +1,7 @@
 {# 英雄详情组件 #}
-{% macro ChampionDetail(champion, is_favorited=False, user=None) %}
+{% macro ChampionDetail(champion, is_favorited=False, user=None, champion_tips=[]) %}
+{# 导入技巧组件 #}
+{% import 'components/champion_tips.html' as ChampionTipsComponent %}
 {# 标签翻译映射 #}
 {% set tag_translations = {
     'Fighter': '战士',
@@ -557,6 +559,10 @@
                 <i data-lucide="bar-chart-3" class="w-4 h-4 inline mr-2"></i>
                 属性
             </button>
+            <button class="tab-button" data-tab="tips">
+                <i data-lucide="lightbulb" class="w-4 h-4 inline mr-2"></i>
+                技巧
+            </button>
         </div>
 
         <div class="tab-content">
@@ -676,6 +682,10 @@
                         </div>
                     </div>
                 </div>
+            </div>
+
+            <div class="tab-panel" id="tips">
+                {{ ChampionTipsComponent.ChampionTips(champion, champion_tips, user) }}
             </div>
         </div>
     </div>

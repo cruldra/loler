@@ -17,7 +17,7 @@ from typing import Dict, List
 from config import settings
 from oauth_providers import oauth
 from database import create_db_and_tables, get_session
-from models import User, RunePage, TeamComposition, ChampionFavorite, HighlightVideo
+from models import User, RunePage, TeamComposition, ChampionFavorite, HighlightVideo, ChampionTip
 from routes import summoner, champion, item, team_composition, highlight
 from services.ffmpeg_service import ffmpeg_service
 
@@ -233,8 +233,9 @@ async def profile_page(request: Request, session: Session = Depends(get_session)
     """个人资料页面"""
     user = request.session.get('user')
 
-    # 获取用户的符文页
+    # 获取用户的符文页和收藏的英雄
     rune_pages = []
+    favorite_champions = []
     if user:
         # 查找或创建用户
         db_user = session.exec(
@@ -250,6 +251,22 @@ async def profile_page(request: Request, session: Session = Depends(get_session)
                 select(RunePage).where(RunePage.user_id == db_user.id)
             ).all()
 
+            # 获取用户收藏的英雄
+            favorites = session.exec(
+                select(ChampionFavorite).where(ChampionFavorite.user_id == db_user.id)
+            ).all()
+
+            # 获取英雄详细信息
+            from services.champion_service import champion_service
+            for fav in favorites:
+                champion = champion_service.get_champion_by_id(fav.champion_id)
+                if champion:
+                    favorite_champions.append({
+                        'favorite_id': fav.id,
+                        'champion': champion,
+                        'created_at': fav.created_at
+                    })
+
     ffmpeg_installed = ffmpeg_service.is_ffmpeg_installed()
 
     return templates.TemplateResponse(
@@ -258,6 +275,7 @@ async def profile_page(request: Request, session: Session = Depends(get_session)
         context={
             "user": user,
             "rune_pages": rune_pages,
+            "favorite_champions": favorite_champions,
             "ffmpeg_installed": ffmpeg_installed
         }
     )

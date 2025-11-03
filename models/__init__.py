@@ -6,11 +6,13 @@ from .rune_page import RunePage
 from .team_composition import TeamComposition
 from .champion_favorite import ChampionFavorite
 from .highlight_video import HighlightVideo
+from .champion_tip import ChampionTip
 
 __all__ = [
     "User",
     "RunePage",
     "TeamComposition",
     "ChampionFavorite",
-    "HighlightVideo"
+    "HighlightVideo",
+    "ChampionTip"
 ]
