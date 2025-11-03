@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>英雄联盟 BP 组件</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="lol_theme.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-sans) !important;
+            background: var(--background) !important;
+            color: var(--foreground) !important;
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        .bp-container {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            max-width: 1200px;
+            margin: 0 auto;
+            box-shadow: var(--shadow-xl);
+        }
+
+        .team-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .team-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .team-info {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .player-level {
+            background: var(--muted);
+            color: var(--primary);
+            padding: 0.25rem 0.5rem;
+            border-radius: var(--radius-sm);
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        .player-avatar {
+            width: 2.5rem;
+            height: 2.5rem;
+            border-radius: 50%;
+            border: 2px solid var(--primary);
+            object-fit: cover;
+        }
+
+        .player-name {
+            font-weight: 500;
+            color: var(--foreground);
+        }
+
+        .win-stats {
+            color: var(--primary);
+            font-size: 0.875rem;
+            text-align: center;
+        }
+
+        .champion-row {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .champion-row:last-child {
+            border-bottom: none;
+        }
+
+        .ban-indicator {
+            color: var(--destructive);
+            font-size: 1.25rem;
+            width: 1.5rem;
+            text-align: center;
+        }
+
+        .champion-avatar {
+            width: 2rem;
+            height: 2rem;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border);
+            object-fit: cover;
+        }
+
+        .champion-select {
+            flex: 1;
+            background: var(--input);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 0.5rem 0.75rem;
+            color: var(--foreground);
+            font-size: 0.875rem;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+            background-position: right 0.5rem center;
+            background-repeat: no-repeat;
+            background-size: 1rem;
+            padding-right: 2.5rem;
+        }
+
+        .champion-select:focus {
+            outline: none;
+            border-color: var(--ring);
+            box-shadow: 0 0 0 2px rgba(112, 192, 232, 0.2);
+        }
+
+        .role-icon {
+            width: 1.5rem;
+            height: 1.5rem;
+            background: var(--accent);
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-foreground);
+            font-size: 0.75rem;
+        }
+
+        .skill-level-select {
+            background: var(--input);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 0.5rem;
+            color: var(--foreground);
+            font-size: 0.875rem;
+            min-width: 5rem;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+            background-position: right 0.5rem center;
+            background-repeat: no-repeat;
+            background-size: 0.75rem;
+            padding-right: 2rem;
+        }
+
+        .skill-level-select:focus {
+            outline: none;
+            border-color: var(--ring);
+            box-shadow: 0 0 0 2px rgba(112, 192, 232, 0.2);
+        }
+
+        .teams-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .team-section {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+        }
+
+        .bottom-controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 1rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .control-button {
+            background: var(--primary);
+            color: var(--primary-foreground);
+            border: none;
+            border-radius: var(--radius-sm);
+            padding: 0.75rem 1.5rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .control-button:hover {
+            background: var(--primary);
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+        .control-button.secondary {
+            background: var(--secondary);
+            color: var(--secondary-foreground);
+        }
+
+        .empty-slot {
+            color: var(--muted-foreground);
+            font-style: italic;
+        }
+
+        .team-1 .champion-row {
+            flex-direction: row;
+        }
+
+        .team-2 .champion-row {
+            flex-direction: row-reverse;
+        }
+
+        .team-2 .ban-indicator {
+            order: 1;
+        }
+
+        .team-2 .champion-avatar {
+            order: 2;
+        }
+
+        .team-2 .champion-select {
+            order: 3;
+        }
+
+        .team-2 .role-icon {
+            order: 4;
+        }
+
+        .team-2 .skill-level-select {
+            order: 5;
+        }
+
+        @media (max-width: 768px) {
+            .teams-container {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+            
+            .champion-row {
+                flex-wrap: wrap;
+                gap: 0.5rem;
+            }
+            
+            .champion-select {
+                min-width: 120px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="bp-container">
+        <div class="teams-container">
+            <!-- 队伍1 -->
+            <div class="team-section team-1">
+                <div class="team-header">
+                    <h2 class="team-title">队伍1</h2>
+                </div>
+                
+                <!-- 队长信息 -->
+                <div class="team-info mb-4">
+                    <span class="player-level">30</span>
+                    <img src="https://ddragon.leagueoflegends.com/cdn/13.24.1/img/champion/Graves.png" alt="梅烧商诗人" class="player-avatar">
+                    <span class="player-name">梅烧商诗人</span>
+                </div>
+
+                <!-- 英雄选择列表 -->
+                <div class="champions-list">
+                    <div class="champion-row">
+                        <span class="ban-indicator">×</span>
+                        <img src="https://ddragon.leagueoflegends.com/cdn/13.24.1/img/champion/Poppy.png" alt="蓝钢之胄" class="champion-avatar">
+                        <select class="champion-select">
+                            <option>蓝钢之胄</option>
+                            <option>其他英雄</option>
+                        </select>
+                        <div class="role-icon">🖊</div>
+                        <select class="skill-level-select">
+                            <option>一般级</option>
+                            <option>新手级</option>
+                            <option>高级</option>
+                        </select>
+                    </div>
+
+                    <div class="champion-row">
+                        <span class="ban-indicator">×</span>
+                        <img src="https://ddragon.leagueoflegends.com/cdn/13.24.1/img/champion/Blitzcrank.png" alt="蒸汽机器人" class="champion-avatar">
+                        <select class="champion-select">
+                            <option>蒸汽机器人</option>
+                            <option>其他英雄</option>
+                        </select>
+                        <div class="role-icon">⚡</div>
+                        <select class="skill-level-select">
+                            <option>一般级</option>
+                            <option>新手级</option>
+                            <option>高级</option>
+                        </select>
+                    </div>
+
+                    <div class="champion-row">
+                        <span class="ban-indicator">×</span>
+                        <img src="https://ddragon.leagueoflegends.com/cdn/13.24.1/img/champion/Poppy.png" alt="圣锤之毅" class="champion-avatar">
+                        <select class="champion-select">
+                            <option>圣锤之毅</option>
+                            <option>其他英雄</option>
+                        </select>
+                        <div class="role-icon">⬇</div>
+                        <select class="skill-level-select">
+                            <option>一般级</option>
+                            <option>新手级</option>
+                            <option>高级</option>
+                        </select>
+                    </div>
+
+                    <div class="champion-row">
+                        <span class="ban-indicator">×</span>
+                        <img src="https://ddragon.leagueoflegends.com/cdn/13.24.1/img/champion/Volibear.png" alt="不灭狂雷" class="champion-avatar">
+                        <select class="champion-select">
+                            <option>不灭狂雷</option>
+                            <option>其他英雄</option>
+                        </select>
+                        <div class="role-icon">🔧</div>
+                        <select class="skill-level-select">
+                            <option>一般级</option>
+                            <option>新手级</option>
+                            <option>高级</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 队伍2 -->
+            <div class="team-section team-2">
+                <div class="team-header">
+                    <h2 class="team-title">队伍2</h2>
+                </div>
+
+                <!-- 队长信息和胜负记录 -->
+                <div class="flex justify-between items-center mb-4">
+                    <div class="win-stats">
+                        <div class="text-primary">流光语翠II</div>
+                        <div class="text-sm">胜: 4 (排位赛)</div>
+                    </div>
+                    <div class="team-info">
+                        <img src="https://ddragon.leagueoflegends.com/cdn/13.24.1/img/champion/Diana.png" alt="皎月女神" class="player-avatar">
+                        <select class="champion-select">
+                            <option>皎月女神</option>
+                            <option>其他英雄</option>
+                        </select>
+                        <div class="role-icon">∨</div>
+                        <select class="skill-level-select">
+                            <option>一般级</option>
+                            <option>新手级</option>
+                            <option>高级</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- 英雄选择列表 -->
+                <div class="champions-list">
+                    <div class="champion-row">
+                        <span class="ban-indicator">×</span>
+                        <img src="https://ddragon.leagueoflegends.com/cdn/13.24.1/img/champion/Braum.png" alt="弗雷尔卓德之心" class="champion-avatar">
+                        <select class="champion-select">
+                            <option>弗雷尔卓德之心</option>
+                            <option>其他英雄</option>
+                        </select>
+                        <div class="role-icon">⚡</div>
+                        <select class="skill-level-select">
+                            <option>一般级</option>
+                            <option>新手级</option>
+                            <option>高级</option>
+                        </select>
+                    </div>
+
+                    <div class="champion-row">
+                        <span class="ban-indicator">×</span>
+                        <img src="https://ddragon.leagueoflegends.com/cdn/13.24.1/img/champion/Volibear.png" alt="不灭狂雷" class="champion-avatar">
+                        <select class="champion-select">
+                            <option>不灭狂雷</option>
+                            <option>其他英雄</option>
+                        </select>
+                        <div class="role-icon">🛡</div>
+                        <select class="skill-level-select">
+                            <option>一般级</option>
+                            <option>新手级</option>
+                            <option>高级</option>
+                        </select>
+                    </div>
+
+                    <div class="champion-row">
+                        <span class="ban-indicator">×</span>
+                        <img src="https://ddragon.leagueoflegends.com/cdn/13.24.1/img/champion/Garen.png" alt="德玛西亚" class="champion-avatar">
+                        <select class="champion-select">
+                            <option>德玛西亚</option>
+                            <option>其他英雄</option>
+                        </select>
+                        <div class="role-icon">🔧</div>
+                        <select class="skill-level-select">
+                            <option>一般级</option>
+                            <option>新手级</option>
+                            <option>高级</option>
+                        </select>
+                    </div>
+
+                    <div class="champion-row">
+                        <span class="empty-slot">空位</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 底部控制按钮 -->
+        <div class="bottom-controls">
+            <span class="text-muted-foreground">全</span>
+            <button class="control-button">加入</button>
+            <button class="control-button secondary">添加电脑玩家</button>
+        </div>
+    </div>
+
+    <script>
+        // 初始化 Lucide 图标
+        lucide.createIcons();
+
+        // 添加交互效果
+        document.querySelectorAll('.champion-select, .skill-level-select').forEach(select => {
+            select.addEventListener('focus', function() {
+                this.style.transform = 'scale(1.02)';
+            });
+            
+            select.addEventListener('blur', function() {
+                this.style.transform = 'scale(1)';
+            });
+        });
+
+        // 按钮点击效果
+        document.querySelectorAll('.control-button').forEach(button => {
+            button.addEventListener('click', function() {
+                this.style.transform = 'scale(0.95)';
+                setTimeout(() => {
+                    this.style.transform = 'translateY(-1px)';
+                }, 100);
+            });
+        });
+
+        // 模拟数据更新
+        function updateChampionData() {
+            // 这里可以添加实际的数据更新逻辑
+            console.log('Champion data updated');
+        }
+
+        // 添加悬停效果
+        document.querySelectorAll('.champion-row').forEach(row => {
+            row.addEventListener('mouseenter', function() {
+                this.style.backgroundColor = 'rgba(112, 192, 232, 0.1)';
+                this.style.transform = 'translateX(4px)';
+            });
+            
+            row.addEventListener('mouseleave', function() {
+                this.style.backgroundColor = 'transparent';
+                this.style.transform = 'translateX(0)';
+            });
+        });
+    </script>
+</body>
+</html>

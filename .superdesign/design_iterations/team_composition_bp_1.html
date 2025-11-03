@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>阵容BP组件</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    <link rel="stylesheet" href="lol_theme.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #0a1428 0%, #1e2328 50%, #0a1428 100%) !important;
+            color: rgb(from var(--foreground) r g b) !important;
+            font-family: var(--font-sans) !important;
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+        
+        .bp-container {
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgb(from var(--border) r g b / 0.3);
+            border-radius: var(--radius-lg);
+            padding: 2rem;
+            box-shadow: var(--shadow-2xl);
+        }
+        
+        .team-section {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgb(from var(--border) r g b / 0.2);
+            border-radius: var(--radius-md);
+            padding: 1.5rem;
+        }
+        
+        .team-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid rgb(from var(--border) r g b / 0.3);
+        }
+        
+        .team-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: rgb(from var(--primary) r g b);
+        }
+        
+        .team-info {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 0.875rem;
+            color: rgb(from var(--muted-foreground) r g b);
+        }
+        
+        .rank-badge {
+            background: rgb(from var(--accent) r g b);
+            color: rgb(from var(--accent-foreground) r g b);
+            padding: 0.25rem 0.75rem;
+            border-radius: var(--radius-sm);
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+        
+        .champion-row {
+            display: grid;
+            grid-template-columns: auto 1fr auto auto;
+            gap: 1rem;
+            align-items: center;
+            padding: 0.75rem;
+            margin-bottom: 0.5rem;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgb(from var(--border) r g b / 0.2);
+            border-radius: var(--radius-md);
+            transition: all 200ms ease-out;
+        }
+        
+        .champion-row:hover {
+            background: rgba(0, 0, 0, 0.5);
+            border-color: rgb(from var(--primary) r g b / 0.3);
+        }
+        
+        .champion-info {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        
+        .champion-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 2px solid rgb(from var(--primary) r g b);
+            background: linear-gradient(135deg, #1e2328, #3c3c41);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .champion-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 50%;
+        }
+        
+        .ban-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(220, 38, 38, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+        }
+        
+        .champion-select {
+            flex: 1;
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid rgb(from var(--border) r g b / 0.3);
+            border-radius: var(--radius-sm);
+            padding: 0.5rem 0.75rem;
+            color: rgb(from var(--foreground) r g b);
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: all 200ms ease-out;
+        }
+        
+        .champion-select:hover {
+            border-color: rgb(from var(--primary) r g b / 0.5);
+            background: rgba(0, 0, 0, 0.7);
+        }
+        
+        .champion-select:focus {
+            outline: none;
+            border-color: rgb(from var(--ring) r g b);
+            box-shadow: 0 0 0 2px rgb(from var(--ring) r g b / 0.2);
+        }
+        
+        .summoner-spell {
+            width: 24px;
+            height: 24px;
+            border-radius: var(--radius-sm);
+            border: 1px solid rgb(from var(--border) r g b / 0.5);
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 150ms ease-out;
+        }
+        
+        .summoner-spell:hover {
+            border-color: rgb(from var(--primary) r g b);
+            transform: scale(1.1);
+        }
+        
+        .summoner-spell img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: var(--radius-sm);
+        }
+        
+        .rank-select {
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid rgb(from var(--border) r g b / 0.3);
+            border-radius: var(--radius-sm);
+            padding: 0.375rem 0.5rem;
+            color: rgb(from var(--foreground) r g b);
+            font-size: 0.75rem;
+            min-width: 80px;
+            cursor: pointer;
+        }
+        
+        .rank-select:focus {
+            outline: none;
+            border-color: rgb(from var(--ring) r g b);
+        }
+        
+        .action-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid rgb(from var(--border) r g b / 0.3);
+        }
+        
+        .action-button {
+            background: rgb(from var(--primary) r g b);
+            color: rgb(from var(--primary-foreground) r g b);
+            border: none;
+            border-radius: var(--radius-md);
+            padding: 0.75rem 2rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 200ms ease-out;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .action-button:hover {
+            background: rgb(from var(--primary) r g b / 0.9);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .action-button.secondary {
+            background: rgb(from var(--secondary) r g b);
+            color: rgb(from var(--secondary-foreground) r g b);
+        }
+        
+        .action-button.secondary:hover {
+            background: rgb(from var(--secondary) r g b / 0.9);
+        }
+        
+        .phase-indicator {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding: 1rem;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgb(from var(--border) r g b / 0.2);
+            border-radius: var(--radius-md);
+        }
+        
+        .phase-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: rgb(from var(--primary) r g b);
+            margin-bottom: 0.5rem;
+        }
+        
+        .phase-subtitle {
+            font-size: 0.875rem;
+            color: rgb(from var(--muted-foreground) r g b);
+        }
+        
+        .timer {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgb(from var(--destructive) r g b / 0.2);
+            color: rgb(from var(--destructive) r g b);
+            padding: 0.25rem 0.75rem;
+            border-radius: var(--radius-sm);
+            font-family: var(--font-mono);
+            font-weight: 600;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .timer.warning {
+            animation: pulse 1s infinite;
+        }
+        
+        .vs-divider {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 2rem 0;
+            position: relative;
+        }
+        
+        .vs-divider::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgb(from var(--border) r g b), transparent);
+        }
+        
+        .vs-text {
+            background: rgb(from var(--background) r g b);
+            padding: 0.5rem 1rem;
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: rgb(from var(--primary) r g b);
+            border: 2px solid rgb(from var(--primary) r g b);
+            border-radius: 50%;
+            z-index: 1;
+        }
+    </style>
+</head>
+<body class="p-6">
+    <div class="max-w-7xl mx-auto" x-data="teamCompositionBP()">
+        <div class="bp-container">
+            <!-- 阶段指示器 -->
+            <div class="phase-indicator">
+                <h2 class="phase-title" x-text="currentPhase.title"></h2>
+                <p class="phase-subtitle" x-text="currentPhase.subtitle"></p>
+                <div class="timer mt-2" :class="{ 'warning': timeLeft <= 10 }">
+                    <i data-lucide="clock" class="w-4 h-4"></i>
+                    <span x-text="formatTime(timeLeft)"></span>
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <!-- 队伍1 -->
+                <div class="team-section">
+                    <div class="team-header">
+                        <h3 class="team-title">队伍1</h3>
+                        <div class="team-info">
+                            <span class="rank-badge">流光翡翠II</span>
+                            <span>胜: 4 (排位赛)</span>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-3">
+                        <template x-for="(player, index) in team1" :key="index">
+                            <div class="champion-row">
+                                <div class="champion-info">
+                                    <div class="champion-avatar">
+                                        <template x-if="player.champion">
+                                            <img :src="getChampionIcon(player.champion)" :alt="player.champion" />
+                                        </template>
+                                        <template x-if="player.banned">
+                                            <div class="ban-overlay">
+                                                <i data-lucide="x" class="w-5 h-5 text-white"></i>
+                                            </div>
+                                        </template>
+                                    </div>
+                                    <select 
+                                        class="champion-select" 
+                                        x-model="player.champion"
+                                        @change="updateChampion(1, index, $event.target.value)"
+                                    >
+                                        <option value="">选择英雄</option>
+                                        <template x-for="champion in availableChampions" :key="champion.id">
+                                            <option :value="champion.id" x-text="champion.name"></option>
+                                        </template>
+                                    </select>
+                                </div>
+                                
+                                <div class="flex gap-1">
+                                    <div class="summoner-spell" @click="selectSummonerSpell(1, index, 0)">
+                                        <template x-if="player.summonerSpells[0]">
+                                            <img :src="getSummonerSpellIcon(player.summonerSpells[0])" alt="召唤师技能1" />
+                                        </template>
+                                        <template x-if="!player.summonerSpells[0]">
+                                            <i data-lucide="plus" class="w-3 h-3 text-muted-foreground"></i>
+                                        </template>
+                                    </div>
+                                    <div class="summoner-spell" @click="selectSummonerSpell(1, index, 1)">
+                                        <template x-if="player.summonerSpells[1]">
+                                            <img :src="getSummonerSpellIcon(player.summonerSpells[1])" alt="召唤师技能2" />
+                                        </template>
+                                        <template x-if="!player.summonerSpells[1]">
+                                            <i data-lucide="plus" class="w-3 h-3 text-muted-foreground"></i>
+                                        </template>
+                                    </div>
+                                </div>
+                                
+                                <select class="rank-select" x-model="player.rank">
+                                    <option value="一般级">一般级</option>
+                                    <option value="青铜">青铜</option>
+                                    <option value="白银">白银</option>
+                                    <option value="黄金">黄金</option>
+                                    <option value="铂金">铂金</option>
+                                    <option value="钻石">钻石</option>
+                                    <option value="大师">大师</option>
+                                    <option value="宗师">宗师</option>
+                                    <option value="王者">王者</option>
+                                </select>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+                
+                <!-- VS 分隔符 -->
+                <div class="vs-divider lg:hidden">
+                    <div class="vs-text">VS</div>
+                </div>
+                
+                <!-- 队伍2 -->
+                <div class="team-section">
+                    <div class="team-header">
+                        <h3 class="team-title">队伍2</h3>
+                        <div class="team-info">
+                            <span class="rank-badge">破晓女神</span>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-3">
+                        <template x-for="(player, index) in team2" :key="index">
+                            <div class="champion-row">
+                                <div class="champion-info">
+                                    <div class="champion-avatar">
+                                        <template x-if="player.champion">
+                                            <img :src="getChampionIcon(player.champion)" :alt="player.champion" />
+                                        </template>
+                                        <template x-if="player.banned">
+                                            <div class="ban-overlay">
+                                                <i data-lucide="x" class="w-5 h-5 text-white"></i>
+                                            </div>
+                                        </template>
+                                    </div>
+                                    <select 
+                                        class="champion-select" 
+                                        x-model="player.champion"
+                                        @change="updateChampion(2, index, $event.target.value)"
+                                    >
+                                        <option value="">选择英雄</option>
+                                        <template x-for="champion in availableChampions" :key="champion.id">
+                                            <option :value="champion.id" x-text="champion.name"></option>
+                                        </template>
+                                    </select>
+                                </div>
+                                
+                                <div class="flex gap-1">
+                                    <div class="summoner-spell" @click="selectSummonerSpell(2, index, 0)">
+                                        <template x-if="player.summonerSpells[0]">
+                                            <img :src="getSummonerSpellIcon(player.summonerSpells[0])" alt="召唤师技能1" />
+                                        </template>
+                                        <template x-if="!player.summonerSpells[0]">
+                                            <i data-lucide="plus" class="w-3 h-3 text-muted-foreground"></i>
+                                        </template>
+                                    </div>
+                                    <div class="summoner-spell" @click="selectSummonerSpell(2, index, 1)">
+                                        <template x-if="player.summonerSpells[1]">
+                                            <img :src="getSummonerSpellIcon(player.summonerSpells[1])" alt="召唤师技能2" />
+                                        </template>
+                                        <template x-if="!player.summonerSpells[1]">
+                                            <i data-lucide="plus" class="w-3 h-3 text-muted-foreground"></i>
+                                        </template>
+                                    </div>
+                                </div>
+                                
+                                <select class="rank-select" x-model="player.rank">
+                                    <option value="一般级">一般级</option>
+                                    <option value="青铜">青铜</option>
+                                    <option value="白银">白银</option>
+                                    <option value="黄金">黄金</option>
+                                    <option value="铂金">铂金</option>
+                                    <option value="钻石">钻石</option>
+                                    <option value="大师">大师</option>
+                                    <option value="宗师">宗师</option>
+                                    <option value="王者">王者</option>
+                                </select>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 操作按钮 -->
+            <div class="action-buttons">
+                <button class="action-button secondary" @click="resetBP()">
+                    <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+                    重置
+                </button>
+                <button class="action-button" @click="nextPhase()">
+                    <i data-lucide="play" class="w-4 h-4"></i>
+                    <span x-text="currentPhase.buttonText"></span>
+                </button>
+                <button class="action-button secondary" @click="addToTeam()">
+                    <i data-lucide="user-plus" class="w-4 h-4"></i>
+                    添加队员
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function teamCompositionBP() {
+            return {
+                currentPhaseIndex: 0,
+                timeLeft: 30,
+                timer: null,
+                
+                phases: [
+                    { title: 'Ban阶段', subtitle: '禁用英雄', buttonText: '开始选择' },
+                    { title: 'Pick阶段', subtitle: '选择英雄', buttonText: '确认选择' },
+                    { title: '准备阶段', subtitle: '最终确认', buttonText: '开始游戏' }
+                ],
+                
+                team1: [
+                    { champion: 'Jinx', summonerSpells: ['SummonerFlash', 'SummonerHeal'], rank: '一般级', banned: false },
+                    { champion: 'Morgana', summonerSpells: ['SummonerFlash', 'SummonerIgnite'], rank: '一般级', banned: false },
+                    { champion: 'Yasuo', summonerSpells: ['SummonerFlash', 'SummonerIgnite'], rank: '一般级', banned: false },
+                    { champion: 'Sona', summonerSpells: ['SummonerFlash', 'SummonerHeal'], rank: '一般级', banned: false },
+                    { champion: 'Ekko', summonerSpells: ['SummonerFlash', 'SummonerIgnite'], rank: '一般级', banned: false }
+                ],
+                
+                team2: [
+                    { champion: 'Diana', summonerSpells: ['SummonerFlash', 'SummonerIgnite'], rank: '一般级', banned: false },
+                    { champion: 'Zed', summonerSpells: ['SummonerFlash', 'SummonerIgnite'], rank: '一般级', banned: false },
+                    { champion: 'Ekko', summonerSpells: ['SummonerFlash', 'SummonerIgnite'], rank: '一般级', banned: false },
+                    { champion: 'Soraka', summonerSpells: ['SummonerFlash', 'SummonerHeal'], rank: '一般级', banned: false },
+                    { champion: '', summonerSpells: ['', ''], rank: '一般级', banned: false }
+                ],
+                
+                availableChampions: [
+                    { id: 'Jinx', name: '金克丝' },
+                    { id: 'Morgana', name: '莫甘娜' },
+                    { id: 'Yasuo', name: '亚索' },
+                    { id: 'Sona', name: '索娜' },
+                    { id: 'Ekko', name: '艾克' },
+                    { id: 'Diana', name: '黛安娜' },
+                    { id: 'Zed', name: '劫' },
+                    { id: 'Soraka', name: '索拉卡' },
+                    { id: 'Ahri', name: '阿狸' },
+                    { id: 'Lux', name: '拉克丝' },
+                    { id: 'Thresh', name: '锤石' },
+                    { id: 'LeeSin', name: '李青' },
+                    { id: 'Garen', name: '盖伦' },
+                    { id: 'Ashe', name: '艾希' },
+                    { id: 'Darius', name: '德莱厄斯' }
+                ],
+                
+                summonerSpells: [
+                    { id: 'SummonerFlash', name: '闪现' },
+                    { id: 'SummonerHeal', name: '治疗术' },
+                    { id: 'SummonerIgnite', name: '点燃' },
+                    { id: 'SummonerTeleport', name: '传送' },
+                    { id: 'SummonerSmite', name: '惩戒' },
+                    { id: 'SummonerBarrier', name: '屏障' },
+                    { id: 'SummonerExhaust', name: '虚弱' }
+                ],
+                
+                get currentPhase() {
+                    return this.phases[this.currentPhaseIndex];
+                },
+                
+                init() {
+                    this.startTimer();
+                },
+                
+                startTimer() {
+                    if (this.timer) clearInterval(this.timer);
+                    this.timeLeft = 30;
+                    this.timer = setInterval(() => {
+                        this.timeLeft--;
+                        if (this.timeLeft <= 0) {
+                            this.nextPhase();
+                        }
+                    }, 1000);
+                },
+                
+                formatTime(seconds) {
+                    const mins = Math.floor(seconds / 60);
+                    const secs = seconds % 60;
+                    return `${mins}:${secs.toString().padStart(2, '0')}`;
+                },
+                
+                nextPhase() {
+                    if (this.currentPhaseIndex < this.phases.length - 1) {
+                        this.currentPhaseIndex++;
+                        this.startTimer();
+                    } else {
+                        clearInterval(this.timer);
+                        alert('游戏开始！');
+                    }
+                },
+                
+                updateChampion(team, playerIndex, championId) {
+                    if (team === 1) {
+                        this.team1[playerIndex].champion = championId;
+                    } else {
+                        this.team2[playerIndex].champion = championId;
+                    }
+                },
+                
+                selectSummonerSpell(team, playerIndex, spellIndex) {
+                    // 简化版本：循环切换召唤师技能
+                    const spells = ['SummonerFlash', 'SummonerHeal', 'SummonerIgnite', 'SummonerTeleport', 'SummonerSmite'];
+                    const currentSpell = team === 1 ? this.team1[playerIndex].summonerSpells[spellIndex] : this.team2[playerIndex].summonerSpells[spellIndex];
+                    const currentIndex = spells.indexOf(currentSpell);
+                    const nextIndex = (currentIndex + 1) % spells.length;
+                    
+                    if (team === 1) {
+                        this.team1[playerIndex].summonerSpells[spellIndex] = spells[nextIndex];
+                    } else {
+                        this.team2[playerIndex].summonerSpells[spellIndex] = spells[nextIndex];
+                    }
+                },
+                
+                getChampionIcon(championId) {
+                    if (!championId) return 'https://via.placeholder.com/40x40/1a1a2e/eee?text=?';
+                    return `https://ddragon.leagueoflegends.com/cdn/13.24.1/img/champion/${championId}.png`;
+                },
+                
+                getSummonerSpellIcon(spellId) {
+                    if (!spellId) return 'https://via.placeholder.com/24x24/1a1a2e/eee?text=?';
+                    return `https://ddragon.leagueoflegends.com/cdn/13.24.1/img/spell/${spellId}.png`;
+                },
+                
+                resetBP() {
+                    this.currentPhaseIndex = 0;
+                    this.startTimer();
+                    // 重置队伍数据
+                    this.team1.forEach(player => {
+                        player.champion = '';
+                        player.summonerSpells = ['', ''];
+                        player.banned = false;
+                    });
+                    this.team2.forEach(player => {
+                        player.champion = '';
+                        player.summonerSpells = ['', ''];
+                        player.banned = false;
+                    });
+                },
+                
+                addToTeam() {
+                    // 添加新队员到队伍2（示例）
+                    this.team2.push({
+                        champion: '',
+                        summonerSpells: ['', ''],
+                        rank: '一般级',
+                        banned: false
+                    });
+                }
+            }
+        }
+        
+        // 初始化 Lucide 图标
+        document.addEventListener('DOMContentLoaded', function() {
+            lucide.createIcons();
+        });
+    </script>
+</body>
+</html>

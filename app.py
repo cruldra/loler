@@ -17,8 +17,8 @@ from typing import Dict, List
 from config import settings
 from oauth_providers import oauth
 from database import create_db_and_tables, get_session
-from models import User, RunePage
-from routes import summoner, champion, item
+from models import User, RunePage, TeamComposition
+from routes import summoner, champion, item, team_composition
 
 
 @asynccontextmanager
@@ -57,6 +57,7 @@ app.add_middleware(SessionMiddleware, secret_key=settings.secret_key)
 app.include_router(champion.router)
 app.include_router(summoner.router)
 app.include_router(item.router)
+app.include_router(team_composition.router)
 
 BASE_DIR = Path(__file__).resolve().parent
 TEMPLATES_DIR = BASE_DIR / "templates"

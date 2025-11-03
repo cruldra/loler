@@ -1,7 +1,7 @@
 """
 路由模块
 """
-from . import champion, summoner, item
+from . import champion, summoner, item, team_composition
 
-__all__ = ["champion", "summoner", "item"]
+__all__ = ["champion", "summoner", "item", "team_composition"]
 
