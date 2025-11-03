@@ -1,0 +1,970 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>配装方案列表</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="lol_theme.css">
+    
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: var(--font-sans) !important;
+            background: var(--background) !important;
+            color: var(--foreground) !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            min-height: 100vh !important;
+        }
+        
+        .lol-container {
+            background: var(--background);
+            min-height: 100vh;
+            color: var(--foreground);
+        }
+        
+        .lol-header {
+            background: var(--card);
+            border-bottom: 1px solid var(--border);
+            padding: 1.5rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 2rem;
+        }
+        
+        .lol-title {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+            white-space: nowrap;
+        }
+        
+        .lol-search-container {
+            flex: 1;
+            max-width: 400px;
+            position: relative;
+        }
+        
+        .lol-search-input {
+            width: 100%;
+            background: var(--input);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 0.75rem 1rem 0.75rem 3rem;
+            color: var(--foreground);
+            font-size: 0.95rem;
+            transition: all 300ms ease;
+        }
+        
+        .lol-search-input:focus {
+            outline: none;
+            border-color: var(--ring);
+            box-shadow: 0 0 0 3px var(--ring);
+            transform: scale(1.02);
+        }
+        
+        .lol-search-icon {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--muted-foreground);
+        }
+        
+        .lol-header-actions {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .lol-btn {
+            background: var(--muted);
+            border: 1px solid var(--border);
+            color: var(--muted-foreground);
+            padding: 0.75rem 1rem;
+            border-radius: var(--radius);
+            cursor: pointer;
+            transition: all 300ms ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 500;
+            white-space: nowrap;
+        }
+        
+        .lol-btn:hover {
+            background: var(--accent);
+            color: var(--accent-foreground);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+        
+        .lol-btn-primary {
+            background: var(--primary);
+            color: var(--primary-foreground);
+        }
+        
+        .lol-btn-primary:hover {
+            background: var(--primary);
+            opacity: 0.9;
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .lol-main {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            gap: 1.5rem;
+            padding: 1.5rem;
+            min-height: calc(100vh - 100px);
+        }
+        
+        .lol-sidebar {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            height: fit-content;
+            position: sticky;
+            top: 1.5rem;
+        }
+        
+        .lol-sidebar-section {
+            margin-bottom: 2rem;
+        }
+        
+        .lol-sidebar-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--foreground);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .lol-sidebar-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            border-radius: var(--radius);
+            cursor: pointer;
+            transition: all 250ms ease;
+            margin-bottom: 0.5rem;
+            position: relative;
+        }
+        
+        .lol-sidebar-item:hover {
+            background: var(--muted);
+            color: var(--primary);
+            transform: translateX(4px);
+        }
+        
+        .lol-sidebar-item.active {
+            background: var(--primary);
+            color: var(--primary-foreground);
+        }
+        
+        .lol-sidebar-item.active::before {
+            content: '';
+            position: absolute;
+            left: -1.5rem;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 4px;
+            height: 100%;
+            background: var(--primary);
+            border-radius: 2px;
+        }
+        
+        .lol-builds-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.5rem;
+        }
+        
+        .lol-build-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            cursor: pointer;
+            transition: all 400ms ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .lol-build-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: var(--shadow-xl);
+            border-color: var(--primary);
+        }
+        
+        .lol-build-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary), var(--accent));
+            transform: scaleX(0);
+            transition: transform 400ms ease;
+        }
+        
+        .lol-build-card:hover::before {
+            transform: scaleX(1);
+        }
+        
+        .lol-build-preview {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            padding: 1rem;
+            background: var(--muted);
+            border-radius: var(--radius);
+        }
+        
+        .lol-build-item {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            border-radius: var(--radius);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            color: white;
+            border: 2px solid var(--border);
+            transition: all 300ms ease;
+        }
+        
+        .lol-build-item:hover {
+            transform: scale(1.1) rotate(5deg);
+            box-shadow: var(--shadow-md);
+        }
+        
+        .lol-build-info {
+            text-align: center;
+        }
+        
+        .lol-build-name {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--foreground);
+            margin-bottom: 0.5rem;
+        }
+        
+        .lol-build-description {
+            font-size: 0.9rem;
+            color: var(--muted-foreground);
+            margin-bottom: 1rem;
+            line-height: 1.4;
+        }
+        
+        .lol-build-tags {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+        
+        .lol-build-tag {
+            background: var(--secondary);
+            color: var(--secondary-foreground);
+            padding: 0.25rem 0.75rem;
+            border-radius: var(--radius-xl);
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+        
+        .lol-build-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            font-size: 0.85rem;
+            color: var(--muted-foreground);
+        }
+        
+        .lol-build-actions {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+        
+        .lol-action-btn {
+            background: var(--muted);
+            border: 1px solid var(--border);
+            color: var(--muted-foreground);
+            padding: 0.5rem;
+            border-radius: var(--radius);
+            cursor: pointer;
+            transition: all 250ms ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .lol-action-btn:hover {
+            background: var(--accent);
+            color: var(--accent-foreground);
+            transform: scale(1.1);
+        }
+        
+        .lol-action-btn.edit:hover {
+            background: var(--primary);
+            color: var(--primary-foreground);
+        }
+        
+        .lol-action-btn.delete:hover {
+            background: var(--destructive);
+            color: var(--destructive-foreground);
+        }
+        
+        .lol-new-build-card {
+            background: var(--muted);
+            border: 2px dashed var(--border);
+            border-radius: var(--radius-lg);
+            padding: 3rem 1.5rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            cursor: pointer;
+            transition: all 400ms ease;
+            min-height: 300px;
+        }
+        
+        .lol-new-build-card:hover {
+            border-color: var(--primary);
+            background: var(--primary);
+            color: var(--primary-foreground);
+            transform: scale(1.02);
+        }
+        
+        .lol-new-build-icon {
+            width: 64px;
+            height: 64px;
+            background: var(--primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1rem;
+            transition: all 400ms ease;
+        }
+        
+        .lol-new-build-card:hover .lol-new-build-icon {
+            background: var(--primary-foreground);
+            color: var(--primary);
+            transform: scale(1.1) rotate(90deg);
+        }
+        
+        .lol-new-build-text {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+        
+        .lol-new-build-hint {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+        
+        /* 动画效果 */
+        @keyframes cardLoad {
+            from {
+                opacity: 0;
+                transform: translateY(30px) scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+        
+        .lol-build-card {
+            animation: cardLoad 600ms ease-out;
+        }
+        
+        .lol-build-card:nth-child(1) { animation-delay: 0ms; }
+        .lol-build-card:nth-child(2) { animation-delay: 100ms; }
+        .lol-build-card:nth-child(3) { animation-delay: 200ms; }
+        .lol-build-card:nth-child(4) { animation-delay: 300ms; }
+        .lol-build-card:nth-child(5) { animation-delay: 400ms; }
+        .lol-build-card:nth-child(6) { animation-delay: 500ms; }
+        .lol-build-card:nth-child(7) { animation-delay: 600ms; }
+        .lol-build-card:nth-child(8) { animation-delay: 700ms; }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        
+        .pulse {
+            animation: pulse 1000ms ease-in-out infinite;
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-3px); }
+            75% { transform: translateX(3px); }
+        }
+        
+        .shake {
+            animation: shake 400ms ease-in-out;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 1200px) {
+            .lol-main {
+                grid-template-columns: 250px 1fr;
+            }
+            
+            .lol-builds-grid {
+                grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .lol-header {
+                flex-direction: column;
+                gap: 1rem;
+                padding: 1rem;
+            }
+            
+            .lol-search-container {
+                max-width: none;
+                width: 100%;
+            }
+            
+            .lol-main {
+                grid-template-columns: 1fr;
+                padding: 1rem;
+            }
+            
+            .lol-sidebar {
+                position: static;
+                margin-bottom: 1rem;
+            }
+            
+            .lol-builds-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .lol-header-actions {
+                flex-direction: column;
+                width: 100%;
+            }
+            
+            .lol-btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="lol-container">
+        <!-- 顶部工具栏 -->
+        <header class="lol-header">
+            <div class="lol-title">
+                <i data-lucide="clipboard-list" class="w-6 h-6"></i>
+                <span>我的配装方案</span>
+            </div>
+            
+            <div class="lol-search-container">
+                <i data-lucide="search" class="lol-search-icon w-4 h-4"></i>
+                <input type="text" class="lol-search-input" placeholder="搜索配装方案..." oninput="searchBuilds(this.value)">
+            </div>
+            
+            <div class="lol-header-actions">
+                <button class="lol-btn" onclick="toggleSortMenu()">
+                    <i data-lucide="filter" class="w-4 h-4"></i>
+                    <span>筛选</span>
+                    <i data-lucide="chevron-down" class="w-4 h-4"></i>
+                </button>
+                <button class="lol-btn lol-btn-primary" onclick="createNewBuild()">
+                    <i data-lucide="plus" class="w-4 h-4"></i>
+                    <span>新建方案</span>
+                </button>
+            </div>
+        </header>
+        
+        <!-- 主要内容区域 -->
+        <main class="lol-main">
+            <!-- 左侧筛选栏 -->
+            <aside class="lol-sidebar">
+                <div class="lol-sidebar-section">
+                    <div class="lol-sidebar-title">
+                        <i data-lucide="folder" class="w-4 h-4"></i>
+                        <span>方案分类</span>
+                    </div>
+                    <div class="lol-sidebar-item active" onclick="filterByCategory(this, 'all')">
+                        <i data-lucide="star" class="w-4 h-4"></i>
+                        <span>收藏夹</span>
+                        <span class="ml-auto text-xs bg-primary text-primary-foreground px-2 py-1 rounded-full">3</span>
+                    </div>
+                    <div class="lol-sidebar-item" onclick="filterByCategory(this, 'all')">
+                        <i data-lucide="folder-open" class="w-4 h-4"></i>
+                        <span>全部方案</span>
+                        <span class="ml-auto text-xs bg-muted text-muted-foreground px-2 py-1 rounded-full">12</span>
+                    </div>
+                    <div class="lol-sidebar-item" onclick="filterByCategory(this, 'ad')">
+                        <i data-lucide="sword" class="w-4 h-4"></i>
+                        <span>AD方案</span>
+                        <span class="ml-auto text-xs bg-muted text-muted-foreground px-2 py-1 rounded-full">5</span>
+                    </div>
+                    <div class="lol-sidebar-item" onclick="filterByCategory(this, 'ap')">
+                        <i data-lucide="zap" class="w-4 h-4"></i>
+                        <span>AP方案</span>
+                        <span class="ml-auto text-xs bg-muted text-muted-foreground px-2 py-1 rounded-full">4</span>
+                    </div>
+                    <div class="lol-sidebar-item" onclick="filterByCategory(this, 'tank')">
+                        <i data-lucide="shield" class="w-4 h-4"></i>
+                        <span>坦克方案</span>
+                        <span class="ml-auto text-xs bg-muted text-muted-foreground px-2 py-1 rounded-full">2</span>
+                    </div>
+                    <div class="lol-sidebar-item" onclick="filterByCategory(this, 'support')">
+                        <i data-lucide="heart" class="w-4 h-4"></i>
+                        <span>辅助方案</span>
+                        <span class="ml-auto text-xs bg-muted text-muted-foreground px-2 py-1 rounded-full">1</span>
+                    </div>
+                </div>
+                
+                <div class="lol-sidebar-section">
+                    <div class="lol-sidebar-title">
+                        <i data-lucide="users" class="w-4 h-4"></i>
+                        <span>英雄筛选</span>
+                    </div>
+                    <div class="lol-sidebar-item" onclick="filterByRole(this, 'fighter')">
+                        <span>🗡️</span>
+                        <span>战士</span>
+                    </div>
+                    <div class="lol-sidebar-item" onclick="filterByRole(this, 'marksman')">
+                        <span>🏹</span>
+                        <span>射手</span>
+                    </div>
+                    <div class="lol-sidebar-item" onclick="filterByRole(this, 'mage')">
+                        <span>🔮</span>
+                        <span>法师</span>
+                    </div>
+                    <div class="lol-sidebar-item" onclick="filterByRole(this, 'tank')">
+                        <span>🛡️</span>
+                        <span>坦克</span>
+                    </div>
+                    <div class="lol-sidebar-item" onclick="filterByRole(this, 'support')">
+                        <span>🌟</span>
+                        <span>辅助</span>
+                    </div>
+                    <div class="lol-sidebar-item" onclick="filterByRole(this, 'assassin')">
+                        <span>🗡️</span>
+                        <span>刺客</span>
+                    </div>
+                </div>
+            </aside>
+            
+            <!-- 配装方案网格 -->
+            <section class="lol-builds-grid" id="buildsGrid">
+                <!-- 配装方案卡片 -->
+                <div class="lol-build-card" data-category="ad" data-role="fighter" data-name="AD坦克流">
+                    <div class="lol-build-preview">
+                        <div class="lol-build-item">⚔️</div>
+                        <div class="lol-build-item">🛡️</div>
+                        <div class="lol-build-item">💎</div>
+                        <div class="lol-build-item">🩸</div>
+                        <div class="lol-build-item">⚡</div>
+                        <div class="lol-build-item">🔥</div>
+                    </div>
+                    <div class="lol-build-info">
+                        <div class="lol-build-name">AD坦克流</div>
+                        <div class="lol-build-description">平衡攻击力和生存能力的全能配装，适合前排战士英雄</div>
+                        <div class="lol-build-tags">
+                            <span class="lol-build-tag">盖伦</span>
+                            <span class="lol-build-tag">嘉文四世</span>
+                        </div>
+                        <div class="lol-build-meta">
+                            <span>2天前</span>
+                            <span>⭐ 已收藏</span>
+                        </div>
+                        <div class="lol-build-actions">
+                            <button class="lol-action-btn edit" onclick="editBuild(this)" title="编辑">
+                                <i data-lucide="edit-3" class="w-4 h-4"></i>
+                            </button>
+                            <button class="lol-action-btn" onclick="copyBuild(this)" title="复制">
+                                <i data-lucide="copy" class="w-4 h-4"></i>
+                            </button>
+                            <button class="lol-action-btn delete" onclick="deleteBuild(this)" title="删除">
+                                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="lol-build-card" data-category="ap" data-role="mage" data-name="AP法师流">
+                    <div class="lol-build-preview">
+                        <div class="lol-build-item">🔮</div>
+                        <div class="lol-build-item">📘</div>
+                        <div class="lol-build-item">⚡</div>
+                        <div class="lol-build-item">💫</div>
+                        <div class="lol-build-item">🌟</div>
+                        <div class="lol-build-item">🔥</div>
+                    </div>
+                    <div class="lol-build-info">
+                        <div class="lol-build-name">AP法师流</div>
+                        <div class="lol-build-description">高法术强度配装，专注于技能伤害和法术穿透</div>
+                        <div class="lol-build-tags">
+                            <span class="lol-build-tag">安妮</span>
+                            <span class="lol-build-tag">维迦</span>
+                        </div>
+                        <div class="lol-build-meta">
+                            <span>1周前</span>
+                            <span>⭐ 已收藏</span>
+                        </div>
+                        <div class="lol-build-actions">
+                            <button class="lol-action-btn edit" onclick="editBuild(this)" title="编辑">
+                                <i data-lucide="edit-3" class="w-4 h-4"></i>
+                            </button>
+                            <button class="lol-action-btn" onclick="copyBuild(this)" title="复制">
+                                <i data-lucide="copy" class="w-4 h-4"></i>
+                            </button>
+                            <button class="lol-action-btn delete" onclick="deleteBuild(this)" title="删除">
+                                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="lol-build-card" data-category="ad" data-role="marksman" data-name="ADC暴击流">
+                    <div class="lol-build-preview">
+                        <div class="lol-build-item">🏹</div>
+                        <div class="lol-build-item">💨</div>
+                        <div class="lol-build-item">🗡️</div>
+                        <div class="lol-build-item">⚡</div>
+                        <div class="lol-build-item">💎</div>
+                        <div class="lol-build-item">🔥</div>
+                    </div>
+                    <div class="lol-build-info">
+                        <div class="lol-build-name">ADC暴击流</div>
+                        <div class="lol-build-description">高暴击率和攻击速度，适合后期carry型射手</div>
+                        <div class="lol-build-tags">
+                            <span class="lol-build-tag">金克丝</span>
+                            <span class="lol-build-tag">崔丝塔娜</span>
+                        </div>
+                        <div class="lol-build-meta">
+                            <span>3天前</span>
+                            <span>⭐ 已收藏</span>
+                        </div>
+                        <div class="lol-build-actions">
+                            <button class="lol-action-btn edit" onclick="editBuild(this)" title="编辑">
+                                <i data-lucide="edit-3" class="w-4 h-4"></i>
+                            </button>
+                            <button class="lol-action-btn" onclick="copyBuild(this)" title="复制">
+                                <i data-lucide="copy" class="w-4 h-4"></i>
+                            </button>
+                            <button class="lol-action-btn delete" onclick="deleteBuild(this)" title="删除">
+                                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="lol-build-card" data-category="ap" data-role="mage" data-name="AP爆发流">
+                    <div class="lol-build-preview">
+                        <div class="lol-build-item">🔥</div>
+                        <div class="lol-build-item">📘</div>
+                        <div class="lol-build-item">💫</div>
+                        <div class="lol-build-item">⚡</div>
+                        <div class="lol-build-item">🌟</div>
+                        <div class="lol-build-item">💥</div>
+                    </div>
+                    <div class="lol-build-info">
+                        <div class="lol-build-name">AP爆发流</div>
+                        <div class="lol-build-description">极致法术强度，一套技能秒杀脆皮的爆发配装</div>
+                        <div class="lol-build-tags">
+                            <span class="lol-build-tag">维迦</span>
+                            <span class="lol-build-tag">卡萨丁</span>
+                        </div>
+                        <div class="lol-build-meta">
+                            <span>昨天</span>
+                            <span>📝 草稿</span>
+                        </div>
+                        <div class="lol-build-actions">
+                            <button class="lol-action-btn edit" onclick="editBuild(this)" title="编辑">
+                                <i data-lucide="edit-3" class="w-4 h-4"></i>
+                            </button>
+                            <button class="lol-action-btn" onclick="copyBuild(this)" title="复制">
+                                <i data-lucide="copy" class="w-4 h-4"></i>
+                            </button>
+                            <button class="lol-action-btn delete" onclick="deleteBuild(this)" title="删除">
+                                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="lol-build-card" data-category="tank" data-role="tank" data-name="肉装坦克">
+                    <div class="lol-build-preview">
+                        <div class="lol-build-item">🛡️</div>
+                        <div class="lol-build-item">⚔️</div>
+                        <div class="lol-build-item">💚</div>
+                        <div class="lol-build-item">🩸</div>
+                        <div class="lol-build-item">🔰</div>
+                        <div class="lol-build-item">⭐</div>
+                    </div>
+                    <div class="lol-build-info">
+                        <div class="lol-build-name">肉装坦克</div>
+                        <div class="lol-build-description">极致生存能力，团战前排承伤的终极坦克配装</div>
+                        <div class="lol-build-tags">
+                            <span class="lol-build-tag">石头人</span>
+                            <span class="lol-build-tag">慎</span>
+                        </div>
+                        <div class="lol-build-meta">
+                            <span>5天前</span>
+                            <span>✅ 已完成</span>
+                        </div>
+                        <div class="lol-build-actions">
+                            <button class="lol-action-btn edit" onclick="editBuild(this)" title="编辑">
+                                <i data-lucide="edit-3" class="w-4 h-4"></i>
+                            </button>
+                            <button class="lol-action-btn" onclick="copyBuild(this)" title="复制">
+                                <i data-lucide="copy" class="w-4 h-4"></i>
+                            </button>
+                            <button class="lol-action-btn delete" onclick="deleteBuild(this)" title="删除">
+                                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="lol-build-card" data-category="ad" data-role="marksman" data-name="攻速流">
+                    <div class="lol-build-preview">
+                        <div class="lol-build-item">🏹</div>
+                        <div class="lol-build-item">⚡</div>
+                        <div class="lol-build-item">💎</div>
+                        <div class="lol-build-item">🌪️</div>
+                        <div class="lol-build-item">⚔️</div>
+                        <div class="lol-build-item">🔥</div>
+                    </div>
+                    <div class="lol-build-info">
+                        <div class="lol-build-name">攻速流</div>
+                        <div class="lol-build-description">极致攻击速度配装，适合依赖普攻的英雄</div>
+                        <div class="lol-build-tags">
+                            <span class="lol-build-tag">崔丝塔娜</span>
+                            <span class="lol-build-tag">韦鲁斯</span>
+                        </div>
+                        <div class="lol-build-meta">
+                            <span>1天前</span>
+                            <span>🔄 更新中</span>
+                        </div>
+                        <div class="lol-build-actions">
+                            <button class="lol-action-btn edit" onclick="editBuild(this)" title="编辑">
+                                <i data-lucide="edit-3" class="w-4 h-4"></i>
+                            </button>
+                            <button class="lol-action-btn" onclick="copyBuild(this)" title="复制">
+                                <i data-lucide="copy" class="w-4 h-4"></i>
+                            </button>
+                            <button class="lol-action-btn delete" onclick="deleteBuild(this)" title="删除">
+                                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 新建配装方案卡片 -->
+                <div class="lol-new-build-card" onclick="createNewBuild()">
+                    <div class="lol-new-build-icon">
+                        <i data-lucide="plus" class="w-8 h-8 text-white"></i>
+                    </div>
+                    <div class="lol-new-build-text">新建配装方案</div>
+                    <div class="lol-new-build-hint">点击创建新的装备配置</div>
+                </div>
+            </section>
+        </main>
+    </div>
+    
+    <script>
+        // 初始化 Lucide 图标
+        lucide.createIcons();
+        
+        // 搜索功能
+        function searchBuilds(query) {
+            const cards = document.querySelectorAll('.lol-build-card');
+            cards.forEach(card => {
+                const name = card.dataset.name?.toLowerCase() || '';
+                const description = card.querySelector('.lol-build-description')?.textContent.toLowerCase() || '';
+                const tags = Array.from(card.querySelectorAll('.lol-build-tag')).map(tag => tag.textContent.toLowerCase()).join(' ');
+                
+                if (name.includes(query.toLowerCase()) || 
+                    description.includes(query.toLowerCase()) || 
+                    tags.includes(query.toLowerCase())) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+        
+        // 分类筛选
+        function filterByCategory(element, category) {
+            // 更新侧边栏激活状态
+            document.querySelectorAll('.lol-sidebar-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            element.classList.add('active');
+            
+            // 筛选卡片
+            const cards = document.querySelectorAll('.lol-build-card');
+            cards.forEach(card => {
+                if (category === 'all' || card.dataset.category === category) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+        
+        // 英雄角色筛选
+        function filterByRole(element, role) {
+            // 更新侧边栏激活状态
+            document.querySelectorAll('.lol-sidebar-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            element.classList.add('active');
+            
+            // 筛选卡片
+            const cards = document.querySelectorAll('.lol-build-card');
+            cards.forEach(card => {
+                if (card.dataset.role === role) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+        
+        // 编辑配装方案
+        function editBuild(button) {
+            const card = button.closest('.lol-build-card');
+            const buildName = card.querySelector('.lol-build-name').textContent;
+            
+            // 添加编辑动画
+            card.style.transform = 'scale(0.95)';
+            setTimeout(() => {
+                card.style.transform = 'scale(1)';
+            }, 200);
+            
+            console.log('编辑配装方案:', buildName);
+            // 这里可以跳转到编辑页面或打开编辑模态框
+        }
+        
+        // 复制配装方案
+        function copyBuild(button) {
+            const card = button.closest('.lol-build-card');
+            const buildName = card.querySelector('.lol-build-name').textContent;
+            
+            // 添加复制动画
+            button.classList.add('pulse');
+            setTimeout(() => {
+                button.classList.remove('pulse');
+            }, 1000);
+            
+            console.log('复制配装方案:', buildName);
+            // 这里可以实现复制逻辑
+        }
+        
+        // 删除配装方案
+        function deleteBuild(button) {
+            const card = button.closest('.lol-build-card');
+            const buildName = card.querySelector('.lol-build-name').textContent;
+            
+            if (confirm(`确定要删除配装方案 "${buildName}" 吗？`)) {
+                // 添加删除动画
+                card.style.transform = 'scale(0.8)';
+                card.style.opacity = '0';
+                
+                setTimeout(() => {
+                    card.remove();
+                }, 300);
+                
+                console.log('删除配装方案:', buildName);
+            } else {
+                // 取消删除时的震动效果
+                card.classList.add('shake');
+                setTimeout(() => {
+                    card.classList.remove('shake');
+                }, 400);
+            }
+        }
+        
+        // 创建新配装方案
+        function createNewBuild() {
+            console.log('创建新配装方案');
+            // 这里可以跳转到创建页面或打开创建模态框
+            
+            // 添加创建动画
+            const newBuildCard = document.querySelector('.lol-new-build-card');
+            newBuildCard.style.transform = 'scale(0.9)';
+            setTimeout(() => {
+                newBuildCard.style.transform = 'scale(1)';
+            }, 200);
+        }
+        
+        // 切换排序菜单
+        function toggleSortMenu() {
+            console.log('切换排序菜单');
+            // 这里可以实现排序菜单的显示/隐藏
+        }
+        
+        // 卡片点击事件
+        document.addEventListener('click', function(event) {
+            const card = event.target.closest('.lol-build-card');
+            if (card && !event.target.closest('.lol-build-actions')) {
+                const buildName = card.querySelector('.lol-build-name').textContent;
+                console.log('查看配装方案详情:', buildName);
+                // 这里可以跳转到详情页面
+            }
+        });
+        
+        // 键盘快捷键
+        document.addEventListener('keydown', function(event) {
+            if (event.ctrlKey && event.key === 'n') {
+                event.preventDefault();
+                createNewBuild();
+            }
+            
+            if (event.key === '/') {
+                event.preventDefault();
+                document.querySelector('.lol-search-input').focus();
+            }
+        });
+        
+        // 初始化时的动画效果
+        window.addEventListener('load', function() {
+            const cards = document.querySelectorAll('.lol-build-card, .lol-new-build-card');
+            cards.forEach((card, index) => {
+                card.style.animationDelay = `${index * 100}ms`;
+            });
+        });
+    </script>
+</body>
+</html>

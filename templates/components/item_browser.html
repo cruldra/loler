@@ -359,6 +359,13 @@
 </div>
 
 <script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 从URL参数恢复筛选条件
+    const urlParams = new URLSearchParams(window.location.search);
+    let currentFilter = urlParams.get('tag') || 'all';
+    let currentMapFilter = urlParams.get('map') || 'all';
+    let searchTerm = urlParams.get('search') || '';
+
     // 装备搜索和筛选功能
     const itemSearchInput = document.getElementById('itemSearchInput');
     const itemCards = document.querySelectorAll('.item-card');
@@ -366,19 +373,60 @@
     const filterBtns = document.querySelectorAll('.item-filter-btn');
     const mapFilterBtns = document.querySelectorAll('.map-filter-btn');
 
-    let currentFilter = 'all';
-    let currentMapFilter = 'all';
-    let searchTerm = '';
+    // 恢复搜索框的值
+    if (itemSearchInput && searchTerm) {
+        itemSearchInput.value = searchTerm;
+    }
+
+    // 恢复标签筛选按钮的激活状态
+    filterBtns.forEach(btn => {
+        if (btn.dataset.filter === currentFilter) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    });
+
+    // 恢复地图筛选按钮的激活状态
+    mapFilterBtns.forEach(btn => {
+        if (btn.dataset.map === currentMapFilter) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    });
+
+    // 更新URL参数
+    function updateURLParams() {
+        const url = new URL(window.location);
+        if (currentFilter !== 'all') {
+            url.searchParams.set('tag', currentFilter);
+        } else {
+            url.searchParams.delete('tag');
+        }
+        if (currentMapFilter !== 'all') {
+            url.searchParams.set('map', currentMapFilter);
+        } else {
+            url.searchParams.delete('map');
+        }
+        if (searchTerm) {
+            url.searchParams.set('search', searchTerm);
+        } else {
+            url.searchParams.delete('search');
+        }
+        window.history.replaceState({}, '', url);
+    }
 
     // 搜索功能
     if (itemSearchInput) {
         itemSearchInput.addEventListener('input', function(e) {
             searchTerm = e.target.value;
             filterItems();
+            updateURLParams();
         });
     }
 
-    // 属性筛选功能
+    // 标签筛选功能
     filterBtns.forEach(btn => {
         btn.addEventListener('click', function() {
             // 移除所有活跃状态
@@ -388,6 +436,7 @@
             this.classList.add('active');
             currentFilter = this.dataset.filter;
             filterItems();
+            updateURLParams();
 
             // 添加点击动画
             this.style.transform = 'scale(0.9)';
@@ -407,6 +456,7 @@
             this.classList.add('active');
             currentMapFilter = this.dataset.map;
             filterItems();
+            updateURLParams();
 
             // 添加点击动画
             this.style.transform = 'scale(0.9)';
@@ -448,8 +498,24 @@
             itemSearchInput.value = '';
             searchTerm = '';
             filterItems();
+            updateURLParams();
         }
     });
+
+    // 装备卡片点击时保留筛选条件
+    itemCards.forEach(card => {
+        card.addEventListener('click', function(e) {
+            e.preventDefault();
+            const itemId = this.dataset.itemId;
+            const currentParams = new URLSearchParams(window.location.search);
+            const queryString = currentParams.toString();
+            window.location.href = `/items/${itemId}${queryString ? '?' + queryString : ''}`;
+        });
+    });
+
+    // 页面加载时应用筛选条件
+    filterItems();
+});
 </script>
 {% endmacro %}
 

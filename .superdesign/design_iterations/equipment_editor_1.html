@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>装备配置方案编辑器</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="lol_theme.css">
+    
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: var(--font-sans) !important;
+            background: var(--background) !important;
+            color: var(--foreground) !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            min-height: 100vh !important;
+        }
+        
+        .lol-container {
+            background: var(--background);
+            min-height: 100vh;
+            color: var(--foreground);
+        }
+        
+        .lol-header {
+            background: var(--card);
+            border-bottom: 1px solid var(--border);
+            padding: 1rem 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .lol-title {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--primary);
+        }
+        
+        .lol-toolbar {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .lol-btn {
+            background: var(--muted);
+            border: 1px solid var(--border);
+            color: var(--muted-foreground);
+            padding: 0.5rem;
+            border-radius: var(--radius);
+            cursor: pointer;
+            transition: all 300ms ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .lol-btn:hover {
+            background: var(--accent);
+            color: var(--accent-foreground);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+        
+        .lol-btn-primary {
+            background: var(--primary);
+            color: var(--primary-foreground);
+            padding: 0.5rem 1rem;
+            font-weight: 500;
+        }
+        
+        .lol-btn-primary:hover {
+            background: var(--primary);
+            opacity: 0.9;
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .lol-main {
+            display: grid;
+            grid-template-columns: 250px 1fr 350px;
+            gap: 1rem;
+            padding: 1rem;
+            height: calc(100vh - 80px);
+        }
+        
+        .lol-filters {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 1rem;
+            overflow-y: auto;
+        }
+        
+        .lol-clear-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--destructive);
+            cursor: pointer;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+            transition: all 200ms ease;
+        }
+        
+        .lol-clear-btn:hover {
+            color: var(--destructive);
+            opacity: 0.8;
+        }
+        
+        .lol-filter-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.75rem;
+            cursor: pointer;
+            transition: all 250ms ease;
+        }
+        
+        .lol-filter-item:hover {
+            color: var(--primary);
+        }
+        
+        .lol-checkbox {
+            width: 16px;
+            height: 16px;
+            border: 2px solid var(--border);
+            border-radius: 3px;
+            position: relative;
+            transition: all 250ms ease;
+        }
+        
+        .lol-checkbox.checked {
+            background: var(--primary);
+            border-color: var(--primary);
+        }
+        
+        .lol-checkbox.checked::after {
+            content: '✓';
+            position: absolute;
+            top: -2px;
+            left: 1px;
+            color: var(--primary-foreground);
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .lol-equipment-area {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .lol-search-bar {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .lol-search-input {
+            flex: 1;
+            background: var(--input);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 0.75rem;
+            color: var(--foreground);
+            font-size: 0.9rem;
+            transition: all 200ms ease;
+        }
+        
+        .lol-search-input:focus {
+            outline: none;
+            border-color: var(--ring);
+            box-shadow: 0 0 0 2px var(--ring);
+            transform: scale(1.02);
+        }
+        
+        .lol-sort-select {
+            background: var(--input);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 0.75rem;
+            color: var(--foreground);
+            cursor: pointer;
+            min-width: 120px;
+        }
+        
+        .lol-equipment-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            overflow-y: auto;
+            flex: 1;
+        }
+        
+        .lol-equipment-item {
+            background: var(--muted);
+            border: 2px solid var(--border);
+            border-radius: var(--radius);
+            padding: 0.75rem;
+            text-align: center;
+            cursor: grab;
+            transition: all 300ms ease;
+            position: relative;
+        }
+        
+        .lol-equipment-item:hover {
+            transform: translateY(-4px) scale(1.05);
+            box-shadow: var(--shadow-lg);
+            border-color: var(--primary);
+        }
+        
+        .lol-equipment-item:active {
+            cursor: grabbing;
+            transform: scale(0.9) rotate(3deg);
+            opacity: 0.8;
+        }
+        
+        .lol-equipment-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            border-radius: var(--radius);
+            margin: 0 auto 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: white;
+        }
+        
+        .lol-equipment-price {
+            font-weight: 600;
+            color: var(--primary);
+            font-size: 0.9rem;
+        }
+        
+        .lol-equipment-name {
+            font-size: 0.8rem;
+            color: var(--muted-foreground);
+            margin-top: 0.25rem;
+        }
+        
+        .lol-build-area {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+        
+        .lol-build-hint {
+            color: var(--muted-foreground);
+            margin-bottom: 2rem;
+            font-size: 1rem;
+        }
+        
+        .lol-build-slots {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+        
+        .lol-build-slot {
+            width: 48px;
+            height: 48px;
+            border: 2px dashed var(--border);
+            border-radius: var(--radius);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 400ms ease;
+            position: relative;
+        }
+        
+        .lol-build-slot:hover {
+            border-color: var(--primary);
+            background: var(--primary);
+            opacity: 0.1;
+        }
+        
+        .lol-build-slot.filled {
+            border-style: solid;
+            border-color: var(--primary);
+            background: var(--primary);
+            color: var(--primary-foreground);
+        }
+        
+        .lol-logo {
+            width: 64px;
+            height: 64px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            border-radius: var(--radius-lg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1rem;
+            opacity: 0.3;
+        }
+        
+        /* 动画效果 */
+        @keyframes equipmentLoad {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .lol-equipment-item {
+            animation: equipmentLoad 600ms ease-out;
+        }
+        
+        .lol-equipment-item:nth-child(1) { animation-delay: 0ms; }
+        .lol-equipment-item:nth-child(2) { animation-delay: 100ms; }
+        .lol-equipment-item:nth-child(3) { animation-delay: 200ms; }
+        .lol-equipment-item:nth-child(4) { animation-delay: 300ms; }
+        .lol-equipment-item:nth-child(5) { animation-delay: 400ms; }
+        .lol-equipment-item:nth-child(6) { animation-delay: 500ms; }
+        .lol-equipment-item:nth-child(7) { animation-delay: 600ms; }
+        .lol-equipment-item:nth-child(8) { animation-delay: 700ms; }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+        
+        .shake {
+            animation: shake 300ms ease-in-out;
+        }
+        
+        @keyframes glow {
+            0% { box-shadow: 0 0 5px var(--primary); }
+            50% { box-shadow: 0 0 20px var(--primary), 0 0 30px var(--primary); }
+            100% { box-shadow: 0 0 5px var(--primary); }
+        }
+        
+        .glow {
+            animation: glow 500ms ease-in-out;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 1200px) {
+            .lol-main {
+                grid-template-columns: 200px 1fr 300px;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .lol-main {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto auto auto;
+                gap: 0.5rem;
+            }
+            
+            .lol-equipment-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+            
+            .lol-build-slots {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="lol-container">
+        <!-- 顶部工具栏 -->
+        <header class="lol-header">
+            <div class="lol-title">
+                <i data-lucide="zap" class="w-6 h-6"></i>
+                <span>新的配装方案</span>
+                <i data-lucide="chevron-down" class="w-4 h-4"></i>
+            </div>
+            
+            <div class="lol-toolbar">
+                <button class="lol-btn" title="编辑">
+                    <i data-lucide="edit-3" class="w-4 h-4"></i>
+                </button>
+                <button class="lol-btn" title="笔记">
+                    <i data-lucide="pen-tool" class="w-4 h-4"></i>
+                </button>
+                <button class="lol-btn" title="更多">
+                    <i data-lucide="more-horizontal" class="w-4 h-4"></i>
+                </button>
+                <button class="lol-btn" title="复制">
+                    <i data-lucide="copy" class="w-4 h-4"></i>
+                </button>
+                <button class="lol-btn" title="文件夹">
+                    <i data-lucide="folder" class="w-4 h-4"></i>
+                </button>
+                <button class="lol-btn" title="设置">
+                    <i data-lucide="settings" class="w-4 h-4"></i>
+                </button>
+                <button class="lol-btn" title="删除">
+                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                </button>
+                <button class="lol-btn lol-btn-primary" onclick="saveConfiguration()">
+                    保存
+                </button>
+            </div>
+        </header>
+        
+        <!-- 主要内容区域 -->
+        <main class="lol-main">
+            <!-- 左侧过滤器 -->
+            <aside class="lol-filters">
+                <div class="lol-clear-btn" onclick="clearFilters()">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                    <span>清空</span>
+                </div>
+                
+                <div class="space-y-3">
+                    <div class="lol-filter-item" onclick="toggleFilter(this)">
+                        <div class="lol-checkbox"></div>
+                        <span>攻击力</span>
+                    </div>
+                    <div class="lol-filter-item" onclick="toggleFilter(this)">
+                        <div class="lol-checkbox"></div>
+                        <span>暴击</span>
+                    </div>
+                    <div class="lol-filter-item" onclick="toggleFilter(this)">
+                        <div class="lol-checkbox"></div>
+                        <span>攻击速度</span>
+                    </div>
+                    <div class="lol-filter-item" onclick="toggleFilter(this)">
+                        <div class="lol-checkbox"></div>
+                        <span>攻击特效</span>
+                    </div>
+                    <div class="lol-filter-item" onclick="toggleFilter(this)">
+                        <div class="lol-checkbox"></div>
+                        <span>护甲穿透</span>
+                    </div>
+                    <div class="lol-filter-item" onclick="toggleFilter(this)">
+                        <div class="lol-checkbox"></div>
+                        <span>法术强度</span>
+                    </div>
+                    <div class="lol-filter-item" onclick="toggleFilter(this)">
+                        <div class="lol-checkbox"></div>
+                        <span>法力值&回复</span>
+                    </div>
+                    <div class="lol-filter-item" onclick="toggleFilter(this)">
+                        <div class="lol-checkbox"></div>
+                        <span>法术穿透</span>
+                    </div>
+                    <div class="lol-filter-item" onclick="toggleFilter(this)">
+                        <div class="lol-checkbox"></div>
+                        <span>生命值&回复</span>
+                    </div>
+                    <div class="lol-filter-item" onclick="toggleFilter(this)">
+                        <div class="lol-checkbox"></div>
+                        <span>护甲</span>
+                    </div>
+                    <div class="lol-filter-item" onclick="toggleFilter(this)">
+                        <div class="lol-checkbox"></div>
+                        <span>魔法抗性</span>
+                    </div>
+                    <div class="lol-filter-item" onclick="toggleFilter(this)">
+                        <div class="lol-checkbox"></div>
+                        <span>技能急速</span>
+                    </div>
+                    <div class="lol-filter-item" onclick="toggleFilter(this)">
+                        <div class="lol-checkbox"></div>
+                        <span>移动速度</span>
+                    </div>
+                    <div class="lol-filter-item" onclick="toggleFilter(this)">
+                        <div class="lol-checkbox"></div>
+                        <span>生命偷取&吸血</span>
+                    </div>
+                </div>
+            </aside>
+            
+            <!-- 中央装备区域 -->
+            <section class="lol-equipment-area">
+                <div class="lol-search-bar">
+                    <div class="relative flex-1">
+                        <i data-lucide="search" class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400"></i>
+                        <input type="text" class="lol-search-input pl-10" placeholder="装备搜索" oninput="searchEquipment(this.value)">
+                    </div>
+                    <select class="lol-sort-select" onchange="sortEquipment(this.value)">
+                        <option value="price">金币 ▲</option>
+                        <option value="price-desc">金币 ▼</option>
+                        <option value="name">名称</option>
+                        <option value="type">类型</option>
+                    </select>
+                </div>
+                
+                <div class="lol-equipment-grid" id="equipmentGrid">
+                    <!-- 装备项目 -->
+                    <div class="lol-equipment-item" draggable="true" ondragstart="dragStart(event)" data-price="0" data-name="多兰之剑">
+                        <div class="lol-equipment-icon">⚔️</div>
+                        <div class="lol-equipment-price">免费</div>
+                        <div class="lol-equipment-name">多兰之剑</div>
+                    </div>
+                    
+                    <div class="lol-equipment-item" draggable="true" ondragstart="dragStart(event)" data-price="0" data-name="蓝水晶">
+                        <div class="lol-equipment-icon">🔮</div>
+                        <div class="lol-equipment-price">免费</div>
+                        <div class="lol-equipment-name">蓝水晶</div>
+                    </div>
+                    
+                    <div class="lol-equipment-item" draggable="true" ondragstart="dragStart(event)" data-price="0" data-name="红水晶">
+                        <div class="lol-equipment-icon">🔥</div>
+                        <div class="lol-equipment-price">免费</div>
+                        <div class="lol-equipment-name">红水晶</div>
+                    </div>
+                    
+                    <div class="lol-equipment-item" draggable="true" ondragstart="dragStart(event)" data-price="50" data-name="生命药水">
+                        <div class="lol-equipment-icon">🩸</div>
+                        <div class="lol-equipment-price">50</div>
+                        <div class="lol-equipment-name">生命药水</div>
+                    </div>
+                    
+                    <div class="lol-equipment-item" draggable="true" ondragstart="dragStart(event)" data-price="75" data-name="长剑">
+                        <div class="lol-equipment-icon">⚔️</div>
+                        <div class="lol-equipment-price">75</div>
+                        <div class="lol-equipment-name">长剑</div>
+                    </div>
+                    
+                    <div class="lol-equipment-item" draggable="true" ondragstart="dragStart(event)" data-price="150" data-name="短剑">
+                        <div class="lol-equipment-icon">💎</div>
+                        <div class="lol-equipment-price">150</div>
+                        <div class="lol-equipment-name">短剑</div>
+                    </div>
+                    
+                    <div class="lol-equipment-item" draggable="true" ondragstart="dragStart(event)" data-price="200" data-name="法师之书">
+                        <div class="lol-equipment-icon">📘</div>
+                        <div class="lol-equipment-price">200</div>
+                        <div class="lol-equipment-name">法师之书</div>
+                    </div>
+                    
+                    <div class="lol-equipment-item" draggable="true" ondragstart="dragStart(event)" data-price="250" data-name="匕首">
+                        <div class="lol-equipment-icon">🗡️</div>
+                        <div class="lol-equipment-price">250</div>
+                        <div class="lol-equipment-name">匕首</div>
+                    </div>
+                    
+                    <div class="lol-equipment-item" draggable="true" ondragstart="dragStart(event)" data-price="250" data-name="虚空宝石">
+                        <div class="lol-equipment-icon">🔮</div>
+                        <div class="lol-equipment-price">250</div>
+                        <div class="lol-equipment-name">虚空宝石</div>
+                    </div>
+                    
+                    <div class="lol-equipment-item" draggable="true" ondragstart="dragStart(event)" data-price="300" data-name="草鞋">
+                        <div class="lol-equipment-icon">👢</div>
+                        <div class="lol-equipment-price">300</div>
+                        <div class="lol-equipment-name">草鞋</div>
+                    </div>
+                    
+                    <div class="lol-equipment-item" draggable="true" ondragstart="dragStart(event)" data-price="300" data-name="治疗宝珠">
+                        <div class="lol-equipment-icon">💚</div>
+                        <div class="lol-equipment-price">300</div>
+                        <div class="lol-equipment-name">治疗宝珠</div>
+                    </div>
+                    
+                    <div class="lol-equipment-item" draggable="true" ondragstart="dragStart(event)" data-price="300" data-name="蓝宝石">
+                        <div class="lol-equipment-icon">💎</div>
+                        <div class="lol-equipment-price">300</div>
+                        <div class="lol-equipment-name">蓝宝石</div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- 右侧配置区域 -->
+            <aside class="lol-build-area" ondrop="drop(event)" ondragover="allowDrop(event)">
+                <div class="lol-logo">
+                    <i data-lucide="shield" class="w-8 h-8 text-white"></i>
+                </div>
+                <div class="lol-build-hint">
+                    将装备拖入此处以创建<br>一个新的区块
+                </div>
+                <div class="lol-build-slots">
+                    <div class="lol-build-slot" ondrop="dropToSlot(event, this)" ondragover="allowDrop(event)"></div>
+                    <div class="lol-build-slot" ondrop="dropToSlot(event, this)" ondragover="allowDrop(event)"></div>
+                    <div class="lol-build-slot" ondrop="dropToSlot(event, this)" ondragover="allowDrop(event)"></div>
+                    <div class="lol-build-slot" ondrop="dropToSlot(event, this)" ondragover="allowDrop(event)"></div>
+                    <div class="lol-build-slot" ondrop="dropToSlot(event, this)" ondragover="allowDrop(event)"></div>
+                    <div class="lol-build-slot" ondrop="dropToSlot(event, this)" ondragover="allowDrop(event)"></div>
+                </div>
+            </aside>
+        </main>
+    </div>
+    
+    <script>
+        // 初始化 Lucide 图标
+        lucide.createIcons();
+        
+        // 过滤器功能
+        function toggleFilter(element) {
+            const checkbox = element.querySelector('.lol-checkbox');
+            checkbox.classList.toggle('checked');
+            
+            // 添加动画效果
+            element.style.transform = 'scale(0.95)';
+            setTimeout(() => {
+                element.style.transform = 'scale(1)';
+            }, 150);
+        }
+        
+        function clearFilters() {
+            const checkboxes = document.querySelectorAll('.lol-checkbox');
+            checkboxes.forEach(checkbox => {
+                checkbox.classList.remove('checked');
+            });
+            
+            // 添加震动效果
+            const clearBtn = document.querySelector('.lol-clear-btn');
+            clearBtn.classList.add('shake');
+            setTimeout(() => {
+                clearBtn.classList.remove('shake');
+            }, 300);
+        }
+        
+        // 搜索功能
+        function searchEquipment(query) {
+            const items = document.querySelectorAll('.lol-equipment-item');
+            items.forEach(item => {
+                const name = item.dataset.name.toLowerCase();
+                if (name.includes(query.toLowerCase())) {
+                    item.style.display = 'block';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        }
+        
+        // 排序功能
+        function sortEquipment(sortBy) {
+            const grid = document.getElementById('equipmentGrid');
+            const items = Array.from(grid.children);
+            
+            items.sort((a, b) => {
+                switch(sortBy) {
+                    case 'price':
+                        return parseInt(a.dataset.price) - parseInt(b.dataset.price);
+                    case 'price-desc':
+                        return parseInt(b.dataset.price) - parseInt(a.dataset.price);
+                    case 'name':
+                        return a.dataset.name.localeCompare(b.dataset.name);
+                    default:
+                        return 0;
+                }
+            });
+            
+            // 重新排列元素
+            items.forEach(item => grid.appendChild(item));
+        }
+        
+        // 拖拽功能
+        function dragStart(event) {
+            event.dataTransfer.setData('text/plain', event.target.outerHTML);
+            event.target.style.opacity = '0.5';
+        }
+        
+        function allowDrop(event) {
+            event.preventDefault();
+        }
+        
+        function drop(event) {
+            event.preventDefault();
+            // 通用拖拽处理
+        }
+        
+        function dropToSlot(event, slot) {
+            event.preventDefault();
+            event.stopPropagation();
+            
+            if (!slot.classList.contains('filled')) {
+                const data = event.dataTransfer.getData('text/plain');
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = data;
+                const draggedItem = tempDiv.firstChild;
+                
+                // 获取装备信息
+                const icon = draggedItem.querySelector('.lol-equipment-icon').textContent;
+                const name = draggedItem.dataset.name;
+                
+                // 填充槽位
+                slot.innerHTML = icon;
+                slot.classList.add('filled');
+                slot.title = name;
+                
+                // 添加放置动画
+                slot.style.transform = 'scale(1.2)';
+                slot.classList.add('glow');
+                setTimeout(() => {
+                    slot.style.transform = 'scale(1)';
+                    slot.classList.remove('glow');
+                }, 400);
+            }
+        }
+        
+        // 保存配置
+        function saveConfiguration() {
+            const filledSlots = document.querySelectorAll('.lol-build-slot.filled');
+            const configuration = Array.from(filledSlots).map(slot => slot.title);
+            
+            console.log('保存配置:', configuration);
+            
+            // 添加保存成功动画
+            const saveBtn = document.querySelector('.lol-btn-primary');
+            saveBtn.classList.add('glow');
+            saveBtn.textContent = '已保存';
+            
+            setTimeout(() => {
+                saveBtn.classList.remove('glow');
+                saveBtn.textContent = '保存';
+            }, 2000);
+        }
+        
+        // 重置拖拽元素透明度
+        document.addEventListener('dragend', function(event) {
+            event.target.style.opacity = '1';
+        });
+        
+        // 添加键盘快捷键支持
+        document.addEventListener('keydown', function(event) {
+            if (event.ctrlKey && event.key === 's') {
+                event.preventDefault();
+                saveConfiguration();
+            }
+        });
+    </script>
+</body>
+</html>
