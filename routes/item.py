@@ -156,7 +156,7 @@ async def save_item_build(request: Request, session: Session = Depends(get_sessi
         ).first()
 
         if not build:
-            return RedirectResponse(url='/items/builds/list', status_code=303)
+            return RedirectResponse(url='/profile#item-builds', status_code=303)
 
         build.name = form_data.get('name', build.name)
         build.description = form_data.get('description')
@@ -185,7 +185,7 @@ async def save_item_build(request: Request, session: Session = Depends(get_sessi
 
     session.commit()
 
-    return RedirectResponse(url='/items/builds/list', status_code=303)
+    return RedirectResponse(url='/profile#item-builds', status_code=303)
 
 
 @router.post("/builds/delete/{build_id}")
@@ -216,39 +216,5 @@ async def delete_item_build(request: Request, build_id: int, session: Session = 
         session.delete(build)
         session.commit()
 
-    return RedirectResponse(url='/items/builds/list', status_code=303)
-
-
-@router.get("/builds/list", response_class=HTMLResponse)
-async def list_item_builds(request: Request, session: Session = Depends(get_session)):
-    """装备配置方案列表页面"""
-    user = request.session.get('user')
-    if not user:
-        return RedirectResponse(url='/login', status_code=303)
-
-    db_user = session.exec(
-        select(User).where(
-            User.provider == user['provider'],
-            User.provider_user_id == user['provider_id']
-        )
-    ).first()
-
-    if not db_user:
-        return RedirectResponse(url='/login', status_code=303)
-
-    builds = session.exec(
-        select(ItemBuild).where(ItemBuild.user_id == db_user.id).order_by(ItemBuild.updated_at.desc())
-    ).all()
-
-    version = item_service.get_version()
-
-    return templates.TemplateResponse(
-        request=request,
-        name="items/builds_list.html",
-        context={
-            "user": user,
-            "builds": builds,
-            "version": version
-        }
-    )
+    return RedirectResponse(url='/profile#item-builds', status_code=303)
 

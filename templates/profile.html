@@ -915,30 +915,41 @@
         const sidebarItems = document.querySelectorAll('.sidebar-item[data-section]');
         const contentSections = document.querySelectorAll('.content-section');
 
+        function showSection(sectionId) {
+            // Remove active class from all items
+            sidebarItems.forEach(i => i.classList.remove('active'));
+
+            // Add active class to target item
+            const targetItem = document.querySelector(`.sidebar-item[data-section="${sectionId}"]`);
+            if (targetItem) {
+                targetItem.classList.add('active');
+            }
+
+            // Hide all sections
+            contentSections.forEach(section => {
+                section.style.display = 'none';
+            });
+
+            // Show selected section
+            const targetSection = document.getElementById(`${sectionId}-section`);
+            if (targetSection) {
+                targetSection.style.display = 'block';
+            }
+        }
+
         sidebarItems.forEach(item => {
             item.addEventListener('click', (e) => {
                 e.preventDefault();
-
                 const sectionId = item.dataset.section;
-
-                // Remove active class from all items
-                sidebarItems.forEach(i => i.classList.remove('active'));
-
-                // Add active class to clicked item
-                item.classList.add('active');
-
-                // Hide all sections
-                contentSections.forEach(section => {
-                    section.style.display = 'none';
-                });
-
-                // Show selected section
-                const targetSection = document.getElementById(`${sectionId}-section`);
-                if (targetSection) {
-                    targetSection.style.display = 'block';
-                }
+                showSection(sectionId);
             });
         });
+
+        // 检查 URL 锚点，自动切换到对应菜单
+        const hash = window.location.hash.substring(1);
+        if (hash) {
+            showSection(hash);
+        }
     });
 
     // 删除符文页
