@@ -11,6 +11,7 @@ from services.champion_service import champion_service
 from services.rune_service import rune_service
 from services.summoner_service import summoner_service
 from services.item_service import item_service
+from services.monster_service import monster_service
 from schemas.champion import ChampionModel
 from schemas.user import UserInfo
 from typing import Dict, List
@@ -18,7 +19,7 @@ from config import settings
 from oauth_providers import oauth
 from database import create_db_and_tables, get_session
 from models import User, RunePage, TeamComposition, ChampionFavorite, HighlightVideo, ChampionTip, ItemBuild
-from routes import summoner, champion, item, team_composition, highlight
+from routes import summoner, champion, item, team_composition, highlight, monster
 from services.ffmpeg_service import ffmpeg_service
 
 
@@ -46,6 +47,10 @@ async def lifespan(app: FastAPI):
     item_service.load_items()
     print(f"装备数据加载完成,版本: {item_service.get_version()}")
 
+    # 加载野怪数据
+    monster_service.load_monsters()
+    print(f"野怪数据加载完成")
+
     # 检测ffmpeg
     if ffmpeg_service.is_ffmpeg_installed():
         print(f"FFmpeg已安装: {ffmpeg_service.get_ffmpeg_version()}")
@@ -66,6 +71,7 @@ app.include_router(summoner.router)
 app.include_router(item.router)
 app.include_router(team_composition.router)
 app.include_router(highlight.router)
+app.include_router(monster.router)
 
 BASE_DIR = Path(__file__).resolve().parent
 TEMPLATES_DIR = BASE_DIR / "templates"

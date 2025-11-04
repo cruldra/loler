@@ -38,6 +38,7 @@ from .champion_tip import (
     ChampionTipUpdate,
     ChampionTipResponse
 )
+from .monster import MonsterModel
 
 __all__ = [
     "ChampionDataModel",
@@ -67,6 +68,7 @@ __all__ = [
     "HighlightImportResponse",
     "ChampionTipCreate",
     "ChampionTipUpdate",
-    "ChampionTipResponse"
+    "ChampionTipResponse",
+    "MonsterModel"
 ]
 

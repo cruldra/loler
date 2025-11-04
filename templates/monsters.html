@@ -1,0 +1,183 @@
+{% extends "base.html" %}
+
+{% block title %}野怪数据库 - LOL助手{% endblock %}
+
+{% block styles %}
+<style>
+    /* 确保野怪菜单项高亮 */
+    .nav-item[href="/monsters"] {
+        color: var(--primary) !important;
+        background: rgba(255, 215, 0, 0.15) !important;
+    }
+
+    .nav-item[href="/monsters"]::after {
+        width: 100%;
+    }
+
+    .monster-card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        padding: 1.5rem;
+        cursor: pointer;
+        transition: all 400ms ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .monster-card:hover {
+        transform: translateY(-8px) scale(1.02);
+        box-shadow: var(--shadow-xl);
+        border-color: var(--primary);
+    }
+
+    .monster-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, var(--primary), var(--accent));
+        transform: scaleX(0);
+        transition: transform 400ms ease;
+    }
+
+    .monster-card:hover::before {
+        transform: scaleX(1);
+    }
+
+    .monster-image {
+        width: 100%;
+        height: 200px;
+        object-fit: cover;
+        border-radius: var(--radius);
+        margin-bottom: 1rem;
+    }
+
+    .monster-name {
+        font-size: 1.25rem;
+        font-weight: 600;
+        text-align: center;
+        margin-bottom: 1rem;
+        color: var(--foreground);
+    }
+
+    .monster-info {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        font-size: 0.9rem;
+        color: var(--muted-foreground);
+    }
+
+    .monster-info-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.5rem;
+        background: var(--muted);
+        border-radius: var(--radius);
+    }
+
+    .monster-info-label {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .monster-info-value {
+        font-weight: 600;
+        color: var(--foreground);
+    }
+
+    @keyframes cardLoad {
+        from {
+            opacity: 0;
+            transform: translateY(30px) scale(0.9);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+    }
+
+    .monster-card {
+        animation: cardLoad 600ms ease-out;
+    }
+
+    .monster-card:nth-child(1) { animation-delay: 0ms; }
+    .monster-card:nth-child(2) { animation-delay: 100ms; }
+    .monster-card:nth-child(3) { animation-delay: 200ms; }
+    .monster-card:nth-child(4) { animation-delay: 300ms; }
+    .monster-card:nth-child(5) { animation-delay: 400ms; }
+    .monster-card:nth-child(6) { animation-delay: 500ms; }
+    .monster-card:nth-child(7) { animation-delay: 600ms; }
+    .monster-card:nth-child(8) { animation-delay: 700ms; }
+    .monster-card:nth-child(9) { animation-delay: 800ms; }
+    .monster-card:nth-child(10) { animation-delay: 900ms; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <!-- 页面标题 -->
+    <div class="mb-8">
+        <div class="flex items-center gap-3 mb-4">
+            <i data-lucide="flame" class="w-8 h-8 text-primary"></i>
+            <h1 class="text-3xl font-bold text-foreground">野怪数据库</h1>
+        </div>
+        <p class="text-muted-foreground">查看所有野怪的刷新时间和详细信息</p>
+    </div>
+
+    <!-- 野怪卡片网格 -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        {% for monster in monsters %}
+        <div class="monster-card">
+            <img src="{{ monster.image }}" alt="{{ monster.name }}" class="monster-image">
+            <div class="monster-name">{{ monster.name }}</div>
+            <div class="monster-info">
+                <div class="monster-info-item">
+                    <div class="monster-info-label">
+                        <i data-lucide="clock" class="w-4 h-4"></i>
+                        <span>首次刷新</span>
+                    </div>
+                    <div class="monster-info-value">{{ monster.firstRefreshTimeDesc }}</div>
+                </div>
+                {% if monster.refreshCycleDesc and monster.refreshCycleDesc != "" and monster.refreshCycleDesc != "0" %}
+                <div class="monster-info-item">
+                    <div class="monster-info-label">
+                        <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                        <span>刷新周期</span>
+                    </div>
+                    <div class="monster-info-value">{{ monster.refreshCycleDesc }}</div>
+                </div>
+                {% else %}
+                <div class="monster-info-item">
+                    <div class="monster-info-label">
+                        <i data-lucide="x-circle" class="w-4 h-4"></i>
+                        <span>刷新周期</span>
+                    </div>
+                    <div class="monster-info-value text-muted-foreground">不刷新</div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    {% if not monsters %}
+    <div class="flex flex-col items-center justify-center py-16">
+        <i data-lucide="inbox" class="w-16 h-16 text-muted-foreground mb-4"></i>
+        <h3 class="text-xl font-semibold text-foreground mb-2">暂无野怪数据</h3>
+        <p class="text-muted-foreground">请稍后再试</p>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+    // 初始化 Lucide 图标
+    lucide.createIcons();
+</script>
+{% endblock %}
+

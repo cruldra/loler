@@ -1,0 +1,1186 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>野怪数据库</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="lol_theme.css">
+    
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: var(--font-sans) !important;
+            background: var(--background) !important;
+            color: var(--foreground) !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            min-height: 100vh !important;
+        }
+        
+        .lol-container {
+            background: var(--background);
+            min-height: 100vh;
+            color: var(--foreground);
+        }
+        
+        .lol-header {
+            background: var(--card);
+            border-bottom: 1px solid var(--border);
+            padding: 1.5rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 2rem;
+        }
+        
+        .lol-title {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+            white-space: nowrap;
+        }
+        
+        .lol-search-container {
+            flex: 1;
+            max-width: 400px;
+            position: relative;
+        }
+        
+        .lol-search-input {
+            width: 100%;
+            background: var(--input);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 0.75rem 1rem 0.75rem 3rem;
+            color: var(--foreground);
+            font-size: 0.95rem;
+            transition: all 300ms ease;
+        }
+        
+        .lol-search-input:focus {
+            outline: none;
+            border-color: var(--ring);
+            box-shadow: 0 0 0 3px var(--ring);
+            transform: scale(1.02);
+        }
+        
+        .lol-search-icon {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--muted-foreground);
+        }
+        
+        .lol-header-filters {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .lol-filter-select {
+            background: var(--input);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 0.75rem 1rem;
+            color: var(--foreground);
+            cursor: pointer;
+            min-width: 100px;
+            transition: all 300ms ease;
+        }
+        
+        .lol-filter-select:hover {
+            border-color: var(--primary);
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .lol-main {
+            display: grid;
+            grid-template-columns: 280px 1fr 350px;
+            gap: 1.5rem;
+            padding: 1.5rem;
+            min-height: calc(100vh - 100px);
+        }
+        
+        .lol-sidebar {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            height: fit-content;
+            position: sticky;
+            top: 1.5rem;
+        }
+        
+        .lol-sidebar-section {
+            margin-bottom: 2rem;
+        }
+        
+        .lol-sidebar-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--foreground);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .lol-sidebar-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            border-radius: var(--radius);
+            cursor: pointer;
+            transition: all 250ms ease;
+            margin-bottom: 0.5rem;
+            position: relative;
+        }
+        
+        .lol-sidebar-item:hover {
+            background: var(--muted);
+            color: var(--primary);
+            transform: translateX(4px);
+        }
+        
+        .lol-sidebar-item.active {
+            background: var(--primary);
+            color: var(--primary-foreground);
+        }
+        
+        .lol-sidebar-item.active::before {
+            content: '';
+            position: absolute;
+            left: -1.5rem;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 4px;
+            height: 100%;
+            background: var(--primary);
+            border-radius: 2px;
+        }
+        
+        .lol-monsters-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1.5rem;
+            height: fit-content;
+        }
+        
+        .lol-monster-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            cursor: pointer;
+            transition: all 400ms ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .lol-monster-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: var(--shadow-xl);
+            border-color: var(--primary);
+        }
+        
+        .lol-monster-card.selected {
+            border-color: var(--primary);
+            background: var(--primary);
+            color: var(--primary-foreground);
+        }
+        
+        .lol-monster-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary), var(--accent));
+            transform: scaleX(0);
+            transition: transform 400ms ease;
+        }
+        
+        .lol-monster-card:hover::before,
+        .lol-monster-card.selected::before {
+            transform: scaleX(1);
+        }
+        
+        .lol-monster-icon {
+            width: 64px;
+            height: 64px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            border-radius: var(--radius-lg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            color: white;
+            margin: 0 auto 1rem;
+            border: 3px solid var(--border);
+            transition: all 300ms ease;
+        }
+        
+        .lol-monster-card:hover .lol-monster-icon {
+            transform: scale(1.1) rotate(5deg);
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .lol-monster-name {
+            font-size: 1.1rem;
+            font-weight: 600;
+            text-align: center;
+            margin-bottom: 1rem;
+            color: var(--foreground);
+        }
+        
+        .lol-monster-card.selected .lol-monster-name {
+            color: var(--primary-foreground);
+        }
+        
+        .lol-monster-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .lol-monster-stat {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            font-size: 0.85rem;
+            color: var(--muted-foreground);
+        }
+        
+        .lol-monster-card.selected .lol-monster-stat {
+            color: var(--primary-foreground);
+            opacity: 0.9;
+        }
+        
+        .lol-monster-type {
+            display: inline-block;
+            background: var(--secondary);
+            color: var(--secondary-foreground);
+            padding: 0.25rem 0.75rem;
+            border-radius: var(--radius-xl);
+            font-size: 0.8rem;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+        }
+        
+        .lol-monster-type.elite {
+            background: var(--accent);
+            color: var(--accent-foreground);
+        }
+        
+        .lol-monster-type.epic {
+            background: var(--destructive);
+            color: var(--destructive-foreground);
+        }
+        
+        .lol-monster-respawn {
+            text-align: center;
+            font-size: 0.8rem;
+            color: var(--muted-foreground);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.25rem;
+        }
+        
+        .lol-detail-panel {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            height: fit-content;
+            position: sticky;
+            top: 1.5rem;
+        }
+        
+        .lol-detail-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .lol-detail-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            border-radius: var(--radius-lg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            color: white;
+            border: 3px solid var(--border);
+        }
+        
+        .lol-detail-info h3 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--foreground);
+            margin-bottom: 0.5rem;
+        }
+        
+        .lol-detail-info p {
+            color: var(--muted-foreground);
+            font-size: 0.9rem;
+        }
+        
+        .lol-detail-section {
+            margin-bottom: 2rem;
+        }
+        
+        .lol-detail-section h4 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--foreground);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .lol-stat-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+        
+        .lol-stat-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem;
+            background: var(--muted);
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+        }
+        
+        .lol-stat-label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--muted-foreground);
+            font-size: 0.9rem;
+        }
+        
+        .lol-stat-value {
+            font-weight: 600;
+            color: var(--foreground);
+        }
+        
+        .lol-rewards-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .lol-rewards-list li {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid var(--border);
+            color: var(--muted-foreground);
+        }
+        
+        .lol-rewards-list li:last-child {
+            border-bottom: none;
+        }
+        
+        .lol-empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            color: var(--muted-foreground);
+            padding: 3rem;
+        }
+        
+        .lol-empty-icon {
+            width: 80px;
+            height: 80px;
+            background: var(--muted);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+        
+        /* 动画效果 */
+        @keyframes cardLoad {
+            from {
+                opacity: 0;
+                transform: translateY(30px) scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+        
+        .lol-monster-card {
+            animation: cardLoad 600ms ease-out;
+        }
+        
+        .lol-monster-card:nth-child(1) { animation-delay: 0ms; }
+        .lol-monster-card:nth-child(2) { animation-delay: 100ms; }
+        .lol-monster-card:nth-child(3) { animation-delay: 200ms; }
+        .lol-monster-card:nth-child(4) { animation-delay: 300ms; }
+        .lol-monster-card:nth-child(5) { animation-delay: 400ms; }
+        .lol-monster-card:nth-child(6) { animation-delay: 500ms; }
+        .lol-monster-card:nth-child(7) { animation-delay: 600ms; }
+        .lol-monster-card:nth-child(8) { animation-delay: 700ms; }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        
+        .pulse {
+            animation: pulse 2000ms ease-in-out infinite;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        .slide-in {
+            animation: slideIn 400ms ease-out;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 1200px) {
+            .lol-main {
+                grid-template-columns: 250px 1fr 300px;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .lol-header {
+                flex-direction: column;
+                gap: 1rem;
+                padding: 1rem;
+            }
+            
+            .lol-search-container {
+                max-width: none;
+                width: 100%;
+            }
+            
+            .lol-header-filters {
+                width: 100%;
+                justify-content: space-between;
+            }
+            
+            .lol-main {
+                grid-template-columns: 1fr;
+                padding: 1rem;
+            }
+            
+            .lol-sidebar,
+            .lol-detail-panel {
+                position: static;
+                margin-bottom: 1rem;
+            }
+            
+            .lol-monsters-grid {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="lol-container">
+        <!-- 顶部工具栏 -->
+        <header class="lol-header">
+            <div class="lol-title">
+                <i data-lucide="dragon" class="w-6 h-6"></i>
+                <span>野怪数据库</span>
+            </div>
+            
+            <div class="lol-search-container">
+                <i data-lucide="search" class="lol-search-icon w-4 h-4"></i>
+                <input type="text" class="lol-search-input" placeholder="搜索野怪..." oninput="searchMonsters(this.value)">
+            </div>
+            
+            <div class="lol-header-filters">
+                <select class="lol-filter-select" onchange="filterByArea(this.value)">
+                    <option value="all">全部野区</option>
+                    <option value="blue">蓝色方野区</option>
+                    <option value="red">红色方野区</option>
+                    <option value="river">河道</option>
+                    <option value="dragon">龙坑</option>
+                </select>
+                <select class="lol-filter-select" onchange="filterByType(this.value)">
+                    <option value="all">全部类型</option>
+                    <option value="normal">普通野怪</option>
+                    <option value="elite">精英野怪</option>
+                    <option value="epic">史诗野怪</option>
+                </select>
+                <select class="lol-filter-select" onchange="filterByDifficulty(this.value)">
+                    <option value="all">全部难度</option>
+                    <option value="easy">简单</option>
+                    <option value="medium">中等</option>
+                    <option value="hard">困难</option>
+                </select>
+            </div>
+        </header>
+        
+        <!-- 主要内容区域 -->
+        <main class="lol-main">
+            <!-- 左侧筛选栏 -->
+            <aside class="lol-sidebar">
+                <div class="lol-sidebar-section">
+                    <div class="lol-sidebar-title">
+                        <i data-lucide="map" class="w-4 h-4"></i>
+                        <span>野区筛选</span>
+                    </div>
+                    <div class="lol-sidebar-item active" onclick="filterSidebar(this, 'area', 'all')">
+                        <span>🌲</span>
+                        <span>全部野区</span>
+                        <span class="ml-auto text-xs bg-primary text-primary-foreground px-2 py-1 rounded-full">12</span>
+                    </div>
+                    <div class="lol-sidebar-item" onclick="filterSidebar(this, 'area', 'blue')">
+                        <span>🔵</span>
+                        <span>蓝色方野区</span>
+                        <span class="ml-auto text-xs bg-muted text-muted-foreground px-2 py-1 rounded-full">4</span>
+                    </div>
+                    <div class="lol-sidebar-item" onclick="filterSidebar(this, 'area', 'red')">
+                        <span>🔴</span>
+                        <span>红色方野区</span>
+                        <span class="ml-auto text-xs bg-muted text-muted-foreground px-2 py-1 rounded-full">4</span>
+                    </div>
+                    <div class="lol-sidebar-item" onclick="filterSidebar(this, 'area', 'river')">
+                        <span>🌊</span>
+                        <span>河道</span>
+                        <span class="ml-auto text-xs bg-muted text-muted-foreground px-2 py-1 rounded-full">2</span>
+                    </div>
+                    <div class="lol-sidebar-item" onclick="filterSidebar(this, 'area', 'dragon')">
+                        <span>🐲</span>
+                        <span>龙坑</span>
+                        <span class="ml-auto text-xs bg-muted text-muted-foreground px-2 py-1 rounded-full">2</span>
+                    </div>
+                </div>
+                
+                <div class="lol-sidebar-section">
+                    <div class="lol-sidebar-title">
+                        <i data-lucide="target" class="w-4 h-4"></i>
+                        <span>类型筛选</span>
+                    </div>
+                    <div class="lol-sidebar-item" onclick="filterSidebar(this, 'type', 'normal')">
+                        <span>⚪</span>
+                        <span>普通野怪</span>
+                        <span class="ml-auto text-xs bg-muted text-muted-foreground px-2 py-1 rounded-full">8</span>
+                    </div>
+                    <div class="lol-sidebar-item" onclick="filterSidebar(this, 'type', 'elite')">
+                        <span>🟡</span>
+                        <span>精英野怪</span>
+                        <span class="ml-auto text-xs bg-muted text-muted-foreground px-2 py-1 rounded-full">2</span>
+                    </div>
+                    <div class="lol-sidebar-item" onclick="filterSidebar(this, 'type', 'epic')">
+                        <span>🔴</span>
+                        <span>史诗野怪</span>
+                        <span class="ml-auto text-xs bg-muted text-muted-foreground px-2 py-1 rounded-full">2</span>
+                    </div>
+                </div>
+                
+                <div class="lol-sidebar-section">
+                    <div class="lol-sidebar-title">
+                        <i data-lucide="star" class="w-4 h-4"></i>
+                        <span>难度等级</span>
+                    </div>
+                    <div class="lol-sidebar-item" onclick="filterSidebar(this, 'difficulty', 'easy')">
+                        <span>🟢</span>
+                        <span>简单</span>
+                    </div>
+                    <div class="lol-sidebar-item" onclick="filterSidebar(this, 'difficulty', 'medium')">
+                        <span>🟡</span>
+                        <span>中等</span>
+                    </div>
+                    <div class="lol-sidebar-item" onclick="filterSidebar(this, 'difficulty', 'hard')">
+                        <span>🔴</span>
+                        <span>困难</span>
+                    </div>
+                </div>
+            </aside>
+            
+            <!-- 野怪卡片网格 -->
+            <section class="lol-monsters-grid" id="monstersGrid">
+                <!-- 普通野怪 -->
+                <div class="lol-monster-card" data-area="blue" data-type="normal" data-difficulty="easy" data-name="狼怪" onclick="selectMonster(this, 'wolf')">
+                    <div class="lol-monster-type">普通野怪</div>
+                    <div class="lol-monster-icon">🐺</div>
+                    <div class="lol-monster-name">狼怪</div>
+                    <div class="lol-monster-stats">
+                        <div class="lol-monster-stat">
+                            <span>❤️</span>
+                            <span>1800</span>
+                        </div>
+                        <div class="lol-monster-stat">
+                            <span>⚔️</span>
+                            <span>90</span>
+                        </div>
+                        <div class="lol-monster-stat">
+                            <span>🛡️</span>
+                            <span>15</span>
+                        </div>
+                        <div class="lol-monster-stat">
+                            <span>🔮</span>
+                            <span>0</span>
+                        </div>
+                    </div>
+                    <div class="lol-monster-respawn">
+                        <i data-lucide="clock" class="w-3 h-3"></i>
+                        <span>90秒刷新</span>
+                    </div>
+                </div>
+                
+                <div class="lol-monster-card" data-area="blue" data-type="normal" data-difficulty="easy" data-name="鸟怪" onclick="selectMonster(this, 'bird')">
+                    <div class="lol-monster-type">普通野怪</div>
+                    <div class="lol-monster-icon">🦅</div>
+                    <div class="lol-monster-name">鸟怪</div>
+                    <div class="lol-monster-stats">
+                        <div class="lol-monster-stat">
+                            <span>❤️</span>
+                            <span>1600</span>
+                        </div>
+                        <div class="lol-monster-stat">
+                            <span>⚔️</span>
+                            <span>85</span>
+                        </div>
+                        <div class="lol-monster-stat">
+                            <span>🛡️</span>
+                            <span>10</span>
+                        </div>
+                        <div class="lol-monster-stat">
+                            <span>🔮</span>
+                            <span>0</span>
+                        </div>
+                    </div>
+                    <div class="lol-monster-respawn">
+                        <i data-lucide="clock" class="w-3 h-3"></i>
+                        <span>90秒刷新</span>
+                    </div>
+                </div>
+                
+                <div class="lol-monster-card" data-area="red" data-type="normal" data-difficulty="easy" data-name="蛤蟆" onclick="selectMonster(this, 'frog')">
+                    <div class="lol-monster-type">普通野怪</div>
+                    <div class="lol-monster-icon">🐸</div>
+                    <div class="lol-monster-name">蛤蟆</div>
+                    <div class="lol-monster-stats">
+                        <div class="lol-monster-stat">
+                            <span>❤️</span>
+                            <span>2100</span>
+                        </div>
+                        <div class="lol-monster-stat">
+                            <span>⚔️</span>
+                            <span>95</span>
+                        </div>
+                        <div class="lol-monster-stat">
+                            <span>🛡️</span>
+                            <span>20</span>
+                        </div>
+                        <div class="lol-monster-stat">
+                            <span>🔮</span>
+                            <span>0</span>
+                        </div>
+                    </div>
+                    <div class="lol-monster-respawn">
+                        <i data-lucide="clock" class="w-3 h-3"></i>
+                        <span>90秒刷新</span>
+                    </div>
+                </div>
+                
+                <div class="lol-monster-card" data-area="red" data-type="normal" data-difficulty="medium" data-name="石甲虫" onclick="selectMonster(this, 'krug')">
+                    <div class="lol-monster-type">普通野怪</div>
+                    <div class="lol-monster-icon">🦎</div>
+                    <div class="lol-monster-name">石甲虫</div>
+                    <div class="lol-monster-stats">
+                        <div class="lol-monster-stat">
+                            <span>❤️</span>
+                            <span>1200</span>
+                        </div>
+                        <div class="lol-monster-stat">
+                            <span>⚔️</span>
+                            <span>70</span>
+                        </div>
+                        <div class="lol-monster-stat">
+                            <span>🛡️</span>
+                            <span>25</span>
+                        </div>
+                        <div class="lol-monster-stat">
+                            <span>🔮</span>
+                            <span>5</span>
+                        </div>
+                    </div>
+                    <div class="lol-monster-respawn">
+                        <i data-lucide="clock" class="w-3 h-3"></i>
+                        <span>60秒刷新</span>
+                    </div>
+                </div>
+                
+                <!-- 精英野怪 -->
+                <div class="lol-monster-card" data-area="dragon" data-type="elite" data-difficulty="medium" data-name="小龙" onclick="selectMonster(this, 'dragon')">
+                    <div class="lol-monster-type elite">精英野怪</div>
+                    <div class="lol-monster-icon">🐲</div>
+                    <div class="lol-monster-name">小龙</div>
+                    <div class="lol-monster-stats">
+                        <div class="lol-monster-stat">
+                            <span>❤️</span>
+                            <span>2500</span>
+                        </div>
+                        <div class="lol-monster-stat">
+                            <span>⚔️</span>
+                            <span>120</span>
+                        </div>
+                        <div class="lol-monster-stat">
+                            <span>🛡️</span>
+                            <span>30</span>
+                        </div>
+                        <div class="lol-monster-stat">
+                            <span>🔮</span>
+                            <span>20</span>
+                        </div>
+                    </div>
+                    <div class="lol-monster-respawn">
+                        <i data-lucide="clock" class="w-3 h-3"></i>
+                        <span>300秒刷新</span>
+                    </div>
+                </div>
+                
+                <div class="lol-monster-card" data-area="river" data-type="elite" data-difficulty="medium" data-name="峡谷先锋" onclick="selectMonster(this, 'herald')">
+                    <div class="lol-monster-type elite">精英野怪</div>
+                    <div class="lol-monster-icon">👁️</div>
+                    <div class="lol-monster-name">峡谷先锋</div>
+                    <div class="lol-monster-stats">
+                        <div class="lol-monster-stat">
+                            <span>❤️</span>
+                            <span>8000</span>
+                        </div>
+                        <div class="lol-monster-stat">
+                            <span>⚔️</span>
+                            <span>350</span>
+                        </div>
+                        <div class="lol-monster-stat">
+                            <span>🛡️</span>
+                            <span>60</span>
+                        </div>
+                        <div class="lol-monster-stat">
+                            <span>🔮</span>
+                            <span>40</span>
+                        </div>
+                    </div>
+                    <div class="lol-monster-respawn">
+                        <i data-lucide="clock" class="w-3 h-3"></i>
+                        <span>600秒刷新</span>
+                    </div>
+                </div>
+                
+                <!-- 史诗野怪 -->
+                <div class="lol-monster-card" data-area="dragon" data-type="epic" data-difficulty="hard" data-name="远古龙" onclick="selectMonster(this, 'elder')">
+                    <div class="lol-monster-type epic">史诗野怪</div>
+                    <div class="lol-monster-icon">🐉</div>
+                    <div class="lol-monster-name">远古龙</div>
+                    <div class="lol-monster-stats">
+                        <div class="lol-monster-stat">
+                            <span>❤️</span>
+                            <span>3500</span>
+                        </div>
+                        <div class="lol-monster-stat">
+                            <span>⚔️</span>
+                            <span>180</span>
+                        </div>
+                        <div class="lol-monster-stat">
+                            <span>🛡️</span>
+                            <span>45</span>
+                        </div>
+                        <div class="lol-monster-stat">
+                            <span>🔮</span>
+                            <span>30</span>
+                        </div>
+                    </div>
+                    <div class="lol-monster-respawn">
+                        <i data-lucide="clock" class="w-3 h-3"></i>
+                        <span>600秒刷新</span>
+                    </div>
+                </div>
+                
+                <div class="lol-monster-card" data-area="river" data-type="epic" data-difficulty="hard" data-name="纳什男爵" onclick="selectMonster(this, 'baron')">
+                    <div class="lol-monster-type epic">史诗野怪</div>
+                    <div class="lol-monster-icon">🦑</div>
+                    <div class="lol-monster-name">纳什男爵</div>
+                    <div class="lol-monster-stats">
+                        <div class="lol-monster-stat">
+                            <span>❤️</span>
+                            <span>9000</span>
+                        </div>
+                        <div class="lol-monster-stat">
+                            <span>⚔️</span>
+                            <span>400</span>
+                        </div>
+                        <div class="lol-monster-stat">
+                            <span>🛡️</span>
+                            <span>80</span>
+                        </div>
+                        <div class="lol-monster-stat">
+                            <span>🔮</span>
+                            <span>60</span>
+                        </div>
+                    </div>
+                    <div class="lol-monster-respawn">
+                        <i data-lucide="clock" class="w-3 h-3"></i>
+                        <span>420秒刷新</span>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- 右侧详情面板 -->
+            <aside class="lol-detail-panel" id="detailPanel">
+                <div class="lol-empty-state">
+                    <div class="lol-empty-icon">
+                        <i data-lucide="mouse-pointer-click" class="w-8 h-8"></i>
+                    </div>
+                    <h3>选择一个野怪</h3>
+                    <p>点击左侧野怪卡片查看详细信息</p>
+                </div>
+            </aside>
+        </main>
+    </div>
+    
+    <script>
+        // 初始化 Lucide 图标
+        lucide.createIcons();
+        
+        // 野怪数据
+        const monsterData = {
+            wolf: {
+                name: '狼怪',
+                icon: '🐺',
+                description: '蓝色方野区的普通野怪，提供经验和金币',
+                stats: {
+                    health: 1800,
+                    attack: 90,
+                    armor: 15,
+                    magicResist: 0,
+                    respawnTime: 90
+                },
+                rewards: [
+                    { icon: '💰', text: '金币: 65' },
+                    { icon: '⭐', text: '经验值: 135' },
+                    { icon: '🔵', text: '蓝色方野区控制' }
+                ],
+                abilities: [
+                    '普通攻击造成物理伤害',
+                    '群体攻击时会召唤小狼'
+                ]
+            },
+            bird: {
+                name: '鸟怪',
+                icon: '🦅',
+                description: '蓝色方野区的普通野怪，击杀后获得视野增强',
+                stats: {
+                    health: 1600,
+                    attack: 85,
+                    armor: 10,
+                    magicResist: 0,
+                    respawnTime: 90
+                },
+                rewards: [
+                    { icon: '💰', text: '金币: 55' },
+                    { icon: '⭐', text: '经验值: 115' },
+                    { icon: '👁️', text: '视野增强BUFF' }
+                ],
+                abilities: [
+                    '普通攻击造成物理伤害',
+                    '死亡时分裂成小鸟'
+                ]
+            },
+            dragon: {
+                name: '小龙',
+                icon: '🐲',
+                description: '龙坑中的精英野怪，击杀后全队获得龙魂BUFF',
+                stats: {
+                    health: 2500,
+                    attack: 120,
+                    armor: 30,
+                    magicResist: 20,
+                    respawnTime: 300
+                },
+                rewards: [
+                    { icon: '💰', text: '金币: 150' },
+                    { icon: '⭐', text: '经验值: 300' },
+                    { icon: '🐲', text: '龙魂BUFF' },
+                    { icon: '🔥', text: '元素龙效果' }
+                ],
+                abilities: [
+                    '火焰吐息造成范围魔法伤害',
+                    '龙怒状态下攻击力提升',
+                    '死亡前会释放最后一击'
+                ]
+            },
+            elder: {
+                name: '远古龙',
+                icon: '🐉',
+                description: '最强大的史诗野怪，击杀后获得远古龙BUFF',
+                stats: {
+                    health: 3500,
+                    attack: 180,
+                    armor: 45,
+                    magicResist: 30,
+                    respawnTime: 600
+                },
+                rewards: [
+                    { icon: '💰', text: '金币: 300' },
+                    { icon: '⭐', text: '经验值: 1200' },
+                    { icon: '🐉', text: '远古龙BUFF' },
+                    { icon: '🔥', text: '真实伤害灼烧' }
+                ],
+                abilities: [
+                    '远古火焰造成真实伤害',
+                    '龙息波造成范围伤害',
+                    '愤怒咆哮降低敌人护甲',
+                    '死亡爆炸造成巨额伤害'
+                ]
+            }
+        };
+        
+        // 搜索功能
+        function searchMonsters(query) {
+            const cards = document.querySelectorAll('.lol-monster-card');
+            cards.forEach(card => {
+                const name = card.dataset.name?.toLowerCase() || '';
+                if (name.includes(query.toLowerCase())) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+        
+        // 筛选功能
+        function filterByArea(area) {
+            filterCards('area', area);
+        }
+        
+        function filterByType(type) {
+            filterCards('type', type);
+        }
+        
+        function filterByDifficulty(difficulty) {
+            filterCards('difficulty', difficulty);
+        }
+        
+        function filterCards(attribute, value) {
+            const cards = document.querySelectorAll('.lol-monster-card');
+            cards.forEach(card => {
+                if (value === 'all' || card.dataset[attribute] === value) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+        
+        // 侧边栏筛选
+        function filterSidebar(element, type, value) {
+            // 更新侧边栏激活状态
+            const section = element.closest('.lol-sidebar-section');
+            section.querySelectorAll('.lol-sidebar-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            element.classList.add('active');
+            
+            // 应用筛选
+            if (type === 'area') {
+                filterByArea(value);
+            } else if (type === 'type') {
+                filterByType(value);
+            } else if (type === 'difficulty') {
+                filterByDifficulty(value);
+            }
+        }
+        
+        // 选择野怪
+        function selectMonster(card, monsterId) {
+            // 更新卡片选中状态
+            document.querySelectorAll('.lol-monster-card').forEach(c => {
+                c.classList.remove('selected');
+            });
+            card.classList.add('selected');
+            
+            // 显示详情
+            showMonsterDetail(monsterId);
+        }
+        
+        // 显示野怪详情
+        function showMonsterDetail(monsterId) {
+            const monster = monsterData[monsterId];
+            if (!monster) return;
+            
+            const detailPanel = document.getElementById('detailPanel');
+            detailPanel.innerHTML = `
+                <div class="slide-in">
+                    <div class="lol-detail-header">
+                        <div class="lol-detail-icon">${monster.icon}</div>
+                        <div class="lol-detail-info">
+                            <h3>${monster.name}</h3>
+                            <p>${monster.description}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="lol-detail-section">
+                        <h4>
+                            <i data-lucide="bar-chart-3" class="w-4 h-4"></i>
+                            基础属性
+                        </h4>
+                        <div class="lol-stat-grid">
+                            <div class="lol-stat-item">
+                                <div class="lol-stat-label">
+                                    <span>❤️</span>
+                                    <span>生命值</span>
+                                </div>
+                                <div class="lol-stat-value">${monster.stats.health}</div>
+                            </div>
+                            <div class="lol-stat-item">
+                                <div class="lol-stat-label">
+                                    <span>⚔️</span>
+                                    <span>攻击力</span>
+                                </div>
+                                <div class="lol-stat-value">${monster.stats.attack}</div>
+                            </div>
+                            <div class="lol-stat-item">
+                                <div class="lol-stat-label">
+                                    <span>🛡️</span>
+                                    <span>护甲</span>
+                                </div>
+                                <div class="lol-stat-value">${monster.stats.armor}</div>
+                            </div>
+                            <div class="lol-stat-item">
+                                <div class="lol-stat-label">
+                                    <span>🔮</span>
+                                    <span>魔抗</span>
+                                </div>
+                                <div class="lol-stat-value">${monster.stats.magicResist}</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="lol-detail-section">
+                        <h4>
+                            <i data-lucide="gift" class="w-4 h-4"></i>
+                            击杀奖励
+                        </h4>
+                        <ul class="lol-rewards-list">
+                            ${monster.rewards.map(reward => `
+                                <li>
+                                    <span>${reward.icon}</span>
+                                    <span>${reward.text}</span>
+                                </li>
+                            `).join('')}
+                        </ul>
+                    </div>
+                    
+                    <div class="lol-detail-section">
+                        <h4>
+                            <i data-lucide="zap" class="w-4 h-4"></i>
+                            技能描述
+                        </h4>
+                        <ul class="lol-rewards-list">
+                            ${monster.abilities.map(ability => `
+                                <li>
+                                    <span>⚡</span>
+                                    <span>${ability}</span>
+                                </li>
+                            `).join('')}
+                        </ul>
+                    </div>
+                    
+                    <div class="lol-detail-section">
+                        <h4>
+                            <i data-lucide="clock" class="w-4 h-4"></i>
+                            刷新信息
+                        </h4>
+                        <div class="lol-stat-item">
+                            <div class="lol-stat-label">
+                                <span>⏰</span>
+                                <span>刷新时间</span>
+                            </div>
+                            <div class="lol-stat-value">${monster.stats.respawnTime}秒</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // 重新初始化图标
+            lucide.createIcons();
+        }
+        
+        // 键盘快捷键
+        document.addEventListener('keydown', function(event) {
+            if (event.key === '/') {
+                event.preventDefault();
+                document.querySelector('.lol-search-input').focus();
+            }
+            
+            if (event.key === 'Escape') {
+                // 清除选中状态
+                document.querySelectorAll('.lol-monster-card').forEach(card => {
+                    card.classList.remove('selected');
+                });
+                
+                // 显示空状态
+                const detailPanel = document.getElementById('detailPanel');
+                detailPanel.innerHTML = `
+                    <div class="lol-empty-state">
+                        <div class="lol-empty-icon">
+                            <i data-lucide="mouse-pointer-click" class="w-8 h-8"></i>
+                        </div>
+                        <h3>选择一个野怪</h3>
+                        <p>点击左侧野怪卡片查看详细信息</p>
+                    </div>
+                `;
+                lucide.createIcons();
+            }
+        });
+        
+        // 初始化时的动画效果
+        window.addEventListener('load', function() {
+            const cards = document.querySelectorAll('.lol-monster-card');
+            cards.forEach((card, index) => {
+                card.style.animationDelay = `${index * 100}ms`;
+            });
+        });
+    </script>
+</body>
+</html>

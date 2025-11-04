@@ -1,0 +1,82 @@
+[
+  {
+    "name": "f6",
+    "refreshCycle": "135",
+    "firstRefreshTime": "90",
+    "firstRefreshTimeDesc": "1分30秒",
+    "refreshCycleDesc": "2分15秒",
+    "image": "https://github.com/cruldra/picx-images-hosting/raw/master/PixPin_2025-11-04_19-30-00.3k8faaoilv.webp"
+  },
+  {
+    "name": "红buff",
+    "refreshCycle": "300",
+    "refreshCycleDesc": "5分钟",
+    "firstRefreshTime": "90",
+    "firstRefreshTimeDesc": "1分30秒",
+    "image": "https://github.com/cruldra/picx-images-hosting/raw/master/PixPin_2025-11-04_19-30-26.8dxa6f9qwi.webp"
+  },
+  {
+    "name": "石甲石",
+    "refreshCycle": "135",
+    "refreshCycleDesc": "2分15秒",
+    "firstRefreshTime": "90",
+    "firstRefreshTimeDesc": "1分30秒",
+    "image": "https://github.com/cruldra/picx-images-hosting/raw/master/PixPin_2025-11-04_19-30-54.7zqufk21o1.webp"
+  },
+  {
+    "name": "蓝buff",
+    "refreshCycle": "135",
+    "refreshCycleDesc": "2分15秒",
+    "firstRefreshTime": "90",
+    "firstRefreshTimeDesc": "1分30秒",
+    "image": "https://github.com/cruldra/picx-images-hosting/raw/master/PixPin_2025-11-04_19-37-50.3gotcl5hbe.webp"
+  },
+  {
+    "name": "三狼",
+    "refreshCycle": "135",
+    "refreshCycleDesc": "2分15秒",
+    "firstRefreshTime": "90",
+    "firstRefreshTimeDesc": "1分30秒",
+    "image": "https://github.com/cruldra/picx-images-hosting/raw/master/PixPin_2025-11-04_19-40-37.8hgw45fx0z.webp"
+  },
+  {
+    "name": "蛤蟆",
+    "refreshCycle": "135",
+    "refreshCycleDesc": "2分15秒",
+    "firstRefreshTime": "90",
+    "firstRefreshTimeDesc": "1分30秒",
+    "image": "https://github.com/cruldra/picx-images-hosting/raw/master/PixPin_2025-11-04_19-37-59.9kglf18cq1.webp"
+  },
+  {
+    "name": "河蟹",
+    "refreshCycle": "0",
+    "refreshCycleDesc": "0",
+    "firstRefreshTime": "210",
+    "firstRefreshTimeDesc": "3分30秒",
+    "image": "https://github.com/cruldra/picx-images-hosting/raw/master/PixPin_2025-11-04_19-45-18.26lw69x4aw.webp"
+  },
+  {
+    "name": "巢虫",
+    "refreshCycle": "0",
+    "refreshCycleDesc": "",
+    "firstRefreshTime": "480",
+    "firstRefreshTimeDesc": "8分钟",
+    "image": "https://github.com/cruldra/picx-images-hosting/raw/master/PixPin_2025-11-04_19-45-02.4ubcgmptll.webp"
+  },
+  {
+    "name": "峡谷先锋",
+    "refreshCycle": "0",
+    "refreshCycleDesc": "",
+    "firstRefreshTime": "900",
+    "firstRefreshTimeDesc": "15分钟",
+    "image": "https://github.com/cruldra/picx-images-hosting/raw/master/PixPin_2025-11-04_19-53-24.5fl02xv0ft.webp"
+  },
+  {
+    "name": "厄塔汗",
+    "refreshCycle": "0",
+    "refreshCycleDesc": "",
+    "firstRefreshTime": "1200",
+    "firstRefreshTimeDesc": "20分钟",
+    "image": "https://github.com/cruldra/picx-images-hosting/raw/master/PixPin_2025-11-04_19-53-41.9o07crlmnc.webp"
+  }
+]
