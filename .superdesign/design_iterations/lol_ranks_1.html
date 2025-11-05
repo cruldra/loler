@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>英雄联盟段位分布</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="lol_theme.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-sans) !important;
+            background: var(--background) !important;
+            color: var(--foreground) !important;
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            animation: containerFadeIn 600ms ease-out;
+        }
+
+        .title {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .title h1 {
+            font-size: 2.5rem !important;
+            font-weight: 700 !important;
+            color: var(--primary) !important;
+            margin-bottom: 0.5rem !important;
+            text-shadow: 0 0 20px var(--primary);
+        }
+
+        .title p {
+            font-size: 1.1rem !important;
+            color: var(--muted-foreground) !important;
+            font-weight: 500 !important;
+        }
+
+        .ranks-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .rank-card {
+            background: var(--card);
+            border: 2px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 300ms ease-out;
+            animation: cardFadeIn 400ms ease-out;
+            animation-fill-mode: both;
+        }
+
+        .rank-card:hover {
+            transform: translateY(-8px) scale(1.05);
+            box-shadow: var(--shadow-xl);
+            border-color: var(--ring);
+        }
+
+        .rank-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, transparent 0%, var(--accent) 50%, transparent 100%);
+            opacity: 0;
+            transition: opacity 300ms ease-out;
+            pointer-events: none;
+        }
+
+        .rank-card:hover::before {
+            opacity: 0.1;
+        }
+
+        .rank-icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 1rem;
+            border-radius: 50%;
+            overflow: hidden;
+            border: 3px solid var(--border);
+            transition: all 200ms ease-out;
+        }
+
+        .rank-card:hover .rank-icon {
+            transform: scale(1.1);
+            border-color: var(--ring);
+            box-shadow: 0 0 20px var(--ring);
+        }
+
+        .rank-icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .rank-name-cn {
+            font-size: 1.25rem !important;
+            font-weight: 600 !important;
+            color: var(--foreground) !important;
+            margin-bottom: 0.25rem !important;
+        }
+
+        .rank-name-en {
+            font-size: 0.875rem !important;
+            font-weight: 500 !important;
+            color: var(--muted-foreground) !important;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 1rem !important;
+        }
+
+        .rank-percentage {
+            font-size: 1.5rem !important;
+            font-weight: 700 !important;
+            color: var(--primary) !important;
+            text-shadow: 0 0 10px var(--primary);
+        }
+
+        /* 段位特定样式 */
+        .rank-card[data-rank="IRON"] {
+            border-color: var(--iron-color);
+        }
+        .rank-card[data-rank="IRON"]:hover {
+            border-color: var(--iron-color);
+            box-shadow: 0 0 30px var(--iron-color);
+        }
+
+        .rank-card[data-rank="BRONZE"] {
+            border-color: var(--bronze-color);
+        }
+        .rank-card[data-rank="BRONZE"]:hover {
+            border-color: var(--bronze-color);
+            box-shadow: 0 0 30px var(--bronze-color);
+        }
+
+        .rank-card[data-rank="SILVER"] {
+            border-color: var(--silver-color);
+        }
+        .rank-card[data-rank="SILVER"]:hover {
+            border-color: var(--silver-color);
+            box-shadow: 0 0 30px var(--silver-color);
+        }
+
+        .rank-card[data-rank="GOLD"] {
+            border-color: var(--gold-color);
+        }
+        .rank-card[data-rank="GOLD"]:hover {
+            border-color: var(--gold-color);
+            box-shadow: 0 0 30px var(--gold-color);
+        }
+
+        .rank-card[data-rank="PLATINUM"] {
+            border-color: var(--platinum-color);
+        }
+        .rank-card[data-rank="PLATINUM"]:hover {
+            border-color: var(--platinum-color);
+            box-shadow: 0 0 30px var(--platinum-color);
+        }
+
+        .rank-card[data-rank="EMERALD"] {
+            border-color: var(--emerald-color);
+        }
+        .rank-card[data-rank="EMERALD"]:hover {
+            border-color: var(--emerald-color);
+            box-shadow: 0 0 30px var(--emerald-color);
+        }
+
+        .rank-card[data-rank="DIAMOND"] {
+            border-color: var(--diamond-color);
+        }
+        .rank-card[data-rank="DIAMOND"]:hover {
+            border-color: var(--diamond-color);
+            box-shadow: 0 0 30px var(--diamond-color);
+        }
+
+        /* 高段位特殊效果 */
+        .rank-card[data-rank="MASTER"],
+        .rank-card[data-rank="GRANDMASTER"],
+        .rank-card[data-rank="CHALLENGER"] {
+            position: relative;
+        }
+
+        .rank-card[data-rank="MASTER"] {
+            border-color: var(--master-color);
+            animation: masterGlow 2000ms infinite ease-in-out;
+        }
+
+        .rank-card[data-rank="GRANDMASTER"] {
+            border-color: var(--grandmaster-color);
+            animation: grandmasterGlow 2000ms infinite ease-in-out;
+        }
+
+        .rank-card[data-rank="CHALLENGER"] {
+            border-color: var(--challenger-color);
+            animation: challengerGlow 1500ms infinite ease-in-out;
+        }
+
+        /* 动画定义 */
+        @keyframes containerFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes cardFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes masterGlow {
+            0%, 100% {
+                box-shadow: 0 0 20px var(--master-color);
+            }
+            50% {
+                box-shadow: 0 0 40px var(--master-color);
+            }
+        }
+
+        @keyframes grandmasterGlow {
+            0%, 100% {
+                box-shadow: 0 0 25px var(--grandmaster-color);
+            }
+            50% {
+                box-shadow: 0 0 50px var(--grandmaster-color);
+            }
+        }
+
+        @keyframes challengerGlow {
+            0%, 100% {
+                box-shadow: 0 0 30px var(--challenger-color);
+            }
+            50% {
+                box-shadow: 0 0 60px var(--challenger-color);
+            }
+        }
+
+        @keyframes ripple {
+            from {
+                transform: scale(0);
+                opacity: 1;
+            }
+            to {
+                transform: scale(2);
+                opacity: 0;
+            }
+        }
+
+        .ripple-effect {
+            position: absolute;
+            border-radius: 50%;
+            background: var(--primary);
+            animation: ripple 400ms ease-out;
+            pointer-events: none;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            body {
+                padding: 1rem;
+            }
+
+            .title h1 {
+                font-size: 2rem !important;
+            }
+
+            .ranks-grid {
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+                gap: 1rem;
+            }
+
+            .rank-card {
+                padding: 1rem;
+            }
+
+            .rank-icon {
+                width: 60px;
+                height: 60px;
+            }
+
+            .rank-name-cn {
+                font-size: 1rem !important;
+            }
+
+            .rank-percentage {
+                font-size: 1.25rem !important;
+            }
+        }
+
+        /* 卡片延迟动画 */
+        .rank-card:nth-child(1) { animation-delay: 0ms; }
+        .rank-card:nth-child(2) { animation-delay: 100ms; }
+        .rank-card:nth-child(3) { animation-delay: 200ms; }
+        .rank-card:nth-child(4) { animation-delay: 300ms; }
+        .rank-card:nth-child(5) { animation-delay: 400ms; }
+        .rank-card:nth-child(6) { animation-delay: 500ms; }
+        .rank-card:nth-child(7) { animation-delay: 600ms; }
+        .rank-card:nth-child(8) { animation-delay: 700ms; }
+        .rank-card:nth-child(9) { animation-delay: 800ms; }
+        .rank-card:nth-child(10) { animation-delay: 900ms; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="title">
+            <h1>英雄联盟段位分布</h1>
+            <p>League of Legends Rank Distribution</p>
+        </div>
+
+        <div class="ranks-grid" id="ranksGrid">
+            <!-- 段位卡片将通过JavaScript动态生成 -->
+        </div>
+    </div>
+
+    <script>
+        // 段位数据
+        const ranksData = [
+            {
+                "段位": "IRON",
+                "段位名称": "黑铁",
+                "百分比": 6.6,
+                "图片": "https://github.com/cruldra/picx-images-hosting/raw/master/image.77dyzotkhp.webp"
+            },
+            {
+                "段位": "BRONZE",
+                "段位名称": "青铜",
+                "百分比": 18,
+                "图片": "https://github.com/cruldra/picx-images-hosting/raw/master/image.7eh6v4fvyr.webp"
+            },
+            {
+                "段位": "SILVER",
+                "段位名称": "白银",
+                "百分比": 18,
+                "图片": "https://github.com/cruldra/picx-images-hosting/raw/master/image.2a5i5ug2p6.webp"
+            },
+            {
+                "段位": "GOLD",
+                "段位名称": "黄金",
+                "百分比": 20,
+                "图片": "https://github.com/cruldra/picx-images-hosting/raw/master/image.4joipc0xa7.webp"
+            },
+            {
+                "段位": "PLATINUM",
+                "段位名称": "铂金",
+                "百分比": 19,
+                "图片": "https://github.com/cruldra/picx-images-hosting/raw/master/image.96a5q0zng6.webp"
+            },
+            {
+                "段位": "EMERALD",
+                "段位名称": "翡翠",
+                "百分比": 11,
+                "图片": "https://github.com/cruldra/picx-images-hosting/raw/master/image.26lw84nir3.webp"
+            },
+            {
+                "段位": "DIAMOND",
+                "段位名称": "钻石",
+                "百分比": 3.8,
+                "图片": "https://github.com/cruldra/picx-images-hosting/raw/master/image.esxd849pu.webp"
+            },
+            {
+                "段位": "MASTER",
+                "段位名称": "大师",
+                "百分比": 0.21,
+                "图片": "https://github.com/cruldra/picx-images-hosting/raw/master/image.77dyzoum7e.webp"
+            },
+            {
+                "段位": "GRANDMASTER",
+                "段位名称": "宗师",
+                "百分比": 0.021,
+                "图片": "https://github.com/cruldra/picx-images-hosting/raw/master/image.5q7txxqlx2.webp"
+            },
+            {
+                "段位": "CHALLENGER",
+                "段位名称": "王者",
+                "百分比": 0.0031,
+                "图片": "https://github.com/cruldra/picx-images-hosting/raw/master/image.5xb1tdcx7m.webp"
+            }
+        ];
+
+        // 生成段位卡片
+        function generateRankCards() {
+            const ranksGrid = document.getElementById('ranksGrid');
+            
+            ranksData.forEach((rank, index) => {
+                const card = document.createElement('div');
+                card.className = 'rank-card';
+                card.setAttribute('data-rank', rank.段位);
+                
+                card.innerHTML = `
+                    <div class="rank-icon">
+                        <img src="${rank.图片}" alt="${rank.段位名称}" loading="lazy">
+                    </div>
+                    <div class="rank-name-cn">${rank.段位名称}</div>
+                    <div class="rank-name-en">${rank.段位}</div>
+                    <div class="rank-percentage" data-percentage="${rank.百分比}">
+                        ${rank.百分比}%
+                    </div>
+                `;
+                
+                // 添加点击波纹效果
+                card.addEventListener('click', function(e) {
+                    const ripple = document.createElement('div');
+                    const rect = card.getBoundingClientRect();
+                    const size = Math.max(rect.width, rect.height);
+                    const x = e.clientX - rect.left - size / 2;
+                    const y = e.clientY - rect.top - size / 2;
+                    
+                    ripple.className = 'ripple-effect';
+                    ripple.style.width = ripple.style.height = size + 'px';
+                    ripple.style.left = x + 'px';
+                    ripple.style.top = y + 'px';
+                    
+                    card.appendChild(ripple);
+                    
+                    setTimeout(() => {
+                        ripple.remove();
+                    }, 400);
+                });
+                
+                ranksGrid.appendChild(card);
+            });
+        }
+
+        // 数字递增动画
+        function animatePercentage() {
+            const percentageElements = document.querySelectorAll('.rank-percentage');
+            
+            percentageElements.forEach(element => {
+                const targetValue = parseFloat(element.getAttribute('data-percentage'));
+                let currentValue = 0;
+                const increment = targetValue / 50; // 50步完成动画
+                const duration = 500; // 500ms
+                const stepTime = duration / 50;
+                
+                const timer = setInterval(() => {
+                    currentValue += increment;
+                    if (currentValue >= targetValue) {
+                        currentValue = targetValue;
+                        clearInterval(timer);
+                    }
+                    
+                    if (targetValue < 1) {
+                        element.textContent = currentValue.toFixed(4) + '%';
+                    } else if (targetValue < 10) {
+                        element.textContent = currentValue.toFixed(2) + '%';
+                    } else {
+                        element.textContent = Math.round(currentValue) + '%';
+                    }
+                }, stepTime);
+            });
+        }
+
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            generateRankCards();
+            
+            // 延迟启动百分比动画
+            setTimeout(() => {
+                animatePercentage();
+            }, 1000);
+        });
+
+        // 图片加载错误处理
+        document.addEventListener('error', function(e) {
+            if (e.target.tagName === 'IMG') {
+                e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHZpZXdCb3g9IjAgMCA4MCA4MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjgwIiBoZWlnaHQ9IjgwIiBmaWxsPSIjMzMzIi8+CjxwYXRoIGQ9Ik00MCAyMEM0Ni42Mjc0IDIwIDUyIDI1LjM3MjYgNTIgMzJDNTIgMzguNjI3NCA0Ni42Mjc0IDQ0IDQwIDQ0QzMzLjM3MjYgNDQgMjggMzguNjI3NCAyOCAzMkMyOCAyNS4zNzI2IDMzLjM3MjYgMjAgNDAgMjBaIiBmaWxsPSIjNjY2Ii8+CjxwYXRoIGQ9Ik0yMCA1Nkw2MCA1NkM2MCA1MiA1NiA0OCA1MiA0OEwyOCA0OEMyNCA0OCAyMCA1MiAyMCA1NloiIGZpbGw9IiM2NjYiLz4KPC9zdmc+';
+            }
+        }, true);
+    </script>
+</body>
+</html>

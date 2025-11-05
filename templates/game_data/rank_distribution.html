@@ -1,0 +1,398 @@
+{% extends "base.html" %}
+
+{% block title %}段位分布 - LOL助手{% endblock %}
+
+{% block styles %}
+<style>
+    .rank-container {
+        width: 100%;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem;
+        min-height: calc(100vh - 4rem);
+    }
+
+    .rank-header {
+        text-align: center;
+        margin-bottom: 3rem;
+    }
+
+    .rank-title {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: var(--primary);
+        margin-bottom: 0.5rem;
+        text-shadow: 0 0 20px rgba(201, 170, 113, 0.3);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 1rem;
+    }
+
+    .rank-subtitle {
+        font-size: 1.1rem;
+        color: var(--muted-foreground);
+        font-weight: 500;
+    }
+
+    .ranks-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .rank-card {
+        background: var(--card);
+        border: 2px solid var(--border);
+        border-radius: var(--radius-lg);
+        padding: 1.5rem;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+        cursor: pointer;
+        transition: all 300ms ease-out;
+        animation: cardFadeIn 400ms ease-out;
+        animation-fill-mode: both;
+    }
+
+    .rank-card:hover {
+        transform: translateY(-8px) scale(1.05);
+        box-shadow: var(--shadow-xl);
+        border-color: var(--ring);
+    }
+
+    .rank-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(135deg, transparent 0%, var(--accent) 50%, transparent 100%);
+        opacity: 0;
+        transition: opacity 300ms ease-out;
+        pointer-events: none;
+    }
+
+    .rank-card:hover::before {
+        opacity: 0.1;
+    }
+
+    .rank-icon {
+        width: 80px;
+        height: 80px;
+        margin: 0 auto 1rem;
+        border-radius: 50%;
+        overflow: hidden;
+        border: 3px solid var(--border);
+        transition: all 200ms ease-out;
+    }
+
+    .rank-card:hover .rank-icon {
+        transform: scale(1.1);
+        border-color: var(--ring);
+        box-shadow: 0 0 20px var(--ring);
+    }
+
+    .rank-icon img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .rank-name-cn {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--foreground);
+        margin-bottom: 0.25rem;
+    }
+
+    .rank-name-en {
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: var(--muted-foreground);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 1rem;
+    }
+
+    .rank-percentage {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--primary);
+        text-shadow: 0 0 10px var(--primary);
+    }
+
+    /* 段位特定样式 */
+    .rank-card[data-rank="IRON"] {
+        border-color: var(--iron-color);
+    }
+    .rank-card[data-rank="IRON"]:hover {
+        border-color: var(--iron-color);
+        box-shadow: 0 0 30px var(--iron-color);
+    }
+
+    .rank-card[data-rank="BRONZE"] {
+        border-color: var(--bronze-color);
+    }
+    .rank-card[data-rank="BRONZE"]:hover {
+        border-color: var(--bronze-color);
+        box-shadow: 0 0 30px var(--bronze-color);
+    }
+
+    .rank-card[data-rank="SILVER"] {
+        border-color: var(--silver-color);
+    }
+    .rank-card[data-rank="SILVER"]:hover {
+        border-color: var(--silver-color);
+        box-shadow: 0 0 30px var(--silver-color);
+    }
+
+    .rank-card[data-rank="GOLD"] {
+        border-color: var(--gold-color);
+    }
+    .rank-card[data-rank="GOLD"]:hover {
+        border-color: var(--gold-color);
+        box-shadow: 0 0 30px var(--gold-color);
+    }
+
+    .rank-card[data-rank="PLATINUM"] {
+        border-color: var(--platinum-color);
+    }
+    .rank-card[data-rank="PLATINUM"]:hover {
+        border-color: var(--platinum-color);
+        box-shadow: 0 0 30px var(--platinum-color);
+    }
+
+    .rank-card[data-rank="EMERALD"] {
+        border-color: var(--emerald-color);
+    }
+    .rank-card[data-rank="EMERALD"]:hover {
+        border-color: var(--emerald-color);
+        box-shadow: 0 0 30px var(--emerald-color);
+    }
+
+    .rank-card[data-rank="DIAMOND"] {
+        border-color: var(--diamond-color);
+    }
+    .rank-card[data-rank="DIAMOND"]:hover {
+        border-color: var(--diamond-color);
+        box-shadow: 0 0 30px var(--diamond-color);
+    }
+
+    /* 高段位特殊效果 */
+    .rank-card[data-rank="MASTER"],
+    .rank-card[data-rank="GRANDMASTER"],
+    .rank-card[data-rank="CHALLENGER"] {
+        position: relative;
+    }
+
+    .rank-card[data-rank="MASTER"] {
+        border-color: var(--master-color);
+        animation: masterGlow 2000ms infinite ease-in-out;
+    }
+
+    .rank-card[data-rank="GRANDMASTER"] {
+        border-color: var(--grandmaster-color);
+        animation: grandmasterGlow 2000ms infinite ease-in-out;
+    }
+
+    .rank-card[data-rank="CHALLENGER"] {
+        border-color: var(--challenger-color);
+        animation: challengerGlow 1500ms infinite ease-in-out;
+    }
+
+    /* 动画定义 */
+    @keyframes cardFadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @keyframes masterGlow {
+        0%, 100% {
+            box-shadow: 0 0 20px var(--master-color);
+        }
+        50% {
+            box-shadow: 0 0 40px var(--master-color);
+        }
+    }
+
+    @keyframes grandmasterGlow {
+        0%, 100% {
+            box-shadow: 0 0 25px var(--grandmaster-color);
+        }
+        50% {
+            box-shadow: 0 0 50px var(--grandmaster-color);
+        }
+    }
+
+    @keyframes challengerGlow {
+        0%, 100% {
+            box-shadow: 0 0 30px var(--challenger-color);
+        }
+        50% {
+            box-shadow: 0 0 60px var(--challenger-color);
+        }
+    }
+
+    .ripple-effect {
+        position: absolute;
+        border-radius: 50%;
+        background: var(--primary);
+        animation: ripple 400ms ease-out;
+        pointer-events: none;
+    }
+
+    @keyframes ripple {
+        from {
+            transform: scale(0);
+            opacity: 1;
+        }
+        to {
+            transform: scale(2);
+            opacity: 0;
+        }
+    }
+
+    /* 响应式设计 */
+    @media (max-width: 768px) {
+        .rank-container {
+            padding: 1rem;
+        }
+
+        .rank-title {
+            font-size: 2rem;
+        }
+
+        .ranks-grid {
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+        }
+
+        .rank-card {
+            padding: 1rem;
+        }
+
+        .rank-icon {
+            width: 60px;
+            height: 60px;
+        }
+
+        .rank-name-cn {
+            font-size: 1rem;
+        }
+
+        .rank-percentage {
+            font-size: 1.25rem;
+        }
+    }
+
+    /* 卡片延迟动画 */
+    .rank-card:nth-child(1) { animation-delay: 0ms; }
+    .rank-card:nth-child(2) { animation-delay: 100ms; }
+    .rank-card:nth-child(3) { animation-delay: 200ms; }
+    .rank-card:nth-child(4) { animation-delay: 300ms; }
+    .rank-card:nth-child(5) { animation-delay: 400ms; }
+    .rank-card:nth-child(6) { animation-delay: 500ms; }
+    .rank-card:nth-child(7) { animation-delay: 600ms; }
+    .rank-card:nth-child(8) { animation-delay: 700ms; }
+    .rank-card:nth-child(9) { animation-delay: 800ms; }
+    .rank-card:nth-child(10) { animation-delay: 900ms; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="rank-container">
+    <div class="rank-header">
+        <h1 class="rank-title">
+            <i data-lucide="trophy" class="w-10 h-10"></i>
+            段位分布
+        </h1>
+        <p class="rank-subtitle">League of Legends Rank Distribution</p>
+    </div>
+
+    <div class="ranks-grid">
+        {% for rank in rank_data %}
+        <div class="rank-card" data-rank="{{ rank.段位 }}">
+            <div class="rank-icon">
+                <img src="{{ rank.图片 }}" alt="{{ rank.段位名称 }}" loading="lazy">
+            </div>
+            <div class="rank-name-cn">{{ rank.段位名称 }}</div>
+            <div class="rank-name-en">{{ rank.段位 }}</div>
+            <div class="rank-percentage" data-percentage="{{ rank.百分比 }}">
+                {{ rank.百分比 }}%
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<script>
+    // 添加点击波纹效果
+    document.querySelectorAll('.rank-card').forEach(card => {
+        card.addEventListener('click', function(e) {
+            const ripple = document.createElement('div');
+            const rect = card.getBoundingClientRect();
+            const size = Math.max(rect.width, rect.height);
+            const x = e.clientX - rect.left - size / 2;
+            const y = e.clientY - rect.top - size / 2;
+
+            ripple.className = 'ripple-effect';
+            ripple.style.width = ripple.style.height = size + 'px';
+            ripple.style.left = x + 'px';
+            ripple.style.top = y + 'px';
+
+            card.appendChild(ripple);
+
+            setTimeout(() => {
+                ripple.remove();
+            }, 400);
+        });
+    });
+
+    // 数字递增动画
+    function animatePercentage() {
+        const percentageElements = document.querySelectorAll('.rank-percentage');
+
+        percentageElements.forEach(element => {
+            const targetValue = parseFloat(element.getAttribute('data-percentage'));
+            let currentValue = 0;
+            const increment = targetValue / 50;
+            const duration = 500;
+            const stepTime = duration / 50;
+
+            const timer = setInterval(() => {
+                currentValue += increment;
+                if (currentValue >= targetValue) {
+                    currentValue = targetValue;
+                    clearInterval(timer);
+                }
+
+                if (targetValue < 1) {
+                    element.textContent = currentValue.toFixed(4) + '%';
+                } else if (targetValue < 10) {
+                    element.textContent = currentValue.toFixed(2) + '%';
+                } else {
+                    element.textContent = Math.round(currentValue) + '%';
+                }
+            }, stepTime);
+        });
+    }
+
+    // 页面加载完成后启动动画
+    setTimeout(() => {
+        animatePercentage();
+    }, 1000);
+
+    // 初始化 Lucide 图标
+    lucide.createIcons();
+</script>
+{% endblock %}
+

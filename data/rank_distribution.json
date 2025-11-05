@@ -1,0 +1,63 @@
+[
+  {
+    "段位": "IRON",
+    "段位名称": "黑铁",
+    "百分比": 6.6,
+    "图片": "https://github.com/cruldra/picx-images-hosting/raw/master/image.77dyzotkhp.webp"
+  },
+  {
+    "段位": "BRONZE",
+    "段位名称": "青铜",
+    "百分比": 18,
+    "图片": "https://github.com/cruldra/picx-images-hosting/raw/master/image.7eh6v4fvyr.webp"
+  },
+  {
+    "段位": "SILVER",
+    "段位名称": "白银",
+    "百分比": 18,
+    "图片": "https://github.com/cruldra/picx-images-hosting/raw/master/image.2a5i5ug2p6.webp"
+  },
+  {
+    "段位": "GOLD",
+    "段位名称": "黄金",
+    "百分比": 20,
+    "图片": "https://github.com/cruldra/picx-images-hosting/raw/master/image.4joipc0xa7.webp"
+  },
+  {
+    "段位": "PLATINUM",
+    "段位名称": "铂金",
+    "百分比": 19,
+    "图片": "https://github.com/cruldra/picx-images-hosting/raw/master/image.96a5q0zng6.webp"
+  },
+  {
+    "段位": "EMERALD",
+    "段位名称": "翡翠",
+    "百分比": 11,
+    "图片": "https://github.com/cruldra/picx-images-hosting/raw/master/image.26lw84nir3.webp"
+  },
+  {
+    "段位": "DIAMOND",
+    "段位名称": "钻石",
+    "百分比": 3.8,
+    "图片": "https://github.com/cruldra/picx-images-hosting/raw/master/image.esxd849pu.webp"
+  },
+  {
+    "段位": "MASTER",
+    "段位名称": "大师",
+    "百分比": 0.21,
+    "图片": "https://github.com/cruldra/picx-images-hosting/raw/master/image.77dyzoum7e.webp"
+  },
+  {
+    "段位": "GRANDMASTER",
+    "段位名称": "宗师",
+    "百分比": 0.021,
+    "图片": "https://github.com/cruldra/picx-images-hosting/raw/master/image.5q7txxqlx2.webp"
+  },
+  {
+    "段位": "CHALLENGER",
+    "段位名称": "王者",
+    "百分比": 0.0031,
+    "图片": "https://github.com/cruldra/picx-images-hosting/raw/master/image.5xb1tdcx7m.webp"
+  }
+]
+

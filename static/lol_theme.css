@@ -50,5 +50,16 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
-}
 
+  /* 段位颜色 */
+  --iron-color: #4a4a4a;
+  --bronze-color: #cd7f32;
+  --silver-color: #c0c0c0;
+  --gold-color: #ffd700;
+  --platinum-color: #00bfbf;
+  --emerald-color: #50c878;
+  --diamond-color: #b9f2ff;
+  --master-color: #9b30ff;
+  --grandmaster-color: #ff4444;
+  --challenger-color: #f4c430;
+}
