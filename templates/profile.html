@@ -637,17 +637,21 @@
             </nav>
         </div>
 
-        {% if ffmpeg_installed %}
         <div class="sidebar-section">
             <h3 class="sidebar-section-title">工具</h3>
             <nav>
+                {% if ffmpeg_installed %}
                 <a href="/highlights/page" class="sidebar-item">
                     <i data-lucide="video" class="w-4 h-4"></i>
                     高亮导入
                 </a>
+                {% endif %}
+                <a href="#" class="sidebar-item" data-section="replays">
+                    <i data-lucide="film" class="w-4 h-4"></i>
+                    我的录像
+                </a>
             </nav>
         </div>
-        {% endif %}
     </aside>
 
     <!-- Main Content -->
@@ -902,6 +906,23 @@
 
             {% from 'components/my_builds.html' import MyBuilds %}
             {{ MyBuilds(builds=item_builds, version=item_version) }}
+        </div>
+
+        <!-- Replays Section -->
+        <div id="replays-section" class="content-section" style="display: none;">
+            <div class="content-header" style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h1 class="content-title">我的录像</h1>
+                    <p class="content-description">管理和查看您的对局录像</p>
+                </div>
+                <a href="/replays/import" class="action-button">
+                    <i data-lucide="upload" class="w-4 h-4"></i>
+                    导入录像
+                </a>
+            </div>
+
+            {% from 'components/my_replays.html' import MyReplays %}
+            {{ MyReplays(replays=replays) }}
         </div>
     </main>
 </div>

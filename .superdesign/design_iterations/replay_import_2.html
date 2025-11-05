@@ -1,0 +1,1089 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>录像导入 - LOL助手</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="lol_theme.css">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-sans) !important;
+            background: 
+                radial-gradient(ellipse at center, rgba(20, 30, 48, 0.8) 0%, rgba(10, 15, 25, 0.95) 70%),
+                linear-gradient(135deg, #0f1419 0%, #1a2332 50%, #0f1419 100%) !important;
+            color: #c9aa71 !important;
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* 背景纹理效果 */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: 
+                radial-gradient(circle at 25% 25%, rgba(200, 170, 110, 0.03) 0%, transparent 50%),
+                radial-gradient(circle at 75% 75%, rgba(200, 170, 110, 0.03) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .lol-container {
+            width: 100%;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 2rem;
+            min-height: 100vh;
+        }
+
+        .lol-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .lol-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #c9aa71;
+            margin-bottom: 1rem;
+            text-shadow: 0 0 20px rgba(201, 170, 113, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+        }
+
+        .lol-subtitle {
+            font-size: 1.1rem;
+            color: rgba(201, 170, 113, 0.7);
+            font-weight: 400;
+        }
+
+        .lol-step-indicator {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 3rem;
+            gap: 2rem;
+        }
+
+        .lol-step {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1.5rem;
+            border-radius: 2rem;
+            background: rgba(201, 170, 113, 0.1);
+            border: 1px solid rgba(201, 170, 113, 0.2);
+            transition: all 300ms ease;
+        }
+
+        .lol-step.active {
+            background: linear-gradient(135deg, #c9aa71, #d4b876);
+            color: #0f1419;
+            box-shadow: 0 5px 15px rgba(201, 170, 113, 0.3);
+        }
+
+        .lol-step.completed {
+            background: rgba(76, 175, 80, 0.2);
+            border-color: rgba(76, 175, 80, 0.4);
+            color: #4caf50;
+        }
+
+        .lol-step-number {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: rgba(201, 170, 113, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .lol-step.active .lol-step-number {
+            background: rgba(15, 20, 25, 0.2);
+        }
+
+        .lol-step.completed .lol-step-number {
+            background: rgba(76, 175, 80, 0.3);
+        }
+
+        .lol-import-card {
+            background: linear-gradient(135deg, 
+                rgba(20, 30, 48, 0.9) 0%, 
+                rgba(15, 25, 40, 0.95) 50%, 
+                rgba(10, 20, 35, 0.9) 100%);
+            border: 2px solid rgba(201, 170, 113, 0.2);
+            border-radius: 1rem;
+            padding: 2rem;
+            box-shadow: 
+                0 20px 40px rgba(0, 0, 0, 0.3),
+                inset 0 1px 0 rgba(201, 170, 113, 0.1);
+            backdrop-filter: blur(10px);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .lol-import-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, 
+                transparent 0%, 
+                #c9aa71 50%, 
+                transparent 100%);
+            opacity: 0.6;
+        }
+
+        .lol-folder-section {
+            margin-bottom: 2rem;
+        }
+
+        .lol-folder-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .lol-folder-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #c9aa71;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .lol-folder-path {
+            background: rgba(201, 170, 113, 0.05);
+            border: 1px solid rgba(201, 170, 113, 0.2);
+            border-radius: 0.5rem;
+            padding: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .lol-folder-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #c9aa71, #d4b876);
+            border-radius: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #0f1419;
+            font-size: 1.2rem;
+        }
+
+        .lol-folder-info {
+            flex: 1;
+        }
+
+        .lol-folder-name {
+            font-weight: 600;
+            color: #c9aa71;
+            margin-bottom: 0.25rem;
+        }
+
+        .lol-folder-location {
+            font-size: 0.85rem;
+            color: rgba(201, 170, 113, 0.6);
+            font-family: var(--font-mono);
+        }
+
+        .lol-btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 300ms ease;
+            border: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .lol-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, 
+                transparent 0%, 
+                rgba(255, 255, 255, 0.1) 50%, 
+                transparent 100%);
+            transition: left 500ms ease;
+        }
+
+        .lol-btn:hover::before {
+            left: 100%;
+        }
+
+        .lol-btn-secondary {
+            background: rgba(201, 170, 113, 0.1);
+            color: rgba(201, 170, 113, 0.8);
+            border: 1px solid rgba(201, 170, 113, 0.2);
+        }
+
+        .lol-btn-secondary:hover {
+            background: rgba(201, 170, 113, 0.15);
+            color: #c9aa71;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(201, 170, 113, 0.1);
+        }
+
+        .lol-btn-primary {
+            background: linear-gradient(135deg, #c9aa71, #d4b876);
+            color: #0f1419;
+            box-shadow: 0 5px 15px rgba(201, 170, 113, 0.2);
+        }
+
+        .lol-btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(201, 170, 113, 0.3);
+        }
+
+        .lol-btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .lol-file-list {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid rgba(201, 170, 113, 0.2);
+            border-radius: 0.5rem;
+            background: rgba(201, 170, 113, 0.02);
+        }
+
+        .lol-file-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            border-bottom: 1px solid rgba(201, 170, 113, 0.1);
+            transition: all 250ms ease;
+            cursor: pointer;
+        }
+
+        .lol-file-item:last-child {
+            border-bottom: none;
+        }
+
+        .lol-file-item:hover {
+            background: rgba(201, 170, 113, 0.05);
+        }
+
+        .lol-file-item.selected {
+            background: rgba(201, 170, 113, 0.1);
+            border-color: rgba(201, 170, 113, 0.3);
+        }
+
+        .lol-file-checkbox {
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(201, 170, 113, 0.3);
+            border-radius: 4px;
+            position: relative;
+            cursor: pointer;
+            transition: all 250ms ease;
+        }
+
+        .lol-file-checkbox.checked {
+            background: linear-gradient(135deg, #c9aa71, #d4b876);
+            border-color: #c9aa71;
+        }
+
+        .lol-file-checkbox.checked::after {
+            content: '✓';
+            position: absolute;
+            top: -2px;
+            left: 2px;
+            color: #0f1419;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .lol-file-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #c9aa71, #d4b876);
+            border-radius: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #0f1419;
+            font-size: 1.2rem;
+        }
+
+        .lol-file-details {
+            flex: 1;
+        }
+
+        .lol-file-name {
+            font-weight: 600;
+            color: #c9aa71;
+            margin-bottom: 0.25rem;
+        }
+
+        .lol-file-meta {
+            font-size: 0.85rem;
+            color: rgba(201, 170, 113, 0.6);
+            display: flex;
+            gap: 1rem;
+        }
+
+        .lol-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+            margin-top: 2rem;
+        }
+
+        .lol-hidden {
+            display: none;
+        }
+
+        .lol-success-message {
+            background: rgba(76, 175, 80, 0.1);
+            border: 1px solid rgba(76, 175, 80, 0.3);
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            color: #4caf50;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .lol-error-message {
+            background: rgba(244, 67, 54, 0.1);
+            border: 1px solid rgba(244, 67, 54, 0.3);
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            color: #f44336;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* 编辑模态框样式 */
+        .lol-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+        }
+
+        .lol-modal-content {
+            background: linear-gradient(135deg, 
+                rgba(20, 30, 48, 0.95) 0%, 
+                rgba(15, 25, 40, 0.98) 50%, 
+                rgba(10, 20, 35, 0.95) 100%);
+            border: 2px solid rgba(201, 170, 113, 0.3);
+            border-radius: 1rem;
+            padding: 2rem;
+            width: 90%;
+            max-width: 500px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .lol-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .lol-modal-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #c9aa71;
+        }
+
+        .lol-close-btn {
+            background: none;
+            border: none;
+            color: rgba(201, 170, 113, 0.6);
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 0.25rem;
+            transition: all 250ms ease;
+        }
+
+        .lol-close-btn:hover {
+            color: #c9aa71;
+            background: rgba(201, 170, 113, 0.1);
+        }
+
+        .lol-form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .lol-label {
+            display: block;
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #c9aa71;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .lol-input {
+            width: 100%;
+            background: rgba(201, 170, 113, 0.05);
+            border: 1px solid rgba(201, 170, 113, 0.2);
+            border-radius: 0.5rem;
+            padding: 0.75rem 1rem;
+            color: #c9aa71;
+            font-size: 0.95rem;
+            transition: all 300ms ease;
+        }
+
+        .lol-input:focus {
+            outline: none;
+            border-color: #c9aa71;
+            background: rgba(201, 170, 113, 0.08);
+            box-shadow: 0 0 0 3px rgba(201, 170, 113, 0.1);
+        }
+
+        .lol-textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        /* 动画效果 */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .lol-import-card {
+            animation: fadeInUp 600ms ease-out;
+        }
+
+        @keyframes modalFadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .lol-modal-content {
+            animation: modalFadeIn 300ms ease-out;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .lol-container {
+                padding: 1rem;
+            }
+
+            .lol-title {
+                font-size: 2rem;
+            }
+
+            .lol-step-indicator {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .lol-folder-header {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 1rem;
+            }
+
+            .lol-actions {
+                flex-direction: column;
+            }
+
+            .lol-btn {
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="lol-container">
+        <div class="lol-header">
+            <h1 class="lol-title">
+                <i data-lucide="video" class="w-10 h-10"></i>
+                录像导入
+            </h1>
+            <p class="lol-subtitle">从LOL录像文件夹导入录像文件</p>
+        </div>
+
+        <!-- 步骤指示器 -->
+        <div class="lol-step-indicator">
+            <div class="lol-step active" id="step1">
+                <div class="lol-step-number">1</div>
+                <span>选择文件夹</span>
+            </div>
+            <div class="lol-step" id="step2">
+                <div class="lol-step-number">2</div>
+                <span>选择录像</span>
+            </div>
+            <div class="lol-step" id="step3">
+                <div class="lol-step-number">3</div>
+                <span>添加信息</span>
+            </div>
+        </div>
+
+        <div class="lol-import-card">
+            <!-- 成功/错误消息 -->
+            <div id="successMessage" class="lol-success-message lol-hidden">
+                <i data-lucide="check-circle" class="w-5 h-5"></i>
+                <span>录像导入成功！</span>
+            </div>
+
+            <div id="errorMessage" class="lol-error-message lol-hidden">
+                <i data-lucide="alert-circle" class="w-5 h-5"></i>
+                <span id="errorText">操作失败，请重试</span>
+            </div>
+
+            <!-- 步骤1: 选择文件夹 -->
+            <div id="folderStep" class="lol-folder-section">
+                <div class="lol-folder-header">
+                    <div class="lol-folder-title">
+                        <i data-lucide="folder" class="w-5 h-5"></i>
+                        录像文件夹
+                    </div>
+                    <button class="lol-btn lol-btn-secondary" onclick="selectFolder()">
+                        <i data-lucide="folder-open" class="w-4 h-4"></i>
+                        选择文件夹
+                    </button>
+                </div>
+
+                <div class="lol-folder-path">
+                    <div class="lol-folder-icon">
+                        <i data-lucide="folder" class="w-5 h-5"></i>
+                    </div>
+                    <div class="lol-folder-info">
+                        <div class="lol-folder-name">League of Legends 录像文件夹</div>
+                        <div class="lol-folder-location" id="folderPath">C:\Users\cruld\Documents\League of Legends\Replays</div>
+                    </div>
+                </div>
+
+                <div class="lol-actions">
+                    <button class="lol-btn lol-btn-primary" onclick="scanFolder()">
+                        <i data-lucide="search" class="w-4 h-4"></i>
+                        扫描录像文件
+                    </button>
+                </div>
+            </div>
+
+            <!-- 步骤2: 选择录像文件 -->
+            <div id="fileStep" class="lol-folder-section lol-hidden">
+                <div class="lol-folder-header">
+                    <div class="lol-folder-title">
+                        <i data-lucide="video" class="w-5 h-5"></i>
+                        录像文件列表
+                        <span id="fileCount" style="font-size: 0.8rem; color: rgba(201, 170, 113, 0.6);">(0个文件)</span>
+                    </div>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <button class="lol-btn lol-btn-secondary" onclick="selectAllFiles()">
+                            <i data-lucide="check-square" class="w-4 h-4"></i>
+                            全选
+                        </button>
+                        <button class="lol-btn lol-btn-secondary" onclick="clearSelection()">
+                            <i data-lucide="square" class="w-4 h-4"></i>
+                            清空
+                        </button>
+                    </div>
+                </div>
+
+                <div class="lol-file-list" id="fileList">
+                    <!-- 文件列表将在这里动态生成 -->
+                </div>
+
+                <div class="lol-actions">
+                    <button class="lol-btn lol-btn-secondary" onclick="goBackToFolder()">
+                        <i data-lucide="arrow-left" class="w-4 h-4"></i>
+                        返回
+                    </button>
+                    <button id="nextBtn" class="lol-btn lol-btn-primary" onclick="proceedToEdit()" disabled>
+                        <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                        下一步
+                    </button>
+                </div>
+            </div>
+
+            <!-- 步骤3: 添加信息 -->
+            <div id="editStep" class="lol-folder-section lol-hidden">
+                <div class="lol-folder-header">
+                    <div class="lol-folder-title">
+                        <i data-lucide="edit-3" class="w-5 h-5"></i>
+                        为录像添加信息
+                        <span id="selectedCount" style="font-size: 0.8rem; color: rgba(201, 170, 113, 0.6);">(0个选中)</span>
+                    </div>
+                </div>
+
+                <div id="editList">
+                    <!-- 编辑列表将在这里动态生成 -->
+                </div>
+
+                <div class="lol-actions">
+                    <button class="lol-btn lol-btn-secondary" onclick="goBackToFiles()">
+                        <i data-lucide="arrow-left" class="w-4 h-4"></i>
+                        返回
+                    </button>
+                    <button id="importBtn" class="lol-btn lol-btn-primary" onclick="importReplays()">
+                        <i data-lucide="download" class="w-4 h-4"></i>
+                        导入录像
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 编辑模态框 -->
+    <div id="editModal" class="lol-modal lol-hidden">
+        <div class="lol-modal-content">
+            <div class="lol-modal-header">
+                <div class="lol-modal-title">编辑录像信息</div>
+                <button class="lol-close-btn" onclick="closeEditModal()">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <div class="lol-form-group">
+                <label class="lol-label" for="modalTitle">
+                    <i data-lucide="gamepad-2" class="w-4 h-4"></i>
+                    对局名称
+                </label>
+                <input type="text" id="modalTitle" class="lol-input" placeholder="例如: 翡翠3盲僧教学局">
+            </div>
+
+            <div class="lol-form-group">
+                <label class="lol-label" for="modalDescription">
+                    <i data-lucide="file-text" class="w-4 h-4"></i>
+                    描述信息
+                </label>
+                <textarea id="modalDescription" class="lol-input lol-textarea" placeholder="添加对局描述、学习要点等..."></textarea>
+            </div>
+
+            <div class="lol-actions">
+                <button class="lol-btn lol-btn-secondary" onclick="closeEditModal()">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                    取消
+                </button>
+                <button class="lol-btn lol-btn-primary" onclick="saveReplayInfo()">
+                    <i data-lucide="check" class="w-4 h-4"></i>
+                    保存
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 初始化 Lucide 图标
+        lucide.createIcons();
+
+        let currentStep = 1;
+        let selectedFiles = [];
+        let replayFiles = [];
+        let currentEditingIndex = -1;
+
+        // 模拟录像文件数据
+        const mockReplayFiles = [
+            {
+                name: "LOL_Replay_2024_01_15_14_30_25.rofl",
+                size: 45234567,
+                date: "2024-01-15 14:30:25",
+                title: "",
+                description: ""
+            },
+            {
+                name: "LOL_Replay_2024_01_14_20_15_42.rofl",
+                size: 38765432,
+                date: "2024-01-14 20:15:42",
+                title: "",
+                description: ""
+            },
+            {
+                name: "LOL_Replay_2024_01_13_16_45_18.rofl",
+                size: 52134567,
+                date: "2024-01-13 16:45:18",
+                title: "",
+                description: ""
+            },
+            {
+                name: "LOL_Replay_2024_01_12_19_22_33.rofl",
+                size: 41876543,
+                date: "2024-01-12 19:22:33",
+                title: "",
+                description: ""
+            },
+            {
+                name: "LOL_Replay_2024_01_11_21_08_15.rofl",
+                size: 47654321,
+                date: "2024-01-11 21:08:15",
+                title: "",
+                description: ""
+            }
+        ];
+
+        function selectFolder() {
+            // 模拟文件夹选择
+            const newPath = prompt("请输入录像文件夹路径:", document.getElementById('folderPath').textContent);
+            if (newPath) {
+                document.getElementById('folderPath').textContent = newPath;
+            }
+        }
+
+        function scanFolder() {
+            // 模拟扫描文件夹
+            showSuccess("正在扫描录像文件...");
+            
+            setTimeout(() => {
+                replayFiles = [...mockReplayFiles];
+                displayFileList();
+                goToStep(2);
+                hideMessages();
+            }, 1500);
+        }
+
+        function displayFileList() {
+            const fileList = document.getElementById('fileList');
+            const fileCount = document.getElementById('fileCount');
+            
+            fileCount.textContent = `(${replayFiles.length}个文件)`;
+            fileList.innerHTML = '';
+
+            replayFiles.forEach((file, index) => {
+                const fileItem = document.createElement('div');
+                fileItem.className = 'lol-file-item';
+                fileItem.onclick = () => toggleFileSelection(index);
+                
+                fileItem.innerHTML = `
+                    <div class="lol-file-checkbox" id="checkbox-${index}"></div>
+                    <div class="lol-file-icon">
+                        <i data-lucide="video" class="w-5 h-5"></i>
+                    </div>
+                    <div class="lol-file-details">
+                        <div class="lol-file-name">${file.name}</div>
+                        <div class="lol-file-meta">
+                            <span>${formatFileSize(file.size)}</span>
+                            <span>${file.date}</span>
+                        </div>
+                    </div>
+                `;
+                
+                fileList.appendChild(fileItem);
+            });
+            
+            lucide.createIcons();
+        }
+
+        function toggleFileSelection(index) {
+            const checkbox = document.getElementById(`checkbox-${index}`);
+            const fileItem = checkbox.closest('.lol-file-item');
+            
+            if (selectedFiles.includes(index)) {
+                selectedFiles = selectedFiles.filter(i => i !== index);
+                checkbox.classList.remove('checked');
+                fileItem.classList.remove('selected');
+            } else {
+                selectedFiles.push(index);
+                checkbox.classList.add('checked');
+                fileItem.classList.add('selected');
+            }
+            
+            updateNextButton();
+        }
+
+        function selectAllFiles() {
+            selectedFiles = replayFiles.map((_, index) => index);
+            replayFiles.forEach((_, index) => {
+                const checkbox = document.getElementById(`checkbox-${index}`);
+                const fileItem = checkbox.closest('.lol-file-item');
+                checkbox.classList.add('checked');
+                fileItem.classList.add('selected');
+            });
+            updateNextButton();
+        }
+
+        function clearSelection() {
+            selectedFiles = [];
+            replayFiles.forEach((_, index) => {
+                const checkbox = document.getElementById(`checkbox-${index}`);
+                const fileItem = checkbox.closest('.lol-file-item');
+                checkbox.classList.remove('checked');
+                fileItem.classList.remove('selected');
+            });
+            updateNextButton();
+        }
+
+        function updateNextButton() {
+            const nextBtn = document.getElementById('nextBtn');
+            nextBtn.disabled = selectedFiles.length === 0;
+        }
+
+        function proceedToEdit() {
+            if (selectedFiles.length === 0) {
+                showError("请至少选择一个录像文件");
+                return;
+            }
+            
+            displayEditList();
+            goToStep(3);
+        }
+
+        function displayEditList() {
+            const editList = document.getElementById('editList');
+            const selectedCount = document.getElementById('selectedCount');
+            
+            selectedCount.textContent = `(${selectedFiles.length}个选中)`;
+            editList.innerHTML = '';
+
+            selectedFiles.forEach((fileIndex, listIndex) => {
+                const file = replayFiles[fileIndex];
+                const editItem = document.createElement('div');
+                editItem.className = 'lol-file-item';
+                editItem.style.cursor = 'pointer';
+                editItem.onclick = () => openEditModal(fileIndex);
+                
+                editItem.innerHTML = `
+                    <div class="lol-file-icon">
+                        <i data-lucide="video" class="w-5 h-5"></i>
+                    </div>
+                    <div class="lol-file-details">
+                        <div class="lol-file-name">${file.title || file.name}</div>
+                        <div class="lol-file-meta">
+                            <span>${file.description || '点击添加描述...'}</span>
+                        </div>
+                    </div>
+                    <div style="color: rgba(201, 170, 113, 0.6);">
+                        <i data-lucide="edit-3" class="w-4 h-4"></i>
+                    </div>
+                `;
+                
+                editList.appendChild(editItem);
+            });
+            
+            lucide.createIcons();
+        }
+
+        function openEditModal(fileIndex) {
+            currentEditingIndex = fileIndex;
+            const file = replayFiles[fileIndex];
+            
+            document.getElementById('modalTitle').value = file.title || generateDefaultTitle(file.name);
+            document.getElementById('modalDescription').value = file.description || '';
+            
+            document.getElementById('editModal').classList.remove('lol-hidden');
+        }
+
+        function closeEditModal() {
+            document.getElementById('editModal').classList.add('lol-hidden');
+            currentEditingIndex = -1;
+        }
+
+        function saveReplayInfo() {
+            if (currentEditingIndex === -1) return;
+            
+            const title = document.getElementById('modalTitle').value.trim();
+            const description = document.getElementById('modalDescription').value.trim();
+            
+            if (!title) {
+                showError("请输入对局名称");
+                return;
+            }
+            
+            replayFiles[currentEditingIndex].title = title;
+            replayFiles[currentEditingIndex].description = description;
+            
+            displayEditList();
+            closeEditModal();
+            showSuccess("录像信息已保存");
+        }
+
+        function generateDefaultTitle(filename) {
+            // 从文件名生成默认标题
+            const match = filename.match(/LOL_Replay_(\d{4})_(\d{2})_(\d{2})_(\d{2})_(\d{2})_(\d{2})/);
+            if (match) {
+                const [, year, month, day, hour, minute] = match;
+                return `${year}-${month}-${day} ${hour}:${minute} 对局录像`;
+            }
+            return filename.replace('.rofl', '');
+        }
+
+        function importReplays() {
+            const unnamedFiles = selectedFiles.filter(index => !replayFiles[index].title);
+            
+            if (unnamedFiles.length > 0) {
+                showError(`还有 ${unnamedFiles.length} 个录像未添加标题，请完善信息后再导入`);
+                return;
+            }
+            
+            // 模拟导入过程
+            const importBtn = document.getElementById('importBtn');
+            importBtn.disabled = true;
+            importBtn.innerHTML = '<i data-lucide="loader" class="w-4 h-4 animate-spin"></i> 导入中...';
+            
+            setTimeout(() => {
+                const importData = selectedFiles.map(index => {
+                    const file = replayFiles[index];
+                    const folderPath = document.getElementById('folderPath').textContent;
+                    return {
+                        "对局名称": file.title,
+                        "导入后的文件路径": `D:\\Sources\\loler\\data\\${file.name}`,
+                        "导入前的文件路径": `${folderPath}\\${file.name}`,
+                        "description": file.description
+                    };
+                });
+                
+                console.log('导入数据:', importData);
+                showSuccess(`成功导入 ${selectedFiles.length} 个录像文件！`);
+                
+                setTimeout(() => {
+                    resetImport();
+                }, 2000);
+            }, 3000);
+        }
+
+        function goToStep(step) {
+            // 更新步骤指示器
+            document.querySelectorAll('.lol-step').forEach((stepEl, index) => {
+                stepEl.classList.remove('active', 'completed');
+                if (index + 1 < step) {
+                    stepEl.classList.add('completed');
+                } else if (index + 1 === step) {
+                    stepEl.classList.add('active');
+                }
+            });
+            
+            // 显示对应步骤内容
+            document.getElementById('folderStep').classList.toggle('lol-hidden', step !== 1);
+            document.getElementById('fileStep').classList.toggle('lol-hidden', step !== 2);
+            document.getElementById('editStep').classList.toggle('lol-hidden', step !== 3);
+            
+            currentStep = step;
+        }
+
+        function goBackToFolder() {
+            goToStep(1);
+        }
+
+        function goBackToFiles() {
+            goToStep(2);
+        }
+
+        function resetImport() {
+            selectedFiles = [];
+            replayFiles = [];
+            currentEditingIndex = -1;
+            goToStep(1);
+            
+            document.getElementById('importBtn').disabled = false;
+            document.getElementById('importBtn').innerHTML = '<i data-lucide="download" class="w-4 h-4"></i> 导入录像';
+            
+            hideMessages();
+            lucide.createIcons();
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        function showSuccess(message) {
+            const successMsg = document.getElementById('successMessage');
+            successMsg.querySelector('span').textContent = message;
+            successMsg.classList.remove('lol-hidden');
+            
+            setTimeout(() => {
+                successMsg.classList.add('lol-hidden');
+            }, 3000);
+        }
+
+        function showError(message) {
+            const errorMsg = document.getElementById('errorMessage');
+            document.getElementById('errorText').textContent = message;
+            errorMsg.classList.remove('lol-hidden');
+            
+            setTimeout(() => {
+                errorMsg.classList.add('lol-hidden');
+            }, 3000);
+        }
+
+        function hideMessages() {
+            document.getElementById('successMessage').classList.add('lol-hidden');
+            document.getElementById('errorMessage').classList.add('lol-hidden');
+        }
+
+        // 键盘快捷键
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                if (!document.getElementById('editModal').classList.contains('lol-hidden')) {
+                    closeEditModal();
+                } else {
+                    resetImport();
+                }
+            }
+        });
+
+        // 模态框外部点击关闭
+        document.getElementById('editModal').addEventListener('click', function(event) {
+            if (event.target === this) {
+                closeEditModal();
+            }
+        });
+    </script>
+</body>
+</html>

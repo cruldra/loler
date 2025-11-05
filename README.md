@@ -98,3 +98,10 @@ uv run python run.py
 ## License
 
 MIT
+
+## 下一步
+
+- [ ] 复活时间
+- [ ] 上线时间
+- [ ] ai对比分析装备符文
+- [ ] ai分析版本

@@ -1,0 +1,1002 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>录像导入 - LOL助手</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="lol_theme.css">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-sans) !important;
+            background: 
+                radial-gradient(ellipse at center, rgba(20, 30, 48, 0.8) 0%, rgba(10, 15, 25, 0.95) 70%),
+                linear-gradient(135deg, #0f1419 0%, #1a2332 50%, #0f1419 100%) !important;
+            color: #c9aa71 !important;
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* 背景纹理效果 */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: 
+                radial-gradient(circle at 25% 25%, rgba(200, 170, 110, 0.03) 0%, transparent 50%),
+                radial-gradient(circle at 75% 75%, rgba(200, 170, 110, 0.03) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .lol-container {
+            width: 100%;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+            min-height: 100vh;
+        }
+
+        .lol-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .lol-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #c9aa71;
+            margin-bottom: 1rem;
+            text-shadow: 0 0 20px rgba(201, 170, 113, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+        }
+
+        .lol-subtitle {
+            font-size: 1.1rem;
+            color: rgba(201, 170, 113, 0.7);
+            font-weight: 400;
+        }
+
+        .lol-import-card {
+            background: linear-gradient(135deg, 
+                rgba(20, 30, 48, 0.9) 0%, 
+                rgba(15, 25, 40, 0.95) 50%, 
+                rgba(10, 20, 35, 0.9) 100%);
+            border: 2px solid rgba(201, 170, 113, 0.2);
+            border-radius: 1rem;
+            padding: 2rem;
+            box-shadow: 
+                0 20px 40px rgba(0, 0, 0, 0.3),
+                inset 0 1px 0 rgba(201, 170, 113, 0.1);
+            backdrop-filter: blur(10px);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .lol-import-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, 
+                transparent 0%, 
+                #c9aa71 50%, 
+                transparent 100%);
+            opacity: 0.6;
+        }
+
+        .lol-toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .lol-folder-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            background: rgba(201, 170, 113, 0.05);
+            border: 1px solid rgba(201, 170, 113, 0.2);
+            border-radius: 0.5rem;
+            padding: 0.75rem 1rem;
+            flex: 1;
+            min-width: 300px;
+        }
+
+        .lol-folder-icon {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, #c9aa71, #d4b876);
+            border-radius: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #0f1419;
+            font-size: 1rem;
+        }
+
+        .lol-folder-path {
+            font-size: 0.9rem;
+            color: rgba(201, 170, 113, 0.8);
+            font-family: var(--font-mono);
+        }
+
+        .lol-toolbar-actions {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .lol-btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 300ms ease;
+            border: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .lol-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, 
+                transparent 0%, 
+                rgba(255, 255, 255, 0.1) 50%, 
+                transparent 100%);
+            transition: left 500ms ease;
+        }
+
+        .lol-btn:hover::before {
+            left: 100%;
+        }
+
+        .lol-btn-secondary {
+            background: rgba(201, 170, 113, 0.1);
+            color: rgba(201, 170, 113, 0.8);
+            border: 1px solid rgba(201, 170, 113, 0.2);
+        }
+
+        .lol-btn-secondary:hover {
+            background: rgba(201, 170, 113, 0.15);
+            color: #c9aa71;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(201, 170, 113, 0.1);
+        }
+
+        .lol-btn-primary {
+            background: linear-gradient(135deg, #c9aa71, #d4b876);
+            color: #0f1419;
+            box-shadow: 0 5px 15px rgba(201, 170, 113, 0.2);
+        }
+
+        .lol-btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(201, 170, 113, 0.3);
+        }
+
+        .lol-btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .lol-table-container {
+            background: rgba(201, 170, 113, 0.02);
+            border: 1px solid rgba(201, 170, 113, 0.2);
+            border-radius: 0.75rem;
+            overflow: hidden;
+            margin-bottom: 2rem;
+        }
+
+        .lol-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .lol-table th {
+            background: rgba(201, 170, 113, 0.1);
+            color: #c9aa71;
+            font-weight: 600;
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid rgba(201, 170, 113, 0.2);
+            font-size: 0.9rem;
+        }
+
+        .lol-table td {
+            padding: 1rem;
+            border-bottom: 1px solid rgba(201, 170, 113, 0.1);
+            vertical-align: top;
+        }
+
+        .lol-table tr:hover {
+            background: rgba(201, 170, 113, 0.05);
+        }
+
+        .lol-table tr.selected {
+            background: rgba(201, 170, 113, 0.1);
+        }
+
+        .lol-checkbox {
+            width: 18px;
+            height: 18px;
+            border: 2px solid rgba(201, 170, 113, 0.3);
+            border-radius: 3px;
+            position: relative;
+            cursor: pointer;
+            transition: all 250ms ease;
+        }
+
+        .lol-checkbox.checked {
+            background: linear-gradient(135deg, #c9aa71, #d4b876);
+            border-color: #c9aa71;
+        }
+
+        .lol-checkbox.checked::after {
+            content: '✓';
+            position: absolute;
+            top: -3px;
+            left: 1px;
+            color: #0f1419;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .lol-file-info {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .lol-file-icon {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, #c9aa71, #d4b876);
+            border-radius: 0.375rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #0f1419;
+            font-size: 1rem;
+        }
+
+        .lol-file-details {
+            flex: 1;
+        }
+
+        .lol-file-name {
+            font-weight: 600;
+            color: #c9aa71;
+            margin-bottom: 0.25rem;
+            font-size: 0.9rem;
+        }
+
+        .lol-file-meta {
+            font-size: 0.8rem;
+            color: rgba(201, 170, 113, 0.6);
+        }
+
+        .lol-input {
+            width: 100%;
+            background: rgba(201, 170, 113, 0.05);
+            border: 1px solid rgba(201, 170, 113, 0.2);
+            border-radius: 0.375rem;
+            padding: 0.5rem 0.75rem;
+            color: #c9aa71;
+            font-size: 0.85rem;
+            transition: all 300ms ease;
+        }
+
+        .lol-input:focus {
+            outline: none;
+            border-color: #c9aa71;
+            background: rgba(201, 170, 113, 0.08);
+            box-shadow: 0 0 0 2px rgba(201, 170, 113, 0.1);
+        }
+
+        .lol-textarea {
+            min-height: 60px;
+            resize: vertical;
+        }
+
+        .lol-status-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 1rem;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .lol-status-pending {
+            background: rgba(255, 193, 7, 0.1);
+            color: #ffc107;
+            border: 1px solid rgba(255, 193, 7, 0.3);
+        }
+
+        .lol-status-ready {
+            background: rgba(76, 175, 80, 0.1);
+            color: #4caf50;
+            border: 1px solid rgba(76, 175, 80, 0.3);
+        }
+
+        .lol-status-importing {
+            background: rgba(33, 150, 243, 0.1);
+            color: #2196f3;
+            border: 1px solid rgba(33, 150, 243, 0.3);
+        }
+
+        .lol-status-completed {
+            background: rgba(76, 175, 80, 0.2);
+            color: #4caf50;
+            border: 1px solid rgba(76, 175, 80, 0.4);
+        }
+
+        .lol-summary-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(201, 170, 113, 0.05);
+            border: 1px solid rgba(201, 170, 113, 0.2);
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .lol-summary-stats {
+            display: flex;
+            gap: 2rem;
+        }
+
+        .lol-stat-item {
+            text-align: center;
+        }
+
+        .lol-stat-number {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #c9aa71;
+        }
+
+        .lol-stat-label {
+            font-size: 0.8rem;
+            color: rgba(201, 170, 113, 0.6);
+        }
+
+        .lol-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+        }
+
+        .lol-hidden {
+            display: none;
+        }
+
+        .lol-success-message {
+            background: rgba(76, 175, 80, 0.1);
+            border: 1px solid rgba(76, 175, 80, 0.3);
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            color: #4caf50;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .lol-error-message {
+            background: rgba(244, 67, 54, 0.1);
+            border: 1px solid rgba(244, 67, 54, 0.3);
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            color: #f44336;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* 动画效果 */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .lol-import-card {
+            animation: fadeInUp 600ms ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .lol-table tr {
+            animation: slideIn 400ms ease-out;
+        }
+
+        .lol-table tr:nth-child(1) { animation-delay: 0ms; }
+        .lol-table tr:nth-child(2) { animation-delay: 100ms; }
+        .lol-table tr:nth-child(3) { animation-delay: 200ms; }
+        .lol-table tr:nth-child(4) { animation-delay: 300ms; }
+        .lol-table tr:nth-child(5) { animation-delay: 400ms; }
+
+        /* 响应式设计 */
+        @media (max-width: 1024px) {
+            .lol-table-container {
+                overflow-x: auto;
+            }
+
+            .lol-table {
+                min-width: 800px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .lol-container {
+                padding: 1rem;
+            }
+
+            .lol-title {
+                font-size: 2rem;
+            }
+
+            .lol-toolbar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .lol-folder-info {
+                min-width: auto;
+            }
+
+            .lol-toolbar-actions {
+                justify-content: center;
+            }
+
+            .lol-summary-stats {
+                flex-wrap: wrap;
+                gap: 1rem;
+            }
+
+            .lol-actions {
+                flex-direction: column;
+            }
+
+            .lol-btn {
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="lol-container">
+        <div class="lol-header">
+            <h1 class="lol-title">
+                <i data-lucide="video" class="w-10 h-10"></i>
+                录像导入
+            </h1>
+            <p class="lol-subtitle">批量导入和管理LOL录像文件</p>
+        </div>
+
+        <div class="lol-import-card">
+            <!-- 成功/错误消息 -->
+            <div id="successMessage" class="lol-success-message lol-hidden">
+                <i data-lucide="check-circle" class="w-5 h-5"></i>
+                <span>操作成功！</span>
+            </div>
+
+            <div id="errorMessage" class="lol-error-message lol-hidden">
+                <i data-lucide="alert-circle" class="w-5 h-5"></i>
+                <span id="errorText">操作失败，请重试</span>
+            </div>
+
+            <!-- 工具栏 -->
+            <div class="lol-toolbar">
+                <div class="lol-folder-info">
+                    <div class="lol-folder-icon">
+                        <i data-lucide="folder" class="w-4 h-4"></i>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.8rem; color: rgba(201, 170, 113, 0.6); margin-bottom: 0.25rem;">录像文件夹</div>
+                        <div class="lol-folder-path" id="folderPath">C:\Users\cruld\Documents\League of Legends\Replays</div>
+                    </div>
+                </div>
+                
+                <div class="lol-toolbar-actions">
+                    <button class="lol-btn lol-btn-secondary" onclick="selectFolder()">
+                        <i data-lucide="folder-open" class="w-4 h-4"></i>
+                        更改文件夹
+                    </button>
+                    <button class="lol-btn lol-btn-primary" onclick="scanFolder()">
+                        <i data-lucide="search" class="w-4 h-4"></i>
+                        扫描录像
+                    </button>
+                </div>
+            </div>
+
+            <!-- 摘要栏 -->
+            <div id="summaryBar" class="lol-summary-bar lol-hidden">
+                <div class="lol-summary-stats">
+                    <div class="lol-stat-item">
+                        <div class="lol-stat-number" id="totalFiles">0</div>
+                        <div class="lol-stat-label">总文件数</div>
+                    </div>
+                    <div class="lol-stat-item">
+                        <div class="lol-stat-number" id="selectedFiles">0</div>
+                        <div class="lol-stat-label">已选择</div>
+                    </div>
+                    <div class="lol-stat-item">
+                        <div class="lol-stat-number" id="readyFiles">0</div>
+                        <div class="lol-stat-label">准备就绪</div>
+                    </div>
+                    <div class="lol-stat-item">
+                        <div class="lol-stat-number" id="totalSize">0MB</div>
+                        <div class="lol-stat-label">总大小</div>
+                    </div>
+                </div>
+                
+                <div style="display: flex; gap: 1rem;">
+                    <button class="lol-btn lol-btn-secondary" onclick="selectAllFiles()">
+                        <i data-lucide="check-square" class="w-4 h-4"></i>
+                        全选
+                    </button>
+                    <button class="lol-btn lol-btn-secondary" onclick="clearAllFiles()">
+                        <i data-lucide="square" class="w-4 h-4"></i>
+                        清空
+                    </button>
+                </div>
+            </div>
+
+            <!-- 录像文件表格 -->
+            <div id="tableContainer" class="lol-table-container lol-hidden">
+                <table class="lol-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 50px;">
+                                <div class="lol-checkbox" id="selectAllCheckbox" onclick="toggleSelectAll()"></div>
+                            </th>
+                            <th style="width: 300px;">录像文件</th>
+                            <th style="width: 250px;">对局名称</th>
+                            <th>描述信息</th>
+                            <th style="width: 120px;">状态</th>
+                        </tr>
+                    </thead>
+                    <tbody id="fileTableBody">
+                        <!-- 文件行将在这里动态生成 -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- 空状态 -->
+            <div id="emptyState" style="text-align: center; padding: 3rem; color: rgba(201, 170, 113, 0.5);">
+                <i data-lucide="folder-search" class="w-16 h-16 mx-auto mb-4"></i>
+                <h3 style="font-size: 1.2rem; margin-bottom: 0.5rem;">暂无录像文件</h3>
+                <p>点击"扫描录像"开始导入录像文件</p>
+            </div>
+
+            <!-- 操作按钮 -->
+            <div class="lol-actions">
+                <button id="importBtn" class="lol-btn lol-btn-primary lol-hidden" onclick="importSelectedFiles()" disabled>
+                    <i data-lucide="download" class="w-4 h-4"></i>
+                    导入录像
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 初始化 Lucide 图标
+        lucide.createIcons();
+
+        let replayFiles = [];
+        let selectedFiles = new Set();
+
+        // 模拟录像文件数据
+        const mockReplayFiles = [
+            {
+                name: "LOL_Replay_2024_01_15_14_30_25.rofl",
+                size: 45234567,
+                date: "2024-01-15 14:30:25",
+                title: "",
+                description: "",
+                status: "pending"
+            },
+            {
+                name: "LOL_Replay_2024_01_14_20_15_42.rofl",
+                size: 38765432,
+                date: "2024-01-14 20:15:42",
+                title: "",
+                description: "",
+                status: "pending"
+            },
+            {
+                name: "LOL_Replay_2024_01_13_16_45_18.rofl",
+                size: 52134567,
+                date: "2024-01-13 16:45:18",
+                title: "",
+                description: "",
+                status: "pending"
+            },
+            {
+                name: "LOL_Replay_2024_01_12_19_22_33.rofl",
+                size: 41876543,
+                date: "2024-01-12 19:22:33",
+                title: "",
+                description: "",
+                status: "pending"
+            },
+            {
+                name: "LOL_Replay_2024_01_11_21_08_15.rofl",
+                size: 47654321,
+                date: "2024-01-11 21:08:15",
+                title: "",
+                description: "",
+                status: "pending"
+            }
+        ];
+
+        function selectFolder() {
+            const newPath = prompt("请输入录像文件夹路径:", document.getElementById('folderPath').textContent);
+            if (newPath) {
+                document.getElementById('folderPath').textContent = newPath;
+            }
+        }
+
+        function scanFolder() {
+            showSuccess("正在扫描录像文件...");
+            
+            setTimeout(() => {
+                replayFiles = mockReplayFiles.map(file => ({
+                    ...file,
+                    title: generateDefaultTitle(file.name),
+                    description: "",
+                    status: "pending"
+                }));
+                
+                displayFileTable();
+                showControls();
+                updateSummary();
+                hideMessages();
+            }, 1500);
+        }
+
+        function displayFileTable() {
+            const tableBody = document.getElementById('fileTableBody');
+            tableBody.innerHTML = '';
+
+            replayFiles.forEach((file, index) => {
+                const row = document.createElement('tr');
+                row.id = `row-${index}`;
+                
+                row.innerHTML = `
+                    <td>
+                        <div class="lol-checkbox" id="checkbox-${index}" onclick="toggleFileSelection(${index})"></div>
+                    </td>
+                    <td>
+                        <div class="lol-file-info">
+                            <div class="lol-file-icon">
+                                <i data-lucide="video" class="w-4 h-4"></i>
+                            </div>
+                            <div class="lol-file-details">
+                                <div class="lol-file-name">${file.name}</div>
+                                <div class="lol-file-meta">${formatFileSize(file.size)} • ${file.date}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <input type="text" class="lol-input" value="${file.title}" 
+                               onchange="updateFileTitle(${index}, this.value)"
+                               placeholder="输入对局名称">
+                    </td>
+                    <td>
+                        <textarea class="lol-input lol-textarea" 
+                                  placeholder="添加描述信息..."
+                                  onchange="updateFileDescription(${index}, this.value)">${file.description}</textarea>
+                    </td>
+                    <td>
+                        <div class="lol-status-indicator lol-status-${file.status}" id="status-${index}">
+                            <i data-lucide="clock" class="w-3 h-3"></i>
+                            <span>待完善</span>
+                        </div>
+                    </td>
+                `;
+                
+                tableBody.appendChild(row);
+            });
+            
+            lucide.createIcons();
+        }
+
+        function toggleFileSelection(index) {
+            const checkbox = document.getElementById(`checkbox-${index}`);
+            const row = document.getElementById(`row-${index}`);
+            
+            if (selectedFiles.has(index)) {
+                selectedFiles.delete(index);
+                checkbox.classList.remove('checked');
+                row.classList.remove('selected');
+            } else {
+                selectedFiles.add(index);
+                checkbox.classList.add('checked');
+                row.classList.add('selected');
+            }
+            
+            updateSummary();
+            updateImportButton();
+            updateSelectAllCheckbox();
+        }
+
+        function toggleSelectAll() {
+            const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+            
+            if (selectedFiles.size === replayFiles.length) {
+                clearAllFiles();
+            } else {
+                selectAllFiles();
+            }
+        }
+
+        function selectAllFiles() {
+            selectedFiles.clear();
+            replayFiles.forEach((_, index) => {
+                selectedFiles.add(index);
+                const checkbox = document.getElementById(`checkbox-${index}`);
+                const row = document.getElementById(`row-${index}`);
+                checkbox.classList.add('checked');
+                row.classList.add('selected');
+            });
+            updateSummary();
+            updateImportButton();
+            updateSelectAllCheckbox();
+        }
+
+        function clearAllFiles() {
+            selectedFiles.clear();
+            replayFiles.forEach((_, index) => {
+                const checkbox = document.getElementById(`checkbox-${index}`);
+                const row = document.getElementById(`row-${index}`);
+                checkbox.classList.remove('checked');
+                row.classList.remove('selected');
+            });
+            updateSummary();
+            updateImportButton();
+            updateSelectAllCheckbox();
+        }
+
+        function updateSelectAllCheckbox() {
+            const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+            
+            if (selectedFiles.size === 0) {
+                selectAllCheckbox.classList.remove('checked');
+            } else if (selectedFiles.size === replayFiles.length) {
+                selectAllCheckbox.classList.add('checked');
+            } else {
+                selectAllCheckbox.classList.remove('checked');
+            }
+        }
+
+        function updateFileTitle(index, title) {
+            replayFiles[index].title = title.trim();
+            updateFileStatus(index);
+            updateSummary();
+        }
+
+        function updateFileDescription(index, description) {
+            replayFiles[index].description = description.trim();
+            updateFileStatus(index);
+            updateSummary();
+        }
+
+        function updateFileStatus(index) {
+            const file = replayFiles[index];
+            const statusElement = document.getElementById(`status-${index}`);
+            
+            if (file.title.trim()) {
+                file.status = "ready";
+                statusElement.className = "lol-status-indicator lol-status-ready";
+                statusElement.innerHTML = '<i data-lucide="check" class="w-3 h-3"></i><span>准备就绪</span>';
+            } else {
+                file.status = "pending";
+                statusElement.className = "lol-status-indicator lol-status-pending";
+                statusElement.innerHTML = '<i data-lucide="clock" class="w-3 h-3"></i><span>待完善</span>';
+            }
+            
+            lucide.createIcons();
+        }
+
+        function updateSummary() {
+            document.getElementById('totalFiles').textContent = replayFiles.length;
+            document.getElementById('selectedFiles').textContent = selectedFiles.size;
+            
+            const readyCount = replayFiles.filter(file => file.status === 'ready').length;
+            document.getElementById('readyFiles').textContent = readyCount;
+            
+            const totalSize = Array.from(selectedFiles).reduce((sum, index) => 
+                sum + replayFiles[index].size, 0
+            );
+            document.getElementById('totalSize').textContent = formatFileSize(totalSize);
+        }
+
+        function updateImportButton() {
+            const importBtn = document.getElementById('importBtn');
+            importBtn.disabled = selectedFiles.size === 0;
+        }
+
+        function showControls() {
+            document.getElementById('summaryBar').classList.remove('lol-hidden');
+            document.getElementById('tableContainer').classList.remove('lol-hidden');
+            document.getElementById('importBtn').classList.remove('lol-hidden');
+            document.getElementById('emptyState').classList.add('lol-hidden');
+        }
+
+        function importSelectedFiles() {
+            const unreadyFiles = Array.from(selectedFiles).filter(index => 
+                replayFiles[index].status !== 'ready'
+            );
+            
+            if (unreadyFiles.length > 0) {
+                showError(`还有 ${unreadyFiles.length} 个录像未完善信息，请添加标题后再导入`);
+                return;
+            }
+            
+            const importBtn = document.getElementById('importBtn');
+            importBtn.disabled = true;
+            importBtn.innerHTML = '<i data-lucide="loader" class="w-4 h-4 animate-spin"></i> 导入中...';
+            
+            // 更新状态为导入中
+            Array.from(selectedFiles).forEach(index => {
+                const statusElement = document.getElementById(`status-${index}`);
+                statusElement.className = "lol-status-indicator lol-status-importing";
+                statusElement.innerHTML = '<i data-lucide="loader" class="w-3 h-3 animate-spin"></i><span>导入中</span>';
+                replayFiles[index].status = 'importing';
+            });
+            
+            lucide.createIcons();
+            
+            setTimeout(() => {
+                const importData = Array.from(selectedFiles).map(index => {
+                    const file = replayFiles[index];
+                    const folderPath = document.getElementById('folderPath').textContent;
+                    return {
+                        "对局名称": file.title,
+                        "导入后的文件路径": `D:\\Sources\\loler\\data\\${file.name}`,
+                        "导入前的文件路径": `${folderPath}\\${file.name}`,
+                        "description": file.description
+                    };
+                });
+                
+                console.log('导入数据:', importData);
+                
+                // 更新状态为已完成
+                Array.from(selectedFiles).forEach(index => {
+                    const statusElement = document.getElementById(`status-${index}`);
+                    statusElement.className = "lol-status-indicator lol-status-completed";
+                    statusElement.innerHTML = '<i data-lucide="check-circle" class="w-3 h-3"></i><span>已完成</span>';
+                    replayFiles[index].status = 'completed';
+                });
+                
+                showSuccess(`成功导入 ${selectedFiles.size} 个录像文件！`);
+                
+                // 重置选择状态
+                selectedFiles.clear();
+                replayFiles.forEach((_, index) => {
+                    const checkbox = document.getElementById(`checkbox-${index}`);
+                    const row = document.getElementById(`row-${index}`);
+                    checkbox.classList.remove('checked');
+                    row.classList.remove('selected');
+                });
+                
+                updateSummary();
+                updateImportButton();
+                updateSelectAllCheckbox();
+                
+                importBtn.disabled = false;
+                importBtn.innerHTML = '<i data-lucide="download" class="w-4 h-4"></i> 导入录像';
+                lucide.createIcons();
+            }, 3000);
+        }
+
+        function generateDefaultTitle(filename) {
+            const match = filename.match(/LOL_Replay_(\d{4})_(\d{2})_(\d{2})_(\d{2})_(\d{2})_(\d{2})/);
+            if (match) {
+                const [, year, month, day, hour, minute] = match;
+                return `${year}-${month}-${day} ${hour}:${minute} 对局录像`;
+            }
+            return filename.replace('.rofl', '');
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        function showSuccess(message) {
+            const successMsg = document.getElementById('successMessage');
+            successMsg.querySelector('span').textContent = message;
+            successMsg.classList.remove('lol-hidden');
+            
+            setTimeout(() => {
+                successMsg.classList.add('lol-hidden');
+            }, 3000);
+        }
+
+        function showError(message) {
+            const errorMsg = document.getElementById('errorMessage');
+            document.getElementById('errorText').textContent = message;
+            errorMsg.classList.remove('lol-hidden');
+            
+            setTimeout(() => {
+                errorMsg.classList.add('lol-hidden');
+            }, 3000);
+        }
+
+        function hideMessages() {
+            document.getElementById('successMessage').classList.add('lol-hidden');
+            document.getElementById('errorMessage').classList.add('lol-hidden');
+        }
+
+        // 键盘快捷键
+        document.addEventListener('keydown', function(event) {
+            if (event.ctrlKey && event.key === 'a') {
+                event.preventDefault();
+                selectAllFiles();
+            }
+            
+            if (event.key === 'Escape') {
+                clearAllFiles();
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,666 @@
+{% macro MyReplays(replays=[]) %}
+<style>
+    .replay-stats {
+        display: flex;
+        gap: 2rem;
+        margin-bottom: 2rem;
+        flex-wrap: wrap;
+    }
+
+    .replay-stat-card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 1.5rem;
+        flex: 1;
+        min-width: 200px;
+        transition: all 300ms ease;
+    }
+
+    .replay-stat-card:hover {
+        border-color: var(--primary);
+        box-shadow: var(--shadow-md);
+    }
+
+    .replay-stat-label {
+        color: var(--muted-foreground);
+        font-size: 0.9rem;
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .replay-stat-value {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--primary);
+    }
+
+    .replay-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .replay-card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 1.5rem;
+        transition: all 300ms ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .replay-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, var(--primary), transparent);
+        opacity: 0;
+        transition: opacity 300ms ease;
+    }
+
+    .replay-card:hover {
+        border-color: var(--primary);
+        box-shadow: var(--shadow-lg);
+        transform: translateY(-4px);
+    }
+
+    .replay-card:hover::before {
+        opacity: 1;
+    }
+
+    .replay-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 1rem;
+    }
+
+    .replay-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--foreground);
+        margin-bottom: 0.5rem;
+    }
+
+    .replay-description {
+        color: var(--muted-foreground);
+        font-size: 0.9rem;
+        margin-bottom: 1rem;
+        line-height: 1.5;
+    }
+
+    .replay-meta {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .replay-meta-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: var(--muted-foreground);
+        font-size: 0.85rem;
+    }
+
+    .replay-actions {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+
+    .replay-btn {
+        padding: 0.5rem 1rem;
+        border-radius: var(--radius);
+        font-size: 0.85rem;
+        cursor: pointer;
+        transition: all 200ms ease;
+        border: 1px solid var(--border);
+        background: var(--background);
+        color: var(--foreground);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        text-decoration: none;
+    }
+
+    .replay-btn:hover {
+        border-color: var(--primary);
+        background: var(--card);
+    }
+
+    .replay-btn-primary {
+        background: var(--primary);
+        color: var(--primary-foreground);
+        border-color: var(--primary);
+    }
+
+    .replay-btn-primary:hover {
+        background: var(--primary);
+        border-color: var(--primary);
+        opacity: 0.9;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(201, 170, 113, 0.3);
+    }
+
+    .replay-btn-danger {
+        border-color: #f44336;
+        color: #f44336;
+    }
+
+    .replay-btn-danger:hover {
+        background: rgba(244, 67, 54, 0.1);
+    }
+
+    .replay-empty {
+        text-align: center;
+        padding: 4rem 2rem;
+        color: var(--muted-foreground);
+    }
+
+    .replay-empty-icon {
+        width: 64px;
+        height: 64px;
+        margin: 0 auto 1rem;
+        opacity: 0.5;
+    }
+
+    .replay-empty-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        color: var(--foreground);
+    }
+
+    .replay-empty-description {
+        margin-bottom: 2rem;
+    }
+
+    .replay-modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.8);
+        z-index: 9999;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+    }
+
+    .replay-modal.show {
+        display: flex;
+    }
+
+    .replay-modal-content {
+        background: var(--card);
+        border: 2px solid var(--primary);
+        border-radius: var(--radius);
+        max-width: 600px;
+        width: 100%;
+        padding: 2rem;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        animation: modalSlideIn 0.3s ease;
+    }
+
+    @keyframes modalSlideIn {
+        from {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .replay-modal-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .replay-modal-icon {
+        width: 48px;
+        height: 48px;
+        color: var(--primary);
+    }
+
+    .replay-modal-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--primary);
+    }
+
+    .replay-modal-steps {
+        margin-bottom: 1.5rem;
+    }
+
+    .replay-modal-step {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 1rem;
+        padding: 1rem;
+        background: var(--background);
+        border-radius: var(--radius);
+        border: 1px solid var(--border);
+    }
+
+    .replay-modal-step-number {
+        flex-shrink: 0;
+        width: 32px;
+        height: 32px;
+        background: var(--primary);
+        color: var(--primary-foreground);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+    }
+
+    .replay-modal-step-content {
+        flex: 1;
+    }
+
+    .replay-modal-step-title {
+        font-weight: 600;
+        color: var(--foreground);
+        margin-bottom: 0.25rem;
+    }
+
+    .replay-modal-step-desc {
+        color: var(--muted-foreground);
+        font-size: 0.9rem;
+        line-height: 1.5;
+    }
+
+    .replay-modal-path {
+        background: var(--background);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+        font-family: monospace;
+        font-size: 0.85rem;
+        color: var(--primary);
+        word-break: break-all;
+        cursor: pointer;
+        transition: all 200ms ease;
+    }
+
+    .replay-modal-path:hover {
+        border-color: var(--primary);
+        background: var(--card);
+    }
+
+    .replay-modal-actions {
+        display: flex;
+        gap: 1rem;
+        justify-content: flex-end;
+    }
+
+    .replay-modal-btn {
+        padding: 0.75rem 1.5rem;
+        border-radius: var(--radius);
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 200ms ease;
+        border: 1px solid var(--border);
+        background: var(--background);
+        color: var(--foreground);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .replay-modal-btn:hover {
+        border-color: var(--primary);
+        background: var(--card);
+    }
+
+    .replay-modal-btn-primary {
+        background: var(--primary);
+        color: var(--primary-foreground);
+        border-color: var(--primary);
+    }
+
+    .replay-modal-btn-primary:hover:not(:disabled) {
+        background: var(--primary);
+        border-color: var(--primary);
+        opacity: 0.9;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(201, 170, 113, 0.3);
+    }
+
+    .replay-modal-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .replay-modal-btn:disabled:hover {
+        transform: none;
+        background: var(--background);
+        border-color: var(--border);
+    }
+
+    .replay-modal-btn-primary:disabled {
+        background: var(--primary);
+        border-color: var(--primary);
+    }
+
+    .replay-modal-btn-primary:disabled:hover {
+        background: var(--primary);
+        border-color: var(--primary);
+        transform: none;
+        box-shadow: none;
+    }
+</style>
+
+<div class="replay-stats">
+    <div class="replay-stat-card">
+        <div class="replay-stat-label">
+            <i data-lucide="video" class="w-4 h-4"></i>
+            总录像数
+        </div>
+        <div class="replay-stat-value">{{ replays|length }}</div>
+    </div>
+    <div class="replay-stat-card">
+        <div class="replay-stat-label">
+            <i data-lucide="hard-drive" class="w-4 h-4"></i>
+            总大小
+        </div>
+        <div class="replay-stat-value" id="totalSize">0 MB</div>
+    </div>
+</div>
+
+{% if replays %}
+<div class="replay-grid">
+    {% for replay in replays %}
+    <div class="replay-card">
+        <div class="replay-header">
+            <div style="flex: 1;">
+                <div class="replay-title">{{ replay.name }}</div>
+                {% if replay.description %}
+                <div class="replay-description">{{ replay.description }}</div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="replay-meta">
+            <div class="replay-meta-item">
+                <i data-lucide="hard-drive" class="w-4 h-4"></i>
+                <span class="file-size" data-size="{{ replay.file_size }}">{{ (replay.file_size / 1024 / 1024)|round(2) }} MB</span>
+            </div>
+            <div class="replay-meta-item">
+                <i data-lucide="calendar" class="w-4 h-4"></i>
+                <span>{{ replay.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
+            </div>
+        </div>
+
+        <div class="replay-actions">
+            <button onclick="playReplay('{{ replay.stored_path }}', {{ replay.id }})" class="replay-btn replay-btn-primary">
+                <i data-lucide="play" class="w-4 h-4"></i>
+                播放
+            </button>
+            <button onclick="editReplay({{ replay.id }}, '{{ replay.name }}', '{{ replay.description or '' }}')" class="replay-btn">
+                <i data-lucide="edit" class="w-4 h-4"></i>
+                编辑
+            </button>
+            <button onclick="deleteReplay({{ replay.id }}, '{{ replay.name }}')" class="replay-btn replay-btn-danger">
+                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                删除
+            </button>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="replay-empty">
+    <div class="replay-empty-icon">
+        <i data-lucide="video" style="width: 100%; height: 100%;"></i>
+    </div>
+    <div class="replay-empty-title">暂无录像</div>
+    <div class="replay-empty-description">点击上方"导入录像"按钮开始导入您的对局录像</div>
+</div>
+{% endif %}
+
+<!-- 播放提示模态框 -->
+<div id="replayModal" class="replay-modal">
+    <div class="replay-modal-content">
+        <div class="replay-modal-header">
+            <i data-lucide="info" class="replay-modal-icon"></i>
+            <div class="replay-modal-title">如何播放录像</div>
+        </div>
+
+        <div class="replay-modal-steps">
+            <div class="replay-modal-step">
+                <div class="replay-modal-step-number">1</div>
+                <div class="replay-modal-step-content">
+                    <div class="replay-modal-step-title">打开英雄联盟客户端</div>
+                    <div class="replay-modal-step-desc">启动LOL客户端并登录您的账号</div>
+                </div>
+            </div>
+
+            <div class="replay-modal-step">
+                <div class="replay-modal-step-number">2</div>
+                <div class="replay-modal-step-content">
+                    <div class="replay-modal-step-title">下载最近一局回放</div>
+                    <div class="replay-modal-step-desc">在客户端的"生涯"页面，找到最近的一局对局，点击下载回放</div>
+                </div>
+            </div>
+
+            <div class="replay-modal-step">
+                <div class="replay-modal-step-number">3</div>
+                <div class="replay-modal-step-content">
+                    <div class="replay-modal-step-title">自动替换录像文件</div>
+                    <div class="replay-modal-step-desc">点击下方"自动替换"按钮，系统会自动将此录像替换到客户端最新下载的录像文件</div>
+                    <div style="margin-top: 1rem;">
+                        <button onclick="autoReplaceReplay()" id="replaceBtn" class="replay-modal-btn replay-modal-btn-primary" style="padding: 0.5rem 1rem; font-size: 0.9rem;">
+                            <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                            自动替换
+                        </button>
+                    </div>
+                    <div id="replaceResult" style="display: none; margin-top: 1rem; padding: 1rem; border-radius: var(--radius); background: rgba(76, 175, 80, 0.1); border: 1px solid rgba(76, 175, 80, 0.3); color: #4caf50;">
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <i data-lucide="check-circle" class="w-5 h-5"></i>
+                            <span id="replaceResultText"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="replay-modal-step">
+                <div class="replay-modal-step-number">4</div>
+                <div class="replay-modal-step-content">
+                    <div class="replay-modal-step-title">在客户端播放</div>
+                    <div class="replay-modal-step-desc">返回客户端，在"生涯"页面点击播放按钮即可观看录像</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="replay-modal-path" id="replayPath" onclick="copyReplayPath()">
+            点击复制录像路径
+        </div>
+
+        <div class="replay-modal-actions">
+            <button onclick="closeReplayModal()" class="replay-modal-btn">
+                <i data-lucide="x" class="w-4 h-4"></i>
+                关闭
+            </button>
+            <button onclick="openReplayFolder()" class="replay-modal-btn">
+                <i data-lucide="folder-open" class="w-4 h-4"></i>
+                打开文件夹
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let currentReplayPath = '';
+    let currentReplayId = null;
+
+    function playReplay(replayPath, replayId) {
+        currentReplayPath = replayPath;
+        currentReplayId = replayId;
+        const modal = document.getElementById('replayModal');
+        const pathElement = document.getElementById('replayPath');
+        const resultDiv = document.getElementById('replaceResult');
+        const replaceBtn = document.getElementById('replaceBtn');
+
+        pathElement.textContent = replayPath;
+        resultDiv.style.display = 'none';
+        replaceBtn.disabled = false;
+
+        modal.classList.add('show');
+        lucide.createIcons();
+    }
+
+    function closeReplayModal() {
+        const modal = document.getElementById('replayModal');
+        modal.classList.remove('show');
+    }
+
+    function copyReplayPath() {
+        if (!currentReplayPath) return;
+
+        navigator.clipboard.writeText(currentReplayPath).then(() => {
+            const pathElement = document.getElementById('replayPath');
+            const originalText = pathElement.textContent;
+            pathElement.textContent = '✓ 已复制到剪贴板';
+            pathElement.style.color = '#4caf50';
+
+            setTimeout(() => {
+                pathElement.textContent = originalText;
+                pathElement.style.color = '';
+            }, 2000);
+        });
+    }
+
+    async function autoReplaceReplay() {
+        if (!currentReplayId) return;
+
+        const replaceBtn = document.getElementById('replaceBtn');
+        const originalHTML = replaceBtn.innerHTML;
+
+        replaceBtn.disabled = true;
+        replaceBtn.innerHTML = '<i data-lucide="loader" class="w-4 h-4 animate-spin"></i> 替换中...';
+        lucide.createIcons();
+
+        const formData = new FormData();
+
+        const response = await fetch(`/replays/${currentReplayId}/replace`, {
+            method: 'POST',
+            body: formData
+        });
+
+        const result = await response.json();
+
+        replaceBtn.disabled = false;
+        replaceBtn.innerHTML = originalHTML;
+        lucide.createIcons();
+
+        const resultDiv = document.getElementById('replaceResult');
+        const resultText = document.getElementById('replaceResultText');
+
+        if (result.success) {
+            replaceBtn.disabled = true;
+        } else {
+            resultDiv.style.display = 'block';
+            resultDiv.style.background = 'rgba(244, 67, 54, 0.1)';
+            resultDiv.style.borderColor = 'rgba(244, 67, 54, 0.3)';
+            resultDiv.style.color = '#f44336';
+            resultText.textContent = result.message;
+
+            const icon = resultDiv.querySelector('i');
+            icon.setAttribute('data-lucide', 'alert-circle');
+            lucide.createIcons();
+        }
+    }
+
+    function openReplayFolder() {
+        if (!currentReplayPath) return;
+
+        const folderPath = currentReplayPath.substring(0, currentReplayPath.lastIndexOf('\\'));
+        window.open(`file:///${folderPath}`);
+    }
+
+    function editReplay(id, name, description) {
+        const newName = prompt('请输入新的对局名称:', name);
+        if (newName === null || newName.trim() === '') return;
+
+        const newDesc = prompt('请输入新的描述:', description);
+        if (newDesc === null) return;
+
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/replays/${id}/update`;
+
+        const nameInput = document.createElement('input');
+        nameInput.type = 'hidden';
+        nameInput.name = 'name';
+        nameInput.value = newName;
+        form.appendChild(nameInput);
+
+        const descInput = document.createElement('input');
+        descInput.type = 'hidden';
+        descInput.name = 'description';
+        descInput.value = newDesc;
+        form.appendChild(descInput);
+
+        document.body.appendChild(form);
+        form.submit();
+    }
+
+    function deleteReplay(id, name) {
+        if (!confirm(`确定要删除录像"${name}"吗？此操作不可恢复。`)) return;
+
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/replays/${id}/delete`;
+
+        document.body.appendChild(form);
+        form.submit();
+    }
+
+    // 计算总大小
+    document.addEventListener('DOMContentLoaded', () => {
+        const fileSizes = document.querySelectorAll('.file-size');
+        let totalBytes = 0;
+        fileSizes.forEach(el => {
+            totalBytes += parseInt(el.dataset.size || 0);
+        });
+
+        const totalMB = (totalBytes / 1024 / 1024).toFixed(2);
+        const totalSizeEl = document.getElementById('totalSize');
+        if (totalSizeEl) {
+            totalSizeEl.textContent = totalMB + ' MB';
+        }
+
+        // 点击模态框外部关闭
+        const modal = document.getElementById('replayModal');
+        if (modal) {
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    closeReplayModal();
+                }
+            });
+        }
+    });
+</script>
+{% endmacro %}
+

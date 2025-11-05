@@ -1,0 +1,444 @@
+{% extends "base.html" %}
+
+{% block title %}我的录像 - LOL助手{% endblock %}
+
+{% block content %}
+<style>
+    .lol-container {
+        width: 100%;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem;
+        min-height: 100vh;
+    }
+
+    .lol-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .lol-title {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: var(--primary);
+        text-shadow: 0 0 20px rgba(201, 170, 113, 0.3);
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .lol-header-actions {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .lol-search-container {
+        position: relative;
+        min-width: 300px;
+    }
+
+    .lol-search-input {
+        width: 100%;
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 0.75rem 1rem 0.75rem 3rem;
+        color: var(--foreground);
+        font-size: 0.95rem;
+        transition: all 300ms ease;
+    }
+
+    .lol-search-input:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(201, 170, 113, 0.1);
+    }
+
+    .lol-search-icon {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--muted-foreground);
+    }
+
+    .lol-btn {
+        padding: 0.75rem 1.5rem;
+        border-radius: var(--radius);
+        font-weight: 600;
+        font-size: 0.95rem;
+        cursor: pointer;
+        transition: all 300ms ease;
+        border: none;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: var(--primary);
+        color: var(--primary-foreground);
+        text-decoration: none;
+    }
+
+    .lol-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-lg);
+    }
+
+    .lol-stats {
+        display: flex;
+        gap: 2rem;
+        margin-bottom: 2rem;
+        flex-wrap: wrap;
+    }
+
+    .lol-stat-card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        padding: 1.5rem;
+        flex: 1;
+        min-width: 200px;
+    }
+
+    .lol-stat-number {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--primary);
+        margin-bottom: 0.5rem;
+    }
+
+    .lol-stat-label {
+        color: var(--muted-foreground);
+        font-size: 0.9rem;
+    }
+
+    .lol-replay-grid {
+        display: grid;
+        gap: 1.5rem;
+        grid-template-columns: 1fr;
+    }
+
+    .lol-replay-card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        padding: 1.5rem;
+        transition: all 400ms ease;
+        cursor: pointer;
+    }
+
+    .lol-replay-card:hover {
+        transform: translateY(-5px);
+        box-shadow: var(--shadow-xl);
+        border-color: var(--primary);
+    }
+
+    .lol-replay-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 1rem;
+    }
+
+    .lol-replay-name {
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: var(--foreground);
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .lol-replay-icon {
+        width: 40px;
+        height: 40px;
+        background: var(--primary);
+        border-radius: var(--radius);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--primary-foreground);
+    }
+
+    .lol-replay-meta {
+        display: flex;
+        gap: 1.5rem;
+        color: var(--muted-foreground);
+        font-size: 0.9rem;
+        margin-bottom: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .lol-replay-meta-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .lol-replay-description {
+        color: var(--muted-foreground);
+        line-height: 1.6;
+        margin-bottom: 1rem;
+    }
+
+    .lol-replay-paths {
+        background: var(--muted);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .lol-path-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.75rem;
+        margin-bottom: 0.75rem;
+        font-family: var(--font-mono);
+        font-size: 0.85rem;
+    }
+
+    .lol-path-item:last-child {
+        margin-bottom: 0;
+    }
+
+    .lol-path-label {
+        color: var(--muted-foreground);
+        min-width: 80px;
+        font-weight: 600;
+    }
+
+    .lol-path-value {
+        color: var(--foreground);
+        word-break: break-all;
+        flex: 1;
+    }
+
+    .lol-replay-actions {
+        display: flex;
+        gap: 0.75rem;
+        justify-content: flex-end;
+    }
+
+    .lol-action-btn {
+        padding: 0.5rem 1rem;
+        border-radius: var(--radius);
+        font-size: 0.85rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 250ms ease;
+        border: none;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .lol-action-btn-play {
+        background: #4caf50;
+        color: white;
+    }
+
+    .lol-action-btn-play:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(76, 175, 80, 0.3);
+    }
+
+    .lol-action-btn-edit {
+        background: var(--secondary);
+        color: var(--secondary-foreground);
+        border: 1px solid var(--border);
+    }
+
+    .lol-action-btn-edit:hover {
+        background: var(--accent);
+        transform: translateY(-2px);
+    }
+
+    .lol-action-btn-delete {
+        background: rgba(244, 67, 54, 0.1);
+        color: #f44336;
+        border: 1px solid rgba(244, 67, 54, 0.2);
+    }
+
+    .lol-action-btn-delete:hover {
+        background: rgba(244, 67, 54, 0.15);
+        transform: translateY(-2px);
+    }
+
+    .lol-empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        color: var(--muted-foreground);
+    }
+
+    .lol-empty-icon {
+        width: 80px;
+        height: 80px;
+        background: var(--muted);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1.5rem;
+        opacity: 0.5;
+    }
+</style>
+
+<div class="lol-container">
+    <div class="lol-header">
+        <h1 class="lol-title">
+            <i data-lucide="video" class="w-10 h-10"></i>
+            我的录像
+        </h1>
+
+        <div class="lol-header-actions">
+            <div class="lol-search-container">
+                <i data-lucide="search" class="lol-search-icon w-4 h-4"></i>
+                <input type="text" class="lol-search-input" placeholder="搜索录像..." id="searchInput">
+            </div>
+
+            <a href="/replays/import" class="lol-btn">
+                <i data-lucide="upload" class="w-4 h-4"></i>
+                导入录像
+            </a>
+        </div>
+    </div>
+
+    <div class="lol-stats">
+        <div class="lol-stat-card">
+            <div class="lol-stat-number">{{ replays|length }}</div>
+            <div class="lol-stat-label">总录像数</div>
+        </div>
+        <div class="lol-stat-card">
+            <div class="lol-stat-number">{{ (replays|sum(attribute='file_size') / 1024 / 1024)|round(1) }}MB</div>
+            <div class="lol-stat-label">总大小</div>
+        </div>
+    </div>
+
+    {% if replays and replays|length > 0 %}
+    <div class="lol-replay-grid">
+        {% for replay in replays %}
+        <div class="lol-replay-card">
+            <div class="lol-replay-header">
+                <div class="lol-replay-info">
+                    <div class="lol-replay-name">
+                        <div class="lol-replay-icon">
+                            <i data-lucide="video" class="w-5 h-5"></i>
+                        </div>
+                        {{ replay.name }}
+                    </div>
+                    <div class="lol-replay-meta">
+                        <div class="lol-replay-meta-item">
+                            <i data-lucide="calendar" class="w-4 h-4"></i>
+                            <span>{{ replay.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
+                        </div>
+                        <div class="lol-replay-meta-item">
+                            <i data-lucide="hard-drive" class="w-4 h-4"></i>
+                            <span>{{ (replay.file_size / 1024 / 1024)|round(1) }}MB</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {% if replay.description %}
+            <div class="lol-replay-description">
+                {{ replay.description }}
+            </div>
+            {% endif %}
+
+            <div class="lol-replay-paths">
+                <div class="lol-path-item">
+                    <div class="lol-path-label">原始路径:</div>
+                    <div class="lol-path-value">{{ replay.original_path }}</div>
+                </div>
+                <div class="lol-path-item">
+                    <div class="lol-path-label">存储路径:</div>
+                    <div class="lol-path-value">{{ replay.stored_path }}</div>
+                </div>
+            </div>
+
+            <div class="lol-replay-actions">
+                <a href="file:///{{ replay.stored_path }}" class="lol-action-btn lol-action-btn-play" target="_blank">
+                    <i data-lucide="play" class="w-4 h-4"></i>
+                    播放
+                </a>
+                <button class="lol-action-btn lol-action-btn-edit" onclick="editReplay({{ replay.id }}, '{{ replay.name }}', '{{ replay.description or '' }}')">
+                    <i data-lucide="edit-3" class="w-4 h-4"></i>
+                    编辑
+                </button>
+                <form method="post" action="/replays/{{ replay.id }}/delete" style="display: inline;" onsubmit="return confirm('确定要删除这个录像吗？\n\n此操作将同时删除本地文件，无法恢复。')">
+                    <button type="submit" class="lol-action-btn lol-action-btn-delete">
+                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                        删除
+                    </button>
+                </form>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="lol-empty-state">
+        <div class="lol-empty-icon">
+            <i data-lucide="video" style="width: 100%; height: 100%;"></i>
+        </div>
+        <h3 style="font-size: 1.2rem; margin-bottom: 0.5rem;">暂无录像文件</h3>
+        <p>点击"导入录像"开始导入录像文件</p>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+    lucide.createIcons();
+
+    function searchReplays() {
+        const query = document.getElementById('searchInput').value.toLowerCase();
+        const cards = document.querySelectorAll('.lol-replay-card');
+
+        cards.forEach(card => {
+            const name = card.querySelector('.lol-replay-name').textContent.toLowerCase();
+            const description = card.querySelector('.lol-replay-description')?.textContent.toLowerCase() || '';
+
+            if (name.includes(query) || description.includes(query)) {
+                card.style.display = 'block';
+            } else {
+                card.style.display = 'none';
+            }
+        });
+    }
+
+    document.getElementById('searchInput')?.addEventListener('input', searchReplays);
+
+    function editReplay(id, name, description) {
+        const newName = prompt('请输入新的录像名称:', name);
+        if (!newName) return;
+
+        const newDescription = prompt('请输入新的描述:', description);
+        if (newDescription === null) return;
+
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/replays/${id}/update`;
+
+        const nameInput = document.createElement('input');
+        nameInput.type = 'hidden';
+        nameInput.name = 'name';
+        nameInput.value = newName;
+        form.appendChild(nameInput);
+
+        const descInput = document.createElement('input');
+        descInput.type = 'hidden';
+        descInput.name = 'description';
+        descInput.value = newDescription;
+        form.appendChild(descInput);
+
+        document.body.appendChild(form);
+        form.submit();
+    }
+</script>
+{% endblock %}
+

@@ -18,8 +18,8 @@ from typing import Dict, List
 from config import settings
 from oauth_providers import oauth
 from database import create_db_and_tables, get_session
-from models import User, RunePage, TeamComposition, ChampionFavorite, HighlightVideo, ChampionTip, ItemBuild
-from routes import summoner, champion, item, team_composition, highlight, monster
+from models import User, RunePage, TeamComposition, ChampionFavorite, HighlightVideo, ChampionTip, ItemBuild, Replay
+from routes import summoner, champion, item, team_composition, highlight, monster, replay
 from services.ffmpeg_service import ffmpeg_service
 
 
@@ -72,6 +72,7 @@ app.include_router(item.router)
 app.include_router(team_composition.router)
 app.include_router(highlight.router)
 app.include_router(monster.router)
+app.include_router(replay.router)
 
 BASE_DIR = Path(__file__).resolve().parent
 TEMPLATES_DIR = BASE_DIR / "templates"
@@ -239,10 +240,11 @@ async def profile_page(request: Request, session: Session = Depends(get_session)
     """个人资料页面"""
     user = request.session.get('user')
 
-    # 获取用户的符文页、收藏的英雄和配装方案
+    # 获取用户的符文页、收藏的英雄、配装方案和录像
     rune_pages = []
     favorite_champions = []
     item_builds = []
+    replays = []
     if user:
         # 查找或创建用户
         db_user = session.exec(
@@ -279,6 +281,11 @@ async def profile_page(request: Request, session: Session = Depends(get_session)
                 select(ItemBuild).where(ItemBuild.user_id == db_user.id).order_by(ItemBuild.updated_at.desc())
             ).all()
 
+            # 获取用户的录像
+            replays = session.exec(
+                select(Replay).where(Replay.user_id == db_user.id).order_by(Replay.created_at.desc())
+            ).all()
+
     ffmpeg_installed = ffmpeg_service.is_ffmpeg_installed()
 
     return templates.TemplateResponse(
@@ -289,6 +296,7 @@ async def profile_page(request: Request, session: Session = Depends(get_session)
             "rune_pages": rune_pages,
             "favorite_champions": favorite_champions,
             "item_builds": item_builds,
+            "replays": replays,
             "item_version": item_service.get_version(),
             "ffmpeg_installed": ffmpeg_installed
         }

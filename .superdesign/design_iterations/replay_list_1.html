@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>录像列表 - LOL助手</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="lol_theme.css">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-sans) !important;
+            background: 
+                radial-gradient(ellipse at center, rgba(20, 30, 48, 0.8) 0%, rgba(10, 15, 25, 0.95) 70%),
+                linear-gradient(135deg, #0f1419 0%, #1a2332 50%, #0f1419 100%) !important;
+            color: #c9aa71 !important;
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* 背景纹理效果 */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: 
+                radial-gradient(circle at 25% 25%, rgba(200, 170, 110, 0.03) 0%, transparent 50%),
+                radial-gradient(circle at 75% 75%, rgba(200, 170, 110, 0.03) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .lol-container {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+            min-height: 100vh;
+        }
+
+        .lol-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .lol-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #c9aa71;
+            text-shadow: 0 0 20px rgba(201, 170, 113, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .lol-header-actions {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .lol-search-container {
+            position: relative;
+            min-width: 300px;
+        }
+
+        .lol-search-input {
+            width: 100%;
+            background: rgba(201, 170, 113, 0.05);
+            border: 1px solid rgba(201, 170, 113, 0.2);
+            border-radius: 0.5rem;
+            padding: 0.75rem 1rem 0.75rem 3rem;
+            color: #c9aa71;
+            font-size: 0.95rem;
+            transition: all 300ms ease;
+        }
+
+        .lol-search-input:focus {
+            outline: none;
+            border-color: #c9aa71;
+            background: rgba(201, 170, 113, 0.08);
+            box-shadow: 0 0 0 3px rgba(201, 170, 113, 0.1);
+        }
+
+        .lol-search-icon {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: rgba(201, 170, 113, 0.6);
+        }
+
+        .lol-filter-select {
+            background: rgba(201, 170, 113, 0.05);
+            border: 1px solid rgba(201, 170, 113, 0.2);
+            border-radius: 0.5rem;
+            padding: 0.75rem 1rem;
+            color: #c9aa71;
+            cursor: pointer;
+            min-width: 120px;
+            transition: all 300ms ease;
+        }
+
+        .lol-filter-select:hover {
+            border-color: rgba(201, 170, 113, 0.4);
+        }
+
+        .lol-btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 300ms ease;
+            border: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .lol-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, 
+                transparent 0%, 
+                rgba(255, 255, 255, 0.1) 50%, 
+                transparent 100%);
+            transition: left 500ms ease;
+        }
+
+        .lol-btn:hover::before {
+            left: 100%;
+        }
+
+        .lol-btn-primary {
+            background: linear-gradient(135deg, #c9aa71, #d4b876);
+            color: #0f1419;
+            box-shadow: 0 5px 15px rgba(201, 170, 113, 0.2);
+        }
+
+        .lol-btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(201, 170, 113, 0.3);
+        }
+
+        .lol-stats {
+            display: flex;
+            gap: 2rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .lol-stat-card {
+            background: linear-gradient(135deg, 
+                rgba(20, 30, 48, 0.9) 0%, 
+                rgba(15, 25, 40, 0.95) 50%, 
+                rgba(10, 20, 35, 0.9) 100%);
+            border: 1px solid rgba(201, 170, 113, 0.2);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            flex: 1;
+            min-width: 200px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .lol-stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, 
+                transparent 0%, 
+                #c9aa71 50%, 
+                transparent 100%);
+            opacity: 0.6;
+        }
+
+        .lol-stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #c9aa71;
+            margin-bottom: 0.5rem;
+        }
+
+        .lol-stat-label {
+            color: rgba(201, 170, 113, 0.7);
+            font-size: 0.9rem;
+        }
+
+        .lol-replay-grid {
+            display: grid;
+            gap: 1.5rem;
+            grid-template-columns: 1fr;
+        }
+
+        .lol-replay-card {
+            background: linear-gradient(135deg, 
+                rgba(20, 30, 48, 0.9) 0%, 
+                rgba(15, 25, 40, 0.95) 50%, 
+                rgba(10, 20, 35, 0.9) 100%);
+            border: 1px solid rgba(201, 170, 113, 0.2);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            transition: all 400ms ease;
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+        }
+
+        .lol-replay-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, 
+                transparent 0%, 
+                #c9aa71 50%, 
+                transparent 100%);
+            transform: scaleX(0);
+            transition: transform 400ms ease;
+        }
+
+        .lol-replay-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            border-color: rgba(201, 170, 113, 0.4);
+        }
+
+        .lol-replay-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .lol-replay-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+
+        .lol-replay-info {
+            flex: 1;
+        }
+
+        .lol-replay-name {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #c9aa71;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .lol-replay-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #c9aa71, #d4b876);
+            border-radius: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #0f1419;
+            font-size: 1.2rem;
+        }
+
+        .lol-replay-meta {
+            display: flex;
+            gap: 1.5rem;
+            color: rgba(201, 170, 113, 0.6);
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .lol-replay-meta-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .lol-replay-description {
+            color: rgba(201, 170, 113, 0.8);
+            line-height: 1.6;
+            margin-bottom: 1rem;
+        }
+
+        .lol-replay-paths {
+            background: rgba(201, 170, 113, 0.05);
+            border: 1px solid rgba(201, 170, 113, 0.1);
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .lol-path-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            margin-bottom: 0.75rem;
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+        }
+
+        .lol-path-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .lol-path-label {
+            color: rgba(201, 170, 113, 0.7);
+            min-width: 80px;
+            font-weight: 600;
+        }
+
+        .lol-path-value {
+            color: rgba(201, 170, 113, 0.9);
+            word-break: break-all;
+            flex: 1;
+        }
+
+        .lol-replay-actions {
+            display: flex;
+            gap: 0.75rem;
+            justify-content: flex-end;
+        }
+
+        .lol-action-btn {
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 250ms ease;
+            border: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .lol-action-btn-play {
+            background: linear-gradient(135deg, #4caf50, #66bb6a);
+            color: white;
+        }
+
+        .lol-action-btn-play:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(76, 175, 80, 0.3);
+        }
+
+        .lol-action-btn-edit {
+            background: rgba(201, 170, 113, 0.1);
+            color: #c9aa71;
+            border: 1px solid rgba(201, 170, 113, 0.2);
+        }
+
+        .lol-action-btn-edit:hover {
+            background: rgba(201, 170, 113, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .lol-action-btn-delete {
+            background: rgba(244, 67, 54, 0.1);
+            color: #f44336;
+            border: 1px solid rgba(244, 67, 54, 0.2);
+        }
+
+        .lol-action-btn-delete:hover {
+            background: rgba(244, 67, 54, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .lol-empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: rgba(201, 170, 113, 0.6);
+        }
+
+        .lol-empty-icon {
+            width: 80px;
+            height: 80px;
+            background: rgba(201, 170, 113, 0.1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+            opacity: 0.5;
+        }
+
+        .lol-pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 1rem;
+            margin-top: 3rem;
+        }
+
+        .lol-page-btn {
+            padding: 0.5rem 1rem;
+            background: rgba(201, 170, 113, 0.1);
+            border: 1px solid rgba(201, 170, 113, 0.2);
+            border-radius: 0.375rem;
+            color: rgba(201, 170, 113, 0.8);
+            cursor: pointer;
+            transition: all 250ms ease;
+        }
+
+        .lol-page-btn:hover,
+        .lol-page-btn.active {
+            background: #c9aa71;
+            color: #0f1419;
+        }
+
+        /* 动画效果 */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .lol-replay-card {
+            animation: fadeInUp 600ms ease-out;
+        }
+
+        .lol-replay-card:nth-child(1) { animation-delay: 0ms; }
+        .lol-replay-card:nth-child(2) { animation-delay: 100ms; }
+        .lol-replay-card:nth-child(3) { animation-delay: 200ms; }
+        .lol-replay-card:nth-child(4) { animation-delay: 300ms; }
+        .lol-replay-card:nth-child(5) { animation-delay: 400ms; }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .lol-container {
+                padding: 1rem;
+            }
+
+            .lol-header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .lol-title {
+                font-size: 2rem;
+                justify-content: center;
+            }
+
+            .lol-header-actions {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .lol-search-container {
+                min-width: auto;
+            }
+
+            .lol-stats {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .lol-replay-header {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .lol-replay-actions {
+                justify-content: flex-start;
+                flex-wrap: wrap;
+            }
+
+            .lol-path-item {
+                flex-direction: column;
+                gap: 0.25rem;
+            }
+
+            .lol-path-label {
+                min-width: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="lol-container">
+        <!-- 顶部标题和操作 -->
+        <div class="lol-header">
+            <h1 class="lol-title">
+                <i data-lucide="video" class="w-10 h-10"></i>
+                录像列表
+            </h1>
+            
+            <div class="lol-header-actions">
+                <div class="lol-search-container">
+                    <i data-lucide="search" class="lol-search-icon w-4 h-4"></i>
+                    <input type="text" class="lol-search-input" placeholder="搜索录像..." oninput="searchReplays(this.value)">
+                </div>
+                
+                <select class="lol-filter-select" onchange="filterReplays(this.value)">
+                    <option value="all">全部录像</option>
+                    <option value="recent">最近添加</option>
+                    <option value="favorites">收藏夹</option>
+                </select>
+                
+                <button class="lol-btn lol-btn-primary" onclick="importReplay()">
+                    <i data-lucide="plus" class="w-4 h-4"></i>
+                    导入录像
+                </button>
+            </div>
+        </div>
+
+        <!-- 统计信息 -->
+        <div class="lol-stats">
+            <div class="lol-stat-card">
+                <div class="lol-stat-number">12</div>
+                <div class="lol-stat-label">总录像数</div>
+            </div>
+            <div class="lol-stat-card">
+                <div class="lol-stat-number">3</div>
+                <div class="lol-stat-label">本周新增</div>
+            </div>
+            <div class="lol-stat-card">
+                <div class="lol-stat-number">2.3GB</div>
+                <div class="lol-stat-label">总大小</div>
+            </div>
+            <div class="lol-stat-card">
+                <div class="lol-stat-number">5</div>
+                <div class="lol-stat-label">收藏数</div>
+            </div>
+        </div>
+
+        <!-- 录像列表 -->
+        <div class="lol-replay-grid" id="replayGrid">
+            <!-- 录像卡片 -->
+            <div class="lol-replay-card" data-name="翡翠3盲僧教学局" data-date="2024-01-15">
+                <div class="lol-replay-header">
+                    <div class="lol-replay-info">
+                        <div class="lol-replay-name">
+                            <div class="lol-replay-icon">
+                                <i data-lucide="video" class="w-5 h-5"></i>
+                            </div>
+                            翡翠3盲僧教学局
+                        </div>
+                        <div class="lol-replay-meta">
+                            <div class="lol-replay-meta-item">
+                                <i data-lucide="calendar" class="w-4 h-4"></i>
+                                <span>2024-01-15</span>
+                            </div>
+                            <div class="lol-replay-meta-item">
+                                <i data-lucide="clock" class="w-4 h-4"></i>
+                                <span>32分钟</span>
+                            </div>
+                            <div class="lol-replay-meta-item">
+                                <i data-lucide="hard-drive" class="w-4 h-4"></i>
+                                <span>45.2MB</span>
+                            </div>
+                            <div class="lol-replay-meta-item">
+                                <i data-lucide="star" class="w-4 h-4"></i>
+                                <span>已收藏</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="lol-replay-description">
+                    这是一局翡翠段位的盲僧教学局，重点展示了盲僧在中后期团战中的作用和技巧运用。包含多个精彩的回旋踢操作和团战切入时机。
+                </div>
+                
+                <div class="lol-replay-paths">
+                    <div class="lol-path-item">
+                        <div class="lol-path-label">原始路径:</div>
+                        <div class="lol-path-value">C:\\Users\\cruld\\Documents\\League of Legends\\Replays\\xx.rofl</div>
+                    </div>
+                    <div class="lol-path-item">
+                        <div class="lol-path-label">存储路径:</div>
+                        <div class="lol-path-value">D:\\Sources\\loler\\data\\xx.rofl</div>
+                    </div>
+                </div>
+                
+                <div class="lol-replay-actions">
+                    <button class="lol-action-btn lol-action-btn-play" onclick="playReplay(this)">
+                        <i data-lucide="play" class="w-4 h-4"></i>
+                        播放
+                    </button>
+                    <button class="lol-action-btn lol-action-btn-edit" onclick="editReplay(this)">
+                        <i data-lucide="edit-3" class="w-4 h-4"></i>
+                        编辑
+                    </button>
+                    <button class="lol-action-btn lol-action-btn-delete" onclick="deleteReplay(this)">
+                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                        删除
+                    </button>
+                </div>
+            </div>
+
+            <div class="lol-replay-card" data-name="钻石ADC凯莎Carry局" data-date="2024-01-14">
+                <div class="lol-replay-header">
+                    <div class="lol-replay-info">
+                        <div class="lol-replay-name">
+                            <div class="lol-replay-icon">
+                                <i data-lucide="video" class="w-5 h-5"></i>
+                            </div>
+                            钻石ADC凯莎Carry局
+                        </div>
+                        <div class="lol-replay-meta">
+                            <div class="lol-replay-meta-item">
+                                <i data-lucide="calendar" class="w-4 h-4"></i>
+                                <span>2024-01-14</span>
+                            </div>
+                            <div class="lol-replay-meta-item">
+                                <i data-lucide="clock" class="w-4 h-4"></i>
+                                <span>28分钟</span>
+                            </div>
+                            <div class="lol-replay-meta-item">
+                                <i data-lucide="hard-drive" class="w-4 h-4"></i>
+                                <span>38.7MB</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="lol-replay-description">
+                    钻石段位的凯莎ADC教学局，展示了凯莎在不同游戏阶段的发育思路和团战输出技巧。重点分析装备选择和团战站位。
+                </div>
+                
+                <div class="lol-replay-paths">
+                    <div class="lol-path-item">
+                        <div class="lol-path-label">原始路径:</div>
+                        <div class="lol-path-value">C:\\Users\\cruld\\Documents\\League of Legends\\Replays\\kaisa_carry.rofl</div>
+                    </div>
+                    <div class="lol-path-item">
+                        <div class="lol-path-label">存储路径:</div>
+                        <div class="lol-path-value">D:\\Sources\\loler\\data\\kaisa_carry.rofl</div>
+                    </div>
+                </div>
+                
+                <div class="lol-replay-actions">
+                    <button class="lol-action-btn lol-action-btn-play" onclick="playReplay(this)">
+                        <i data-lucide="play" class="w-4 h-4"></i>
+                        播放
+                    </button>
+                    <button class="lol-action-btn lol-action-btn-edit" onclick="editReplay(this)">
+                        <i data-lucide="edit-3" class="w-4 h-4"></i>
+                        编辑
+                    </button>
+                    <button class="lol-action-btn lol-action-btn-delete" onclick="deleteReplay(this)">
+                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                        删除
+                    </button>
+                </div>
+            </div>
+
+            <div class="lol-replay-card" data-name="大师级亚索高光时刻" data-date="2024-01-13">
+                <div class="lol-replay-header">
+                    <div class="lol-replay-info">
+                        <div class="lol-replay-name">
+                            <div class="lol-replay-icon">
+                                <i data-lucide="video" class="w-5 h-5"></i>
+                            </div>
+                            大师级亚索高光时刻
+                        </div>
+                        <div class="lol-replay-meta">
+                            <div class="lol-replay-meta-item">
+                                <i data-lucide="calendar" class="w-4 h-4"></i>
+                                <span>2024-01-13</span>
+                            </div>
+                            <div class="lol-replay-meta-item">
+                                <i data-lucide="clock" class="w-4 h-4"></i>
+                                <span>35分钟</span>
+                            </div>
+                            <div class="lol-replay-meta-item">
+                                <i data-lucide="hard-drive" class="w-4 h-4"></i>
+                                <span>52.1MB</span>
+                            </div>
+                            <div class="lol-replay-meta-item">
+                                <i data-lucide="star" class="w-4 h-4"></i>
+                                <span>已收藏</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="lol-replay-description">
+                    大师段位的亚索精彩操作集锦，包含多个1v3反杀和完美团战切入。重点学习亚索的E技能位移和R技能时机把握。
+                </div>
+                
+                <div class="lol-replay-paths">
+                    <div class="lol-path-item">
+                        <div class="lol-path-label">原始路径:</div>
+                        <div class="lol-path-value">C:\\Users\\cruld\\Documents\\League of Legends\\Replays\\yasuo_master.rofl</div>
+                    </div>
+                    <div class="lol-path-item">
+                        <div class="lol-path-label">存储路径:</div>
+                        <div class="lol-path-value">D:\\Sources\\loler\\data\\yasuo_master.rofl</div>
+                    </div>
+                </div>
+                
+                <div class="lol-replay-actions">
+                    <button class="lol-action-btn lol-action-btn-play" onclick="playReplay(this)">
+                        <i data-lucide="play" class="w-4 h-4"></i>
+                        播放
+                    </button>
+                    <button class="lol-action-btn lol-action-btn-edit" onclick="editReplay(this)">
+                        <i data-lucide="edit-3" class="w-4 h-4"></i>
+                        编辑
+                    </button>
+                    <button class="lol-action-btn lol-action-btn-delete" onclick="deleteReplay(this)">
+                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                        删除
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 分页 -->
+        <div class="lol-pagination">
+            <button class="lol-page-btn" onclick="changePage(1)">
+                <i data-lucide="chevron-left" class="w-4 h-4"></i>
+            </button>
+            <button class="lol-page-btn active" onclick="changePage(1)">1</button>
+            <button class="lol-page-btn" onclick="changePage(2)">2</button>
+            <button class="lol-page-btn" onclick="changePage(3)">3</button>
+            <button class="lol-page-btn" onclick="changePage(2)">
+                <i data-lucide="chevron-right" class="w-4 h-4"></i>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // 初始化 Lucide 图标
+        lucide.createIcons();
+
+        // 搜索功能
+        function searchReplays(query) {
+            const cards = document.querySelectorAll('.lol-replay-card');
+            cards.forEach(card => {
+                const name = card.dataset.name?.toLowerCase() || '';
+                const description = card.querySelector('.lol-replay-description')?.textContent.toLowerCase() || '';
+                
+                if (name.includes(query.toLowerCase()) || description.includes(query.toLowerCase())) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+
+        // 筛选功能
+        function filterReplays(filter) {
+            const cards = document.querySelectorAll('.lol-replay-card');
+            
+            cards.forEach(card => {
+                switch(filter) {
+                    case 'recent':
+                        // 显示最近7天的录像
+                        const cardDate = new Date(card.dataset.date);
+                        const weekAgo = new Date();
+                        weekAgo.setDate(weekAgo.getDate() - 7);
+                        card.style.display = cardDate >= weekAgo ? 'block' : 'none';
+                        break;
+                    case 'favorites':
+                        // 显示收藏的录像
+                        const isFavorite = card.querySelector('.lol-replay-meta').textContent.includes('已收藏');
+                        card.style.display = isFavorite ? 'block' : 'none';
+                        break;
+                    default:
+                        card.style.display = 'block';
+                }
+            });
+        }
+
+        // 播放录像
+        function playReplay(button) {
+            const card = button.closest('.lol-replay-card');
+            const replayName = card.querySelector('.lol-replay-name').textContent.trim();
+            const filePath = card.querySelector('.lol-path-value').textContent;
+            
+            console.log('播放录像:', replayName, filePath);
+            
+            // 添加播放动画
+            button.innerHTML = '<i data-lucide="loader" class="w-4 h-4 animate-spin"></i> 启动中...';
+            button.disabled = true;
+            
+            setTimeout(() => {
+                button.innerHTML = '<i data-lucide="play" class="w-4 h-4"></i> 播放';
+                button.disabled = false;
+                lucide.createIcons();
+                
+                // 这里可以调用实际的播放逻辑
+                alert(`正在启动录像: ${replayName}`);
+            }, 2000);
+        }
+
+        // 编辑录像信息
+        function editReplay(button) {
+            const card = button.closest('.lol-replay-card');
+            const replayName = card.querySelector('.lol-replay-name').textContent.trim();
+            
+            console.log('编辑录像:', replayName);
+            
+            // 这里可以打开编辑模态框或跳转到编辑页面
+            const newName = prompt('请输入新的录像名称:', replayName);
+            if (newName && newName !== replayName) {
+                card.querySelector('.lol-replay-name').textContent = newName;
+                card.dataset.name = newName;
+            }
+        }
+
+        // 删除录像
+        function deleteReplay(button) {
+            const card = button.closest('.lol-replay-card');
+            const replayName = card.querySelector('.lol-replay-name').textContent.trim();
+            
+            if (confirm(`确定要删除录像 "${replayName}" 吗？\n\n此操作将同时删除本地文件，无法恢复。`)) {
+                // 添加删除动画
+                card.style.transform = 'scale(0.8)';
+                card.style.opacity = '0';
+                
+                setTimeout(() => {
+                    card.remove();
+                    updateStats();
+                }, 300);
+                
+                console.log('删除录像:', replayName);
+            }
+        }
+
+        // 导入录像
+        function importReplay() {
+            console.log('跳转到录像导入页面');
+            // 这里可以跳转到导入页面或打开导入模态框
+            window.location.href = 'replay_import_1.html';
+        }
+
+        // 更新统计信息
+        function updateStats() {
+            const totalReplays = document.querySelectorAll('.lol-replay-card').length;
+            const statCards = document.querySelectorAll('.lol-stat-number');
+            if (statCards[0]) {
+                statCards[0].textContent = totalReplays;
+            }
+        }
+
+        // 分页功能
+        function changePage(page) {
+            const pageButtons = document.querySelectorAll('.lol-page-btn');
+            pageButtons.forEach(btn => btn.classList.remove('active'));
+            
+            // 找到对应页码按钮并激活
+            pageButtons.forEach(btn => {
+                if (btn.textContent.trim() === page.toString()) {
+                    btn.classList.add('active');
+                }
+            });
+            
+            console.log('切换到第', page, '页');
+        }
+
+        // 键盘快捷键
+        document.addEventListener('keydown', function(event) {
+            if (event.key === '/') {
+                event.preventDefault();
+                document.querySelector('.lol-search-input').focus();
+            }
+            
+            if (event.ctrlKey && event.key === 'n') {
+                event.preventDefault();
+                importReplay();
+            }
+        });
+
+        // 初始化时的动画效果
+        window.addEventListener('load', function() {
+            const cards = document.querySelectorAll('.lol-replay-card');
+            cards.forEach((card, index) => {
+                card.style.animationDelay = `${index * 100}ms`;
+            });
+        });
+    </script>
+</body>
+</html>

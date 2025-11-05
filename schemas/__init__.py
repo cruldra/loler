@@ -39,6 +39,12 @@ from .champion_tip import (
     ChampionTipResponse
 )
 from .monster import MonsterModel
+from .replay import (
+    ReplayResponse,
+    ReplayImportRequest,
+    ReplayImportResponse,
+    ReplayUpdateRequest
+)
 
 __all__ = [
     "ChampionDataModel",
@@ -69,6 +75,10 @@ __all__ = [
     "ChampionTipCreate",
     "ChampionTipUpdate",
     "ChampionTipResponse",
-    "MonsterModel"
+    "MonsterModel",
+    "ReplayResponse",
+    "ReplayImportRequest",
+    "ReplayImportResponse",
+    "ReplayUpdateRequest"
 ]
 
