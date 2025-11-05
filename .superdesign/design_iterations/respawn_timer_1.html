@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>复活时间表 - LOL助手</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="lol_theme.css">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-sans) !important;
+            background: 
+                radial-gradient(ellipse at center, rgba(20, 30, 48, 0.8) 0%, rgba(10, 15, 25, 0.95) 70%),
+                linear-gradient(135deg, #0f1419 0%, #1a2332 50%, #0f1419 100%) !important;
+            color: #c9aa71 !important;
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* 背景纹理效果 */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: 
+                radial-gradient(circle at 25% 25%, rgba(200, 170, 110, 0.03) 0%, transparent 50%),
+                radial-gradient(circle at 75% 75%, rgba(200, 170, 110, 0.03) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .lol-container {
+            width: 100%;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 2rem;
+            min-height: 100vh;
+        }
+
+        .lol-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .lol-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #c9aa71;
+            margin-bottom: 1rem;
+            text-shadow: 0 0 20px rgba(201, 170, 113, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+        }
+
+        .lol-subtitle {
+            font-size: 1.1rem;
+            color: rgba(201, 170, 113, 0.7);
+            font-weight: 400;
+            margin-bottom: 2rem;
+        }
+
+        .lol-stats-bar {
+            display: flex;
+            justify-content: center;
+            gap: 3rem;
+            margin-bottom: 2rem;
+        }
+
+        .lol-stat-item {
+            text-align: center;
+        }
+
+        .lol-stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #c9aa71;
+            margin-bottom: 0.5rem;
+        }
+
+        .lol-stat-label {
+            font-size: 0.9rem;
+            color: rgba(201, 170, 113, 0.6);
+        }
+
+        .lol-main-layout {
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 2rem;
+            align-items: start;
+        }
+
+        .lol-timer-card {
+            background: linear-gradient(135deg, 
+                rgba(20, 30, 48, 0.9) 0%, 
+                rgba(15, 25, 40, 0.95) 50%, 
+                rgba(10, 20, 35, 0.9) 100%);
+            border: 2px solid rgba(201, 170, 113, 0.2);
+            border-radius: 1rem;
+            padding: 2rem;
+            box-shadow: 
+                0 20px 40px rgba(0, 0, 0, 0.3),
+                inset 0 1px 0 rgba(201, 170, 113, 0.1);
+            backdrop-filter: blur(10px);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .lol-timer-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, 
+                transparent 0%, 
+                #c9aa71 50%, 
+                transparent 100%);
+            opacity: 0.6;
+        }
+
+        .lol-section-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #c9aa71;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .lol-timer-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 1rem;
+        }
+
+        .lol-timer-item {
+            background: rgba(201, 170, 113, 0.05);
+            border: 1px solid rgba(201, 170, 113, 0.2);
+            border-radius: 0.75rem;
+            padding: 1.5rem 1rem;
+            text-align: center;
+            transition: all 400ms ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .lol-timer-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, 
+                transparent 0%, 
+                #c9aa71 50%, 
+                transparent 100%);
+            transform: scaleX(0);
+            transition: transform 400ms ease;
+        }
+
+        .lol-timer-item:hover {
+            transform: translateY(-5px) scale(1.02);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+            border-color: rgba(201, 170, 113, 0.4);
+        }
+
+        .lol-timer-item:hover::before {
+            transform: scaleX(1);
+        }
+
+        .lol-timer-item.active {
+            border-color: #c9aa71;
+            background: rgba(201, 170, 113, 0.1);
+            box-shadow: 0 0 0 2px rgba(201, 170, 113, 0.3);
+        }
+
+        .lol-timer-item.active::before {
+            transform: scaleX(1);
+        }
+
+        .lol-level-badge {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #c9aa71, #d4b876);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: #0f1419;
+            margin: 0 auto 1rem;
+            font-size: 1.1rem;
+            box-shadow: 0 5px 15px rgba(201, 170, 113, 0.2);
+            transition: all 300ms ease;
+        }
+
+        .lol-timer-item:hover .lol-level-badge {
+            transform: scale(1.1) rotate(5deg);
+            box-shadow: 0 10px 25px rgba(201, 170, 113, 0.3);
+        }
+
+        .lol-timer-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #c9aa71;
+            margin-bottom: 0.5rem;
+        }
+
+        .lol-timer-label {
+            font-size: 0.8rem;
+            color: rgba(201, 170, 113, 0.6);
+        }
+
+        .lol-chart-card {
+            background: linear-gradient(135deg, 
+                rgba(20, 30, 48, 0.9) 0%, 
+                rgba(15, 25, 40, 0.95) 50%, 
+                rgba(10, 20, 35, 0.9) 100%);
+            border: 2px solid rgba(201, 170, 113, 0.2);
+            border-radius: 1rem;
+            padding: 2rem;
+            box-shadow: 
+                0 20px 40px rgba(0, 0, 0, 0.3),
+                inset 0 1px 0 rgba(201, 170, 113, 0.1);
+            backdrop-filter: blur(10px);
+            position: relative;
+            overflow: hidden;
+            height: fit-content;
+        }
+
+        .lol-chart-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, 
+                transparent 0%, 
+                #c9aa71 50%, 
+                transparent 100%);
+            opacity: 0.6;
+        }
+
+        .lol-chart-container {
+            position: relative;
+            height: 400px;
+            margin-bottom: 2rem;
+        }
+
+        .lol-chart-bar {
+            position: absolute;
+            bottom: 0;
+            background: linear-gradient(180deg, #c9aa71, #d4b876);
+            border-radius: 4px 4px 0 0;
+            transition: all 400ms ease;
+            cursor: pointer;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            padding-bottom: 0.5rem;
+            color: #0f1419;
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        .lol-chart-bar:hover {
+            background: linear-gradient(180deg, #d4b876, #e0c482);
+            transform: scaleY(1.05);
+            box-shadow: 0 5px 15px rgba(201, 170, 113, 0.3);
+        }
+
+        .lol-chart-axis {
+            position: absolute;
+            bottom: -30px;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            color: rgba(201, 170, 113, 0.6);
+        }
+
+        .lol-chart-y-axis {
+            position: absolute;
+            left: -40px;
+            top: 0;
+            bottom: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            color: rgba(201, 170, 113, 0.6);
+            text-align: right;
+            width: 30px;
+        }
+
+        .lol-level-selector {
+            background: rgba(201, 170, 113, 0.05);
+            border: 1px solid rgba(201, 170, 113, 0.2);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .lol-selector-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #c9aa71;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .lol-level-buttons {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 0.5rem;
+        }
+
+        .lol-level-btn {
+            background: rgba(201, 170, 113, 0.1);
+            border: 1px solid rgba(201, 170, 113, 0.2);
+            border-radius: 0.375rem;
+            padding: 0.5rem;
+            color: rgba(201, 170, 113, 0.8);
+            cursor: pointer;
+            transition: all 250ms ease;
+            font-weight: 500;
+            text-align: center;
+        }
+
+        .lol-level-btn:hover {
+            background: rgba(201, 170, 113, 0.15);
+            color: #c9aa71;
+            transform: translateY(-2px);
+        }
+
+        .lol-level-btn.active {
+            background: linear-gradient(135deg, #c9aa71, #d4b876);
+            color: #0f1419;
+            border-color: #c9aa71;
+            box-shadow: 0 3px 10px rgba(201, 170, 113, 0.3);
+        }
+
+        .lol-timer-display {
+            background: rgba(201, 170, 113, 0.05);
+            border: 1px solid rgba(201, 170, 113, 0.2);
+            border-radius: 0.75rem;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .lol-current-level {
+            font-size: 1rem;
+            color: rgba(201, 170, 113, 0.7);
+            margin-bottom: 1rem;
+        }
+
+        .lol-current-timer {
+            font-size: 3rem;
+            font-weight: 700;
+            color: #c9aa71;
+            margin-bottom: 0.5rem;
+            text-shadow: 0 0 20px rgba(201, 170, 113, 0.3);
+        }
+
+        .lol-timer-unit {
+            font-size: 1.2rem;
+            color: rgba(201, 170, 113, 0.6);
+        }
+
+        /* 动画效果 */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .lol-timer-card {
+            animation: fadeInUp 600ms ease-out;
+        }
+
+        .lol-chart-card {
+            animation: fadeInUp 600ms ease-out 200ms both;
+        }
+
+        .lol-timer-item {
+            animation: fadeInUp 400ms ease-out;
+        }
+
+        .lol-timer-item:nth-child(1) { animation-delay: 0ms; }
+        .lol-timer-item:nth-child(2) { animation-delay: 50ms; }
+        .lol-timer-item:nth-child(3) { animation-delay: 100ms; }
+        .lol-timer-item:nth-child(4) { animation-delay: 150ms; }
+        .lol-timer-item:nth-child(5) { animation-delay: 200ms; }
+        .lol-timer-item:nth-child(6) { animation-delay: 250ms; }
+
+        @keyframes barGrow {
+            from {
+                height: 0;
+            }
+            to {
+                height: var(--bar-height);
+            }
+        }
+
+        .lol-chart-bar {
+            animation: barGrow 800ms ease-out;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 1024px) {
+            .lol-main-layout {
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
+            }
+
+            .lol-timer-grid {
+                grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            }
+        }
+
+        @media (max-width: 768px) {
+            .lol-container {
+                padding: 1rem;
+            }
+
+            .lol-title {
+                font-size: 2rem;
+            }
+
+            .lol-stats-bar {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .lol-timer-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+
+            .lol-level-buttons {
+                grid-template-columns: repeat(3, 1fr);
+            }
+
+            .lol-chart-container {
+                height: 300px;
+            }
+
+            .lol-current-timer {
+                font-size: 2.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="lol-container">
+        <div class="lol-header">
+            <h1 class="lol-title">
+                <i data-lucide="timer" class="w-10 h-10"></i>
+                复活时间表
+            </h1>
+            <p class="lol-subtitle">英雄等级与复活时间对应关系</p>
+            
+            <div class="lol-stats-bar">
+                <div class="lol-stat-item">
+                    <div class="lol-stat-number">18</div>
+                    <div class="lol-stat-label">最高等级</div>
+                </div>
+                <div class="lol-stat-item">
+                    <div class="lol-stat-number">53s</div>
+                    <div class="lol-stat-label">最长复活时间</div>
+                </div>
+                <div class="lol-stat-item">
+                    <div class="lol-stat-number">10s</div>
+                    <div class="lol-stat-label">最短复活时间</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="lol-main-layout">
+            <!-- 左侧：复活时间网格 -->
+            <div class="lol-timer-card">
+                <div class="lol-section-title">
+                    <i data-lucide="grid-3x3" class="w-5 h-5"></i>
+                    等级复活时间表
+                </div>
+                
+                <div class="lol-timer-grid" id="timerGrid">
+                    <!-- 复活时间项目将在这里动态生成 -->
+                </div>
+            </div>
+
+            <!-- 右侧：图表和选择器 -->
+            <div class="lol-chart-card">
+                <div class="lol-section-title">
+                    <i data-lucide="bar-chart-3" class="w-5 h-5"></i>
+                    复活时间趋势
+                </div>
+                
+                <div class="lol-chart-container" id="chartContainer">
+                    <div class="lol-chart-y-axis">
+                        <span>60s</span>
+                        <span>45s</span>
+                        <span>30s</span>
+                        <span>15s</span>
+                        <span>0s</span>
+                    </div>
+                    <!-- 图表柱状图将在这里动态生成 -->
+                </div>
+
+                <div class="lol-level-selector">
+                    <div class="lol-selector-title">
+                        <i data-lucide="target" class="w-4 h-4"></i>
+                        快速选择等级
+                    </div>
+                    <div class="lol-level-buttons" id="levelButtons">
+                        <!-- 等级按钮将在这里动态生成 -->
+                    </div>
+                </div>
+
+                <div class="lol-timer-display">
+                    <div class="lol-current-level" id="currentLevel">选择一个等级</div>
+                    <div class="lol-current-timer" id="currentTimer">--</div>
+                    <div class="lol-timer-unit">秒</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 初始化 Lucide 图标
+        lucide.createIcons();
+
+        // 复活时间数据
+        const respawnData = [
+            {"等级":1,"复活时间":10},
+            {"等级":2,"复活时间":10},
+            {"等级":3,"复活时间":12},
+            {"等级":4,"复活时间":12},
+            {"等级":5,"复活时间":14},
+            {"等级":6,"复活时间":16},
+            {"等级":7,"复活时间":20},
+            {"等级":8,"复活时间":25},
+            {"等级":9,"复活时间":28},
+            {"等级":10,"复活时间":33},
+            {"等级":11,"复活时间":35},
+            {"等级":12,"复活时间":38},
+            {"等级":13,"复活时间":40},
+            {"等级":14,"复活时间":43},
+            {"等级":15,"复活时间":45},
+            {"等级":16,"复活时间":48},
+            {"等级":17,"复活时间":50},
+            {"等级":18,"复活时间":53}
+        ];
+
+        let selectedLevel = null;
+
+        function initializeTimerGrid() {
+            const timerGrid = document.getElementById('timerGrid');
+            timerGrid.innerHTML = '';
+
+            respawnData.forEach((data, index) => {
+                const timerItem = document.createElement('div');
+                timerItem.className = 'lol-timer-item';
+                timerItem.onclick = () => selectLevel(data.等级);
+                
+                timerItem.innerHTML = `
+                    <div class="lol-level-badge">${data.等级}</div>
+                    <div class="lol-timer-value">${data.复活时间}s</div>
+                    <div class="lol-timer-label">复活时间</div>
+                `;
+                
+                timerGrid.appendChild(timerItem);
+            });
+        }
+
+        function initializeChart() {
+            const chartContainer = document.getElementById('chartContainer');
+            const maxTime = Math.max(...respawnData.map(d => d.复活时间));
+            
+            respawnData.forEach((data, index) => {
+                const bar = document.createElement('div');
+                bar.className = 'lol-chart-bar';
+                bar.onclick = () => selectLevel(data.等级);
+                
+                const height = (data.复活时间 / maxTime) * 350; // 350px是图表高度
+                const width = (100 / respawnData.length) - 1; // 减去间距
+                const left = (100 / respawnData.length) * index;
+                
+                bar.style.cssText = `
+                    --bar-height: ${height}px;
+                    height: ${height}px;
+                    width: ${width}%;
+                    left: ${left}%;
+                `;
+                
+                bar.textContent = data.复活时间 + 's';
+                bar.title = `等级 ${data.等级}: ${data.复活时间}秒`;
+                
+                chartContainer.appendChild(bar);
+            });
+
+            // 添加X轴标签
+            const xAxis = document.createElement('div');
+            xAxis.className = 'lol-chart-axis';
+            
+            for (let i = 1; i <= 18; i += 3) {
+                const label = document.createElement('span');
+                label.textContent = `Lv${i}`;
+                xAxis.appendChild(label);
+            }
+            
+            chartContainer.appendChild(xAxis);
+        }
+
+        function initializeLevelButtons() {
+            const levelButtons = document.getElementById('levelButtons');
+            levelButtons.innerHTML = '';
+
+            respawnData.forEach(data => {
+                const button = document.createElement('div');
+                button.className = 'lol-level-btn';
+                button.textContent = data.等级;
+                button.onclick = () => selectLevel(data.等级);
+                
+                levelButtons.appendChild(button);
+            });
+        }
+
+        function selectLevel(level) {
+            selectedLevel = level;
+            const data = respawnData.find(d => d.等级 === level);
+            
+            // 更新显示
+            document.getElementById('currentLevel').textContent = `等级 ${level}`;
+            document.getElementById('currentTimer').textContent = data.复活时间;
+            
+            // 更新网格高亮
+            document.querySelectorAll('.lol-timer-item').forEach((item, index) => {
+                item.classList.toggle('active', respawnData[index].等级 === level);
+            });
+            
+            // 更新按钮高亮
+            document.querySelectorAll('.lol-level-btn').forEach(btn => {
+                btn.classList.toggle('active', parseInt(btn.textContent) === level);
+            });
+            
+            // 更新图表高亮
+            document.querySelectorAll('.lol-chart-bar').forEach((bar, index) => {
+                if (respawnData[index].等级 === level) {
+                    bar.style.background = 'linear-gradient(180deg, #e0c482, #f0d492)';
+                    bar.style.transform = 'scaleY(1.1)';
+                    bar.style.boxShadow = '0 10px 25px rgba(201, 170, 113, 0.4)';
+                } else {
+                    bar.style.background = 'linear-gradient(180deg, #c9aa71, #d4b876)';
+                    bar.style.transform = 'scaleY(1)';
+                    bar.style.boxShadow = 'none';
+                }
+            });
+        }
+
+        function getTimerColor(time) {
+            if (time <= 15) return '#4caf50'; // 绿色 - 短时间
+            if (time <= 35) return '#ff9800'; // 橙色 - 中等时间
+            return '#f44336'; // 红色 - 长时间
+        }
+
+        // 键盘快捷键
+        document.addEventListener('keydown', function(event) {
+            const key = parseInt(event.key);
+            if (key >= 1 && key <= 9) {
+                selectLevel(key);
+            } else if (event.key === '0') {
+                selectLevel(10);
+            } else if (event.ctrlKey) {
+                if (event.key === '1') {
+                    event.preventDefault();
+                    selectLevel(11);
+                } else if (event.key === '2') {
+                    event.preventDefault();
+                    selectLevel(12);
+                } else if (event.key === '8') {
+                    event.preventDefault();
+                    selectLevel(18);
+                }
+            }
+        });
+
+        // 初始化所有组件
+        window.addEventListener('load', function() {
+            initializeTimerGrid();
+            initializeChart();
+            initializeLevelButtons();
+            
+            // 默认选择等级10
+            setTimeout(() => {
+                selectLevel(10);
+            }, 1000);
+        });
+
+        // 添加搜索功能
+        function searchLevel(query) {
+            const level = parseInt(query);
+            if (level >= 1 && level <= 18) {
+                selectLevel(level);
+            }
+        }
+
+        // 添加比较功能
+        function compareLevels(level1, level2) {
+            const data1 = respawnData.find(d => d.等级 === level1);
+            const data2 = respawnData.find(d => d.等级 === level2);
+            
+            if (data1 && data2) {
+                const diff = data2.复活时间 - data1.复活时间;
+                console.log(`等级${level1}到等级${level2}复活时间增加了${diff}秒`);
+                return diff;
+            }
+            return 0;
+        }
+
+        // 添加统计功能
+        function getStatistics() {
+            const times = respawnData.map(d => d.复活时间);
+            return {
+                min: Math.min(...times),
+                max: Math.max(...times),
+                average: Math.round(times.reduce((a, b) => a + b, 0) / times.length),
+                median: times.sort((a, b) => a - b)[Math.floor(times.length / 2)]
+            };
+        }
+
+        // 在控制台显示统计信息
+        console.log('复活时间统计:', getStatistics());
+    </script>
+</body>
+</html>

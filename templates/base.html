@@ -390,6 +390,13 @@
                                     <div class="mega-menu-item-title">野怪数据</div>
                                     <div class="mega-menu-item-desc">查看所有野怪的刷新时间和详细信息</div>
                                 </a>
+                                <a href="/game-data/respawn-timer" class="mega-menu-item">
+                                    <div class="mega-menu-item-icon">
+                                        <i data-lucide="timer" class="w-5 h-5"></i>
+                                    </div>
+                                    <div class="mega-menu-item-title">复活时间</div>
+                                    <div class="mega-menu-item-desc">查看英雄等级与复活时间的对应关系</div>
+                                </a>
                             </div>
                         </div>
                     </div>
@@ -486,7 +493,7 @@
             const currentPath = window.location.pathname;
 
             // 检查当前路径是否在 mega menu 中（排除 /items/builds）
-            const megaMenuPaths = ['/champions', '/summoner', '/monsters'];
+            const megaMenuPaths = ['/champions', '/summoner', '/monsters', '/game-data/respawn-timer'];
             const isItemsPath = currentPath.startsWith('/items') && !currentPath.startsWith('/items/builds');
             const isMegaMenuActive = megaMenuPaths.some(path => currentPath.startsWith(path)) || isItemsPath;
 
