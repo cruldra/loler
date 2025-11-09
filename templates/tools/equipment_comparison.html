@@ -1,0 +1,1042 @@
+{% extends "base.html" %}
+
+{% block title %}装备对比 - LOL助手{% endblock %}
+
+{% block styles %}
+<style>
+    .comparison-page {
+        min-height: calc(100vh - 4rem);
+        background: var(--background);
+    }
+
+    .comparison-layout {
+        display: grid;
+        grid-template-columns: 400px 1fr;
+        gap: 1.5rem;
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+
+    /* 左侧装备浏览器样式 */
+    .item-browser {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-xl);
+        overflow: hidden;
+        height: fit-content;
+        position: sticky;
+        top: 5rem;
+    }
+
+    .browser-header {
+        padding: 1rem;
+        border-bottom: 1px solid var(--border);
+        background: var(--muted);
+    }
+
+    .browser-title {
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: var(--foreground);
+        margin-bottom: 0.5rem;
+    }
+
+    .search-box {
+        position: relative;
+    }
+
+    .search-input {
+        width: 100%;
+        padding: 0.75rem 1rem 0.75rem 2.5rem;
+        background: var(--input);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        color: var(--foreground);
+        font-size: 0.9rem;
+        transition: all 0.2s ease-out;
+    }
+
+    .search-input:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 2px rgba(255, 215, 0, 0.2);
+    }
+
+    .search-icon {
+        position: absolute;
+        left: 0.75rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--muted-foreground);
+        pointer-events: none;
+    }
+
+    .filter-section {
+        padding: 1rem;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .filter-title {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: var(--muted-foreground);
+        margin-bottom: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .filter-buttons {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+
+    .filter-btn,
+    .map-filter-btn {
+        padding: 0.5rem 0.75rem;
+        border-radius: var(--radius);
+        background: var(--muted);
+        border: 1px solid var(--border);
+        color: var(--muted-foreground);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s ease-out;
+        font-size: 0.8rem;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    .filter-btn:hover,
+    .map-filter-btn:hover {
+        background: var(--accent);
+        color: var(--accent-foreground);
+        transform: scale(1.05);
+    }
+
+    .filter-btn.active,
+    .map-filter-btn.active {
+        background: var(--primary);
+        color: var(--primary-foreground);
+        border-color: var(--primary);
+    }
+
+    .items-grid {
+        padding: 1rem;
+        max-height: 600px;
+        overflow-y: auto;
+    }
+
+    .items-container {
+        display: grid;
+        grid-template-columns: repeat(6, 1fr);
+        gap: 0.5rem;
+    }
+
+    .item-card {
+        position: relative;
+        aspect-ratio: 1;
+        border-radius: var(--radius);
+        overflow: hidden;
+        cursor: pointer;
+        transition: all 0.2s ease-out;
+        border: 2px solid transparent;
+    }
+
+    .item-card:hover {
+        transform: scale(1.05);
+        border-color: var(--primary);
+        box-shadow: 0 0 15px rgba(255, 215, 0, 0.4);
+    }
+
+    .item-card.selected {
+        border-color: var(--primary);
+        box-shadow: 0 0 20px rgba(255, 215, 0, 0.6);
+    }
+
+    .item-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .item-name {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: linear-gradient(transparent, rgba(0, 0, 0, 0.8));
+        color: white;
+        padding: 0.5rem 0.25rem 0.25rem;
+        font-size: 0.7rem;
+        font-weight: 500;
+        text-align: center;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+    }
+
+    .item-count {
+        padding: 0.5rem 1rem;
+        text-align: center;
+        font-size: 0.85rem;
+        color: var(--muted-foreground);
+        border-top: 1px solid var(--border);
+    }
+
+    /* 右侧对比区域样式 */
+    .comparison-area {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-xl);
+        overflow: hidden;
+    }
+
+    .comparison-header {
+        padding: 1.5rem;
+        border-bottom: 1px solid var(--border);
+        background: var(--muted);
+    }
+
+    .comparison-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--primary);
+        text-shadow: 0 0 10px var(--primary);
+    }
+
+    .selection-area {
+        padding: 2rem;
+        display: grid;
+        grid-template-columns: 1fr auto 1fr;
+        gap: 2rem;
+        align-items: center;
+    }
+
+    .equipment-slot {
+        background: var(--muted);
+        border: 2px dashed var(--border);
+        border-radius: var(--radius-lg);
+        padding: 2rem;
+        text-align: center;
+        transition: all 0.2s ease-out;
+        min-height: 200px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .equipment-slot.filled {
+        border-style: solid;
+        border-color: var(--primary);
+        background: rgba(255, 215, 0, 0.05);
+    }
+
+    .equipment-slot .placeholder {
+        color: var(--muted-foreground);
+        font-size: 0.9rem;
+    }
+
+    .equipment-slot .item-icon {
+        width: 80px;
+        height: 80px;
+        margin-bottom: 1rem;
+        border-radius: var(--radius);
+        overflow: hidden;
+    }
+
+    .equipment-slot .item-icon img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .equipment-slot .item-title {
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: var(--foreground);
+        margin-bottom: 0.5rem;
+    }
+
+    .equipment-slot .item-price {
+        font-size: 0.9rem;
+        color: var(--primary);
+        font-weight: 500;
+    }
+
+    .equipment-slot .remove-btn {
+        position: absolute;
+        top: 0.5rem;
+        right: 0.5rem;
+        width: 2rem;
+        height: 2rem;
+        background: var(--destructive);
+        color: var(--destructive-foreground);
+        border: none;
+        border-radius: 50%;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s ease-out;
+        opacity: 0.8;
+    }
+
+    .equipment-slot .remove-btn:hover {
+        opacity: 1;
+        transform: scale(1.1);
+    }
+
+    .equipment-slot {
+        position: relative;
+    }
+
+    .vs-divider {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--accent);
+        text-shadow: 0 0 15px var(--accent);
+    }
+
+    .compare-button {
+        margin: 0 2rem 2rem;
+        width: calc(100% - 4rem);
+        padding: 1rem;
+        background: var(--primary);
+        color: var(--primary-foreground);
+        border: none;
+        border-radius: var(--radius);
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease-out;
+    }
+
+    .compare-button:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(255, 215, 0, 0.4);
+    }
+
+    .compare-button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .results-area {
+        padding: 2rem;
+        display: none;
+        border-top: 1px solid var(--border);
+    }
+
+    .results-area.active {
+        display: block;
+    }
+
+    .stat-row {
+        display: flex;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+
+    .stat-name {
+        width: 120px;
+        font-size: 0.9rem;
+        color: var(--muted-foreground);
+        font-weight: 500;
+    }
+
+    .stat-bars {
+        flex: 1;
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+    }
+
+    .stat-bar {
+        flex: 1;
+        height: 8px;
+        background: var(--muted);
+        border-radius: 4px;
+        overflow: hidden;
+    }
+
+    .stat-bar-fill {
+        height: 100%;
+        background: var(--primary);
+        transition: width 0.3s ease-out;
+    }
+
+    .stat-value {
+        width: 60px;
+        text-align: right;
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: var(--foreground);
+    }
+
+    .ai-commentary {
+        margin-top: 2rem;
+        padding: 1.5rem;
+        background: var(--muted);
+        border-radius: var(--radius-lg);
+        border: 1px solid var(--border);
+    }
+
+    .ai-title {
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: var(--foreground);
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .ai-content {
+        color: var(--muted-foreground);
+        line-height: 1.6;
+    }
+
+    .ai-tags {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+        margin-top: 1rem;
+    }
+
+    .ai-tag {
+        padding: 0.25rem 0.75rem;
+        background: var(--primary);
+        color: var(--primary-foreground);
+        border-radius: var(--radius);
+        font-size: 0.85rem;
+        font-weight: 500;
+    }
+
+    /* 装备详情提示框 */
+    .item-tooltip {
+        position: fixed;
+        background: var(--popover);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        padding: 1rem;
+        box-shadow: var(--shadow-xl);
+        z-index: 9999;
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 200ms ease;
+        max-width: 350px;
+        min-width: 280px;
+    }
+
+    .item-tooltip.show {
+        opacity: 1;
+    }
+
+    .tooltip-header {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 0.75rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .tooltip-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: var(--radius);
+        border: 2px solid var(--primary);
+    }
+
+    .tooltip-title {
+        flex: 1;
+    }
+
+    .tooltip-name {
+        font-size: 1rem;
+        font-weight: 700;
+        color: var(--foreground);
+        margin-bottom: 0.25rem;
+    }
+
+    .tooltip-price {
+        font-size: 0.875rem;
+        color: var(--primary);
+        font-weight: 600;
+    }
+
+    .tooltip-description {
+        font-size: 0.875rem;
+        color: var(--muted-foreground);
+        line-height: 1.6;
+        margin-bottom: 0.75rem;
+    }
+
+    .tooltip-description br {
+        display: block;
+        content: "";
+        margin: 0.25rem 0;
+    }
+
+    .tooltip-description passive,
+    .tooltip-description active,
+    .tooltip-description unique {
+        color: var(--primary);
+        font-weight: 600;
+    }
+
+    .tooltip-stats {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .tooltip-stat {
+        font-size: 0.8rem;
+        color: var(--foreground);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .tooltip-stat-value {
+        color: var(--primary);
+        font-weight: 600;
+    }
+
+    .tooltip-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .tooltip-tag {
+        padding: 0.25rem 0.5rem;
+        background: var(--secondary);
+        color: var(--secondary-foreground);
+        border-radius: var(--radius-sm);
+        font-size: 0.7rem;
+        font-weight: 500;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="comparison-page">
+    <div class="comparison-layout">
+        <!-- 左侧：装备浏览器 -->
+        <div class="item-browser">
+            <div class="browser-header">
+                <div class="browser-title">选择装备</div>
+                <div class="search-box">
+                    <input type="text" class="search-input" id="searchInput" placeholder="搜索装备...">
+                    <i data-lucide="search" class="search-icon w-5 h-5"></i>
+                </div>
+            </div>
+
+            <!-- 标签筛选 -->
+            <div class="filter-section">
+                <div class="filter-title">按标签筛选</div>
+                <div class="filter-buttons">
+                    <button class="filter-btn active" data-filter="all" title="全部">全部</button>
+                    {% for tag in available_tags %}
+                    <button class="filter-btn" data-filter="{{ tag }}" title="{{ tag_translations.get(tag, tag) }}">
+                        {{ tag_translations.get(tag, tag) }}
+                    </button>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- 地图筛选 -->
+            <div class="filter-section">
+                <div class="filter-title">按地图筛选</div>
+                <div class="filter-buttons">
+                    <button class="map-filter-btn active" data-map="all" title="全部地图">全部</button>
+                    <button class="map-filter-btn" data-map="11" title="{{ map_translations.get('11', '召唤师峡谷') }}">
+                        {{ map_translations.get('11', '召唤师峡谷') }}
+                    </button>
+                    <button class="map-filter-btn" data-map="12" title="{{ map_translations.get('12', '嚎哭深渊') }}">
+                        {{ map_translations.get('12', '嚎哭深渊') }}
+                    </button>
+                    <button class="map-filter-btn" data-map="35" title="{{ map_translations.get('35', '竞技场') }}">
+                        {{ map_translations.get('35', '竞技场') }}
+                    </button>
+                </div>
+            </div>
+
+            <!-- 装备网格 -->
+            <div class="items-grid">
+                <div class="items-container" id="itemsContainer">
+                    {% for item_data in items %}
+                    {% set available_maps = [] %}
+                    {% for map_id, available in item_data.item.maps.items() %}
+                        {% if available %}
+                            {% set _ = available_maps.append(map_id) %}
+                        {% endif %}
+                    {% endfor %}
+                    <div class="item-card"
+                         data-item-id="{{ item_data.id }}"
+                         data-item-name="{{ item_data.item.name }}"
+                         data-item-price="{{ item_data.item.gold.total }}"
+                         data-item-description="{{ item_data.item.description }}"
+                         data-item-plaintext="{{ item_data.item.plaintext }}"
+                         data-tags="{{ item_data.item.tags|join(',') }}"
+                         data-item-tags="{{ item_data.item.tags|join(',') }}"
+                         data-maps="{{ available_maps|join(',') }}"
+                         data-item-hp="{{ item_data.item.stats.FlatHPPoolMod or 0 }}"
+                         data-item-mp="{{ item_data.item.stats.FlatMPPoolMod or 0 }}"
+                         data-item-armor="{{ item_data.item.stats.FlatArmorMod or 0 }}"
+                         data-item-mr="{{ item_data.item.stats.FlatSpellBlockMod or 0 }}"
+                         data-item-ad="{{ item_data.item.stats.FlatPhysicalDamageMod or 0 }}"
+                         data-item-ap="{{ item_data.item.stats.FlatMagicDamageMod or 0 }}"
+                         data-item-as="{{ item_data.item.stats.PercentAttackSpeedMod or 0 }}"
+                         data-item-crit="{{ (item_data.item.stats.FlatCritChanceMod or 0) * 100 }}"
+                         data-item-lifesteal="{{ item_data.item.stats.PercentLifeStealMod or 0 }}"
+                         data-item-ms="{{ item_data.item.stats.FlatMovementSpeedMod or 0 }}"
+                         data-item-mspercent="{{ item_data.item.stats.PercentMovementSpeedMod or 0 }}"
+                         onmouseenter="showItemTooltip(event, this)"
+                         onmouseleave="hideItemTooltip()">
+                        <img src="https://ddragon.leagueoflegends.com/cdn/{{ version }}/img/item/{{ item_data.item.image.full }}"
+                             alt="{{ item_data.item.name }}"
+                             class="item-image">
+                        <div class="item-name">{{ item_data.item.name }}</div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="item-count">
+                共 <span id="itemCount">{{ items|length }}</span> 件装备
+            </div>
+        </div>
+
+        <!-- 右侧：对比区域 -->
+        <div class="comparison-area">
+            <div class="comparison-header">
+                <div class="comparison-title">装备对比</div>
+            </div>
+
+            <div class="selection-area">
+                <div class="equipment-slot" id="slot1">
+                    <div class="placeholder">
+                        <i data-lucide="plus-circle" class="w-12 h-12 mx-auto mb-2"></i>
+                        <p>点击左侧装备选择装备1</p>
+                    </div>
+                </div>
+
+                <div class="vs-divider">VS</div>
+
+                <div class="equipment-slot" id="slot2">
+                    <div class="placeholder">
+                        <i data-lucide="plus-circle" class="w-12 h-12 mx-auto mb-2"></i>
+                        <p>点击左侧装备选择装备2</p>
+                    </div>
+                </div>
+            </div>
+
+            <button class="compare-button" id="compareBtn" disabled>开始对比</button>
+
+            <div class="results-area" id="resultsArea">
+                <!-- 对比结果将在这里显示 -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 装备详情提示框 -->
+<div id="itemTooltip" class="item-tooltip">
+    <div class="tooltip-header">
+        <img id="tooltipIcon" class="tooltip-icon" src="" alt="">
+        <div class="tooltip-title">
+            <div id="tooltipName" class="tooltip-name"></div>
+            <div id="tooltipPrice" class="tooltip-price"></div>
+        </div>
+    </div>
+    <div id="tooltipDescription" class="tooltip-description"></div>
+    <div id="tooltipStats" class="tooltip-stats"></div>
+    <div id="tooltipTags" class="tooltip-tags"></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    let lastSelectedSlot = null; // 记录最后选择的槽位
+    let item1 = null;
+    let item2 = null;
+
+    const searchInput = document.getElementById('searchInput');
+    const itemCards = document.querySelectorAll('.item-card');
+    const filterBtns = document.querySelectorAll('.filter-btn');
+    const mapFilterBtns = document.querySelectorAll('.map-filter-btn');
+    const itemCountSpan = document.getElementById('itemCount');
+    const compareBtn = document.getElementById('compareBtn');
+    const resultsArea = document.getElementById('resultsArea');
+    const slot1 = document.getElementById('slot1');
+    const slot2 = document.getElementById('slot2');
+
+    let currentFilter = 'all';
+    let currentMapFilter = 'all';
+
+    // 搜索功能
+    searchInput.addEventListener('input', function(e) {
+        filterItems();
+    });
+
+    // 标签筛选功能
+    filterBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            filterBtns.forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            currentFilter = this.dataset.filter;
+            filterItems();
+        });
+    });
+
+    // 地图筛选功能
+    mapFilterBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            mapFilterBtns.forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            currentMapFilter = this.dataset.map;
+            filterItems();
+        });
+    });
+
+    function filterItems() {
+        const searchTerm = searchInput.value.toLowerCase();
+        let visibleCount = 0;
+
+        itemCards.forEach(card => {
+            const itemName = card.dataset.itemName.toLowerCase();
+            const itemTags = card.dataset.tags || '';
+            const itemMaps = card.dataset.maps || '';
+
+            const matchesSearch = itemName.includes(searchTerm);
+            const matchesFilter = currentFilter === 'all' || itemTags.includes(currentFilter);
+            const matchesMapFilter = currentMapFilter === 'all' || itemMaps.includes(currentMapFilter);
+
+            if (matchesSearch && matchesFilter && matchesMapFilter) {
+                card.style.display = 'block';
+                visibleCount++;
+            } else {
+                card.style.display = 'none';
+            }
+        });
+
+        itemCountSpan.textContent = visibleCount;
+    }
+
+    // 装备卡片点击事件
+    itemCards.forEach(card => {
+        card.addEventListener('click', function() {
+            const itemData = {
+                id: this.dataset.itemId,
+                name: this.dataset.itemName,
+                price: this.dataset.itemPrice,
+                description: this.dataset.itemDescription,
+                plaintext: this.dataset.itemPlaintext,
+                tags: this.dataset.itemTags,
+                hp: this.dataset.itemHp,
+                mp: this.dataset.itemMp,
+                armor: this.dataset.itemArmor,
+                mr: this.dataset.itemMr,
+                ad: this.dataset.itemAd,
+                ap: this.dataset.itemAp,
+                as: this.dataset.itemAs,
+                crit: this.dataset.itemCrit,
+                lifesteal: this.dataset.itemLifesteal,
+                ms: this.dataset.itemMs,
+                mspercent: this.dataset.itemMspercent,
+                image: this.querySelector('.item-image').src
+            };
+
+            let targetSlot;
+
+            // 如果两个槽位都已填充，替换最后选择的槽位
+            if (item1 && item2) {
+                targetSlot = lastSelectedSlot || slot1;
+            } else if (!item1) {
+                targetSlot = slot1;
+            } else {
+                targetSlot = slot2;
+            }
+
+            // 填充槽位
+            fillSlot(targetSlot, itemData);
+            lastSelectedSlot = targetSlot;
+
+            // 更新选中状态
+            updateSelection();
+
+            // 检查是否可以对比
+            checkCanCompare();
+        });
+    });
+
+    function fillSlot(slot, itemData) {
+        slot.classList.add('filled');
+
+        // 创建data属性字符串
+        const dataAttrs = `
+            data-item-id="${itemData.id}"
+            data-item-name="${itemData.name}"
+            data-item-price="${itemData.price}"
+            data-item-description="${itemData.description || ''}"
+            data-item-plaintext="${itemData.plaintext || ''}"
+            data-item-tags="${itemData.tags || ''}"
+            data-item-hp="${itemData.hp || 0}"
+            data-item-mp="${itemData.mp || 0}"
+            data-item-armor="${itemData.armor || 0}"
+            data-item-mr="${itemData.mr || 0}"
+            data-item-ad="${itemData.ad || 0}"
+            data-item-ap="${itemData.ap || 0}"
+            data-item-as="${itemData.as || 0}"
+            data-item-crit="${itemData.crit || 0}"
+            data-item-lifesteal="${itemData.lifesteal || 0}"
+            data-item-ms="${itemData.ms || 0}"
+            data-item-mspercent="${itemData.mspercent || 0}"
+        `;
+
+        slot.innerHTML = `
+            <button class="remove-btn" onclick="clearSlot('${slot.id}')">
+                <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
+            <div class="item-icon" ${dataAttrs} onmouseenter="showItemTooltip(event, this)" onmouseleave="hideItemTooltip()">
+                <img src="${itemData.image}" alt="${itemData.name}">
+            </div>
+            <div class="item-title">${itemData.name}</div>
+            <div class="item-price">${itemData.price} 金币</div>
+        `;
+
+        if (slot === slot1) {
+            item1 = itemData;
+        } else {
+            item2 = itemData;
+        }
+
+        // 重新初始化lucide图标
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+    }
+
+    // 清空槽位函数（全局函数，供onclick调用）
+    window.clearSlot = function(slotId) {
+        const slot = document.getElementById(slotId);
+        slot.classList.remove('filled');
+        slot.innerHTML = `
+            <div class="placeholder">
+                <i data-lucide="plus-circle" class="w-12 h-12 mx-auto mb-2"></i>
+                <p>点击左侧装备选择装备${slotId === 'slot1' ? '1' : '2'}</p>
+            </div>
+        `;
+
+        if (slotId === 'slot1') {
+            item1 = null;
+            if (lastSelectedSlot === slot1) {
+                lastSelectedSlot = null;
+            }
+        } else {
+            item2 = null;
+            if (lastSelectedSlot === slot2) {
+                lastSelectedSlot = null;
+            }
+        }
+
+        // 重新初始化lucide图标
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+
+        // 更新选中状态
+        updateSelection();
+
+        // 检查是否可以对比
+        checkCanCompare();
+
+        // 隐藏结果区域
+        resultsArea.classList.remove('active');
+    };
+
+    function updateSelection() {
+        itemCards.forEach(card => {
+            card.classList.remove('selected');
+            if ((item1 && card.dataset.itemId === item1.id) ||
+                (item2 && card.dataset.itemId === item2.id)) {
+                card.classList.add('selected');
+            }
+        });
+    }
+
+    function checkCanCompare() {
+        if (item1 && item2) {
+            compareBtn.disabled = false;
+        } else {
+            compareBtn.disabled = true;
+        }
+    }
+
+    // 对比按钮点击事件
+    compareBtn.addEventListener('click', async function() {
+        if (!item1 || !item2) return;
+
+        compareBtn.disabled = true;
+        compareBtn.textContent = '对比中...';
+
+        const response = await fetch('/tools/equipment-comparison/compare', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                item1_id: item1.id,
+                item2_id: item2.id
+            })
+        });
+
+        const html = await response.text();
+
+        // 显示结果
+        resultsArea.classList.add('active');
+        resultsArea.innerHTML = html;
+
+        compareBtn.disabled = false;
+        compareBtn.textContent = '开始对比';
+    });
+
+    // 装备提示框功能
+    const tagTranslations = {{ tag_translations|tojson|safe }};
+    const statConfigs = [
+        { key: 'hp', name: '生命值', isPercent: false },
+        { key: 'mp', name: '法力值', isPercent: false },
+        { key: 'armor', name: '护甲', isPercent: false },
+        { key: 'mr', name: '魔法抗性', isPercent: false },
+        { key: 'ad', name: '攻击力', isPercent: false },
+        { key: 'ap', name: '法术强度', isPercent: false },
+        { key: 'ms', name: '移动速度', isPercent: false },
+        { key: 'as', name: '攻击速度', isPercent: true },
+        { key: 'crit', name: '暴击几率', isPercent: false },
+        { key: 'lifesteal', name: '生命偷取', isPercent: true },
+        { key: 'mspercent', name: '移动速度', isPercent: true }
+    ];
+
+    let tooltipTimeout = null;
+
+    window.showItemTooltip = function(event, element) {
+        const tooltip = document.getElementById('itemTooltip');
+        if (!tooltip) return;
+        clearTimeout(tooltipTimeout);
+
+        tooltipTimeout = setTimeout(() => {
+            const itemId = element.dataset.itemId;
+            const itemName = element.dataset.itemName;
+            const itemPrice = element.dataset.itemPrice;
+            const itemDescription = element.dataset.itemDescription;
+            const itemPlaintext = element.dataset.itemPlaintext;
+            const itemTags = (element.dataset.itemTags || '').split(',').filter(t => t);
+
+            // 设置提示框内容
+            document.getElementById('tooltipIcon').src = `https://ddragon.leagueoflegends.com/cdn/{{ version }}/img/item/${itemId}.png`;
+            document.getElementById('tooltipName').textContent = itemName;
+            document.getElementById('tooltipPrice').textContent = `${itemPrice} 金币`;
+
+            // 使用 innerHTML 显示描述（支持 HTML 标签）
+            const descContainer = document.getElementById('tooltipDescription');
+            if (itemDescription) {
+                descContainer.innerHTML = itemDescription;
+            } else if (itemPlaintext) {
+                descContainer.textContent = itemPlaintext;
+            } else {
+                descContainer.textContent = '暂无描述';
+            }
+
+            // 显示属性
+            const statsContainer = document.getElementById('tooltipStats');
+            statsContainer.innerHTML = '';
+
+            statConfigs.forEach(config => {
+                const value = parseFloat(element.dataset[`item${config.key.charAt(0).toUpperCase() + config.key.slice(1)}`] || 0);
+                if (value && value !== 0) {
+                    const statDiv = document.createElement('div');
+                    statDiv.className = 'tooltip-stat';
+
+                    let displayValue;
+                    if (config.isPercent) {
+                        displayValue = `+${(value * 100).toFixed(0)}%`;
+                    } else {
+                        displayValue = `+${value}`;
+                    }
+
+                    statDiv.innerHTML = `<span class="tooltip-stat-value">${displayValue}</span> ${config.name}`;
+                    statsContainer.appendChild(statDiv);
+                }
+            });
+
+            // 显示标签
+            const tagsContainer = document.getElementById('tooltipTags');
+            tagsContainer.innerHTML = '';
+
+            itemTags.forEach(tag => {
+                if (tag && tagTranslations[tag]) {
+                    const tagSpan = document.createElement('span');
+                    tagSpan.className = 'tooltip-tag';
+                    tagSpan.textContent = tagTranslations[tag];
+                    tagsContainer.appendChild(tagSpan);
+                }
+            });
+
+            // 定位提示框
+            positionTooltip(event, tooltip);
+
+            // 显示提示框
+            tooltip.classList.add('show');
+        }, 100);
+    };
+
+    window.hideItemTooltip = function() {
+        const tooltip = document.getElementById('itemTooltip');
+        if (!tooltip) return;
+        clearTimeout(tooltipTimeout);
+        tooltip.classList.remove('show');
+    };
+
+    function positionTooltip(event, tooltip) {
+        if (!tooltip) return;
+        const tooltipRect = tooltip.getBoundingClientRect();
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+
+        let left = event.clientX + 15;
+        let top = event.clientY + 15;
+
+        // 防止提示框超出右边界
+        if (left + tooltipRect.width > viewportWidth) {
+            left = event.clientX - tooltipRect.width - 15;
+        }
+
+        // 防止提示框超出下边界
+        if (top + tooltipRect.height > viewportHeight) {
+            top = event.clientY - tooltipRect.height - 15;
+        }
+
+        tooltip.style.left = `${left}px`;
+        tooltip.style.top = `${top}px`;
+    }
+
+    // 鼠标移动时更新提示框位置
+    document.addEventListener('mousemove', (event) => {
+        const tooltip = document.getElementById('itemTooltip');
+        if (tooltip && tooltip.classList.contains('show')) {
+            positionTooltip(event, tooltip);
+        }
+    });
+});
+</script>
+{% endblock %}
+

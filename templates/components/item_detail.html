@@ -380,6 +380,10 @@
             <i data-lucide="git-branch" class="w-4 h-4 inline mr-2"></i>
             合成路线
         </button>
+        <button class="item-tab" data-tab="comparisons">
+            <i data-lucide="git-compare" class="w-4 h-4 inline mr-2"></i>
+            对比分析
+        </button>
     </div>
 
     <!-- Tab页内容 - 装备详情 -->
@@ -591,7 +595,32 @@
         {% endif %}
     </div>
 
+    <!-- Tab页内容 - 对比分析 -->
+    <div class="item-tab-content" id="comparisons-tab">
+        <div id="comparisons-content" class="loading-placeholder">
+            <div class="loading-spinner">
+                <i data-lucide="loader-2" class="w-8 h-8 animate-spin"></i>
+                <p class="mt-2 text-muted-foreground">加载中...</p>
+            </div>
+        </div>
+    </div>
+
     {% endif %}
+</div>
+
+<!-- 对比报告详情模态框 -->
+<div id="comparisonModal" class="comparison-modal">
+    <div class="comparison-modal-content">
+        <div class="comparison-modal-header">
+            <h3 class="comparison-modal-title">对比分析详情</h3>
+            <button class="comparison-modal-close" onclick="closeComparisonModal()">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+        </div>
+        <div id="comparisonModalBody" class="comparison-modal-body">
+            <!-- 内容将通过JavaScript动态加载 -->
+        </div>
+    </div>
 </div>
 
 <script>
@@ -606,8 +635,404 @@
             this.classList.add('active');
             const tabName = this.dataset.tab;
             document.getElementById(`${tabName}-tab`).classList.add('active');
+
+            // 如果切换到对比分析tab，加载对比报告
+            if (tabName === 'comparisons') {
+                loadComparisons();
+            }
         });
     });
+
+    // 加载对比报告
+    let comparisonsLoaded = false;
+    function loadComparisons() {
+        if (comparisonsLoaded) return;
+
+        const itemId = '{{ item_id }}';
+        const comparisonsContent = document.getElementById('comparisons-content');
+
+        fetch(`/tools/equipment-comparison/item/${itemId}`)
+            .then(response => response.text())
+            .then(html => {
+                comparisonsContent.innerHTML = html;
+                comparisonsLoaded = true;
+                // 重新初始化lucide图标
+                if (typeof lucide !== 'undefined') {
+                    lucide.createIcons();
+                }
+            })
+            .catch(error => {
+                comparisonsContent.innerHTML = '<p class="text-destructive p-4">加载失败，请稍后重试</p>';
+                console.error('Failed to load comparisons:', error);
+            });
+    }
+
+    // 对比报告相关的全局函数
+    window.viewComparison = async function(comparisonId) {
+        const modal = document.getElementById('comparisonModal');
+        const modalBody = document.getElementById('comparisonModalBody');
+
+        // 显示加载状态
+        modalBody.innerHTML = `
+            <div style="text-align: center; padding: 3rem;">
+                <i data-lucide="loader-2" class="w-8 h-8 animate-spin mx-auto mb-2"></i>
+                <p class="text-muted-foreground">加载中...</p>
+            </div>
+        `;
+        modal.classList.add('active');
+
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+
+        // 获取对比报告详情
+        const response = await fetch(`/tools/equipment-comparison/${comparisonId}`);
+        const data = await response.json();
+
+        if (data.error) {
+            modalBody.innerHTML = `<p class="text-destructive">${data.error}</p>`;
+            return;
+        }
+
+        // 渲染详情内容
+        renderComparisonDetail(data);
+    };
+
+    window.deleteComparison = function(comparisonId) {
+        if (confirm('确定要删除这条对比报告吗？')) {
+            fetch(`/tools/equipment-comparison/${comparisonId}`, {
+                method: 'DELETE'
+            }).then(response => {
+                if (response.ok) {
+                    // 重新加载对比报告列表
+                    comparisonsLoaded = false;
+                    loadComparisons();
+                }
+            });
+        }
+    };
+
+    window.closeComparisonModal = function() {
+        const modal = document.getElementById('comparisonModal');
+        modal.classList.remove('active');
+    };
+
+    function renderComparisonDetail(data) {
+        const modalBody = document.getElementById('comparisonModalBody');
+
+        // 构建属性对比HTML
+        const statsHtml = `
+            <div class="comparison-items-header">
+                <div class="comparison-item">
+                    <img src="https://ddragon.leagueoflegends.com/cdn/${data.version}/img/item/${data.item1_id}.png"
+                         alt="${data.item1_name}">
+                    <div class="comparison-item-name">${data.item1_name}</div>
+                </div>
+                <div class="comparison-vs">VS</div>
+                <div class="comparison-item">
+                    <img src="https://ddragon.leagueoflegends.com/cdn/${data.version}/img/item/${data.item2_id}.png"
+                         alt="${data.item2_name}">
+                    <div class="comparison-item-name">${data.item2_name}</div>
+                </div>
+            </div>
+
+            <div class="comparison-date-info">
+                <i data-lucide="clock" class="w-4 h-4"></i>
+                创建时间: ${data.created_at}
+            </div>
+
+            <h4 class="comparison-section-title">属性对比</h4>
+            <div class="comparison-stats">
+                ${renderStatRow('攻击力', data.stats_comparison.attack_damage)}
+                ${renderStatRow('法术强度', data.stats_comparison.ability_power)}
+                ${renderStatRow('护甲', data.stats_comparison.armor)}
+                ${renderStatRow('魔法抗性', data.stats_comparison.magic_resist)}
+                ${renderStatRow('生命值', data.stats_comparison.health)}
+                ${renderStatRow('暴击几率', data.stats_comparison.crit_chance)}
+                ${renderStatRow('攻击速度', data.stats_comparison.attack_speed)}
+                ${renderStatRow('价格', data.stats_comparison.price)}
+            </div>
+
+            <h4 class="comparison-section-title">
+                <i data-lucide="sparkles" class="w-5 h-5"></i>
+                AI 点评
+            </h4>
+            <div class="comparison-ai-commentary">${data.ai_commentary}</div>
+
+            ${data.ai_tags.length > 0 ? `
+                <div class="comparison-ai-tags">
+                    ${data.ai_tags.map(tag => `<span class="comparison-ai-tag">${tag}</span>`).join('')}
+                </div>
+            ` : ''}
+        `;
+
+        modalBody.innerHTML = statsHtml;
+
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+    }
+
+    function renderStatRow(name, stat) {
+        const item1Val = stat.item1;
+        const item2Val = stat.item2;
+        const maxVal = Math.max(item1Val, item2Val);
+        const item1Percent = maxVal > 0 ? (item1Val / maxVal * 100) : 0;
+        const item2Percent = maxVal > 0 ? (item2Val / maxVal * 100) : 0;
+
+        return `
+            <div class="stat-row">
+                <div class="stat-name">${name}</div>
+                <div class="stat-bars">
+                    <div class="stat-bar">
+                        <div class="stat-bar-fill" style="width: ${item1Percent}%"></div>
+                    </div>
+                    <div class="stat-value">${item1Val}</div>
+                    <div class="stat-bar">
+                        <div class="stat-bar-fill" style="width: ${item2Percent}%"></div>
+                    </div>
+                    <div class="stat-value">${item2Val}</div>
+                </div>
+            </div>
+        `;
+    }
 </script>
+
+<style>
+.loading-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 300px;
+}
+
+/* 对比报告详情模态框样式 */
+.comparison-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.8);
+    z-index: 9999;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    backdrop-filter: blur(4px);
+}
+
+.comparison-modal.active {
+    display: flex;
+}
+
+.comparison-modal-content {
+    background: var(--card);
+    border: 2px solid var(--border);
+    border-radius: var(--radius-lg);
+    max-width: 800px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    animation: modalSlideIn 0.3s ease;
+}
+
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.comparison-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--muted);
+}
+
+.comparison-modal-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--foreground);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.comparison-modal-close {
+    background: transparent;
+    border: none;
+    color: var(--muted-foreground);
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: var(--radius);
+    transition: all 200ms ease;
+}
+
+.comparison-modal-close:hover {
+    background: var(--background);
+    color: var(--foreground);
+}
+
+.comparison-modal-body {
+    padding: 1.5rem;
+}
+
+.comparison-items-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2rem;
+    margin-bottom: 1.5rem;
+    padding: 1.5rem;
+    background: var(--muted);
+    border-radius: var(--radius-lg);
+}
+
+.comparison-item {
+    text-align: center;
+}
+
+.comparison-item img {
+    width: 64px;
+    height: 64px;
+    border-radius: var(--radius);
+    border: 2px solid var(--primary);
+    margin-bottom: 0.5rem;
+}
+
+.comparison-item-name {
+    font-weight: 600;
+    color: var(--foreground);
+}
+
+.comparison-vs {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--primary);
+}
+
+.comparison-date-info {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    color: var(--muted-foreground);
+    margin-bottom: 1.5rem;
+}
+
+.comparison-section-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--foreground);
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.comparison-stats {
+    margin-bottom: 1.5rem;
+}
+
+.stat-row {
+    display: grid;
+    grid-template-columns: 120px 1fr;
+    gap: 1rem;
+    align-items: center;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--border);
+}
+
+.stat-row:last-child {
+    border-bottom: none;
+}
+
+.stat-name {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--muted-foreground);
+}
+
+.stat-bars {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr auto;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.stat-bar {
+    height: 8px;
+    background: var(--muted);
+    border-radius: var(--radius-full);
+    overflow: hidden;
+}
+
+.stat-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary), var(--primary-foreground));
+    border-radius: var(--radius-full);
+    transition: width 300ms ease;
+}
+
+.stat-value {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--foreground);
+    min-width: 50px;
+    text-align: center;
+}
+
+.comparison-ai-commentary {
+    background: var(--muted);
+    border-left: 3px solid var(--primary);
+    padding: 1rem;
+    border-radius: var(--radius);
+    font-size: 0.9375rem;
+    line-height: 1.7;
+    color: var(--foreground);
+    margin-bottom: 1rem;
+}
+
+.comparison-ai-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.comparison-ai-tag {
+    padding: 0.375rem 0.75rem;
+    background: var(--primary);
+    color: var(--primary-foreground);
+    border-radius: var(--radius-full);
+    font-size: 0.8125rem;
+    font-weight: 500;
+}
+
+.loading-spinner {
+    text-align: center;
+}
+
+.animate-spin {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+</style>
 {% endmacro %}
 

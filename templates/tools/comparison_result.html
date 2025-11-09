@@ -1,0 +1,55 @@
+<h3 style="font-size: 1.25rem; font-weight: 600; margin-bottom: 1.5rem;">属性对比</h3>
+
+{% macro stat_row(name, key) %}
+{% set item1_val = stats_comparison[key]['item1'] %}
+{% set item2_val = stats_comparison[key]['item2'] %}
+{% set max_val = [item1_val, item2_val]|max %}
+{% set item1_percent = (item1_val / max_val * 100) if max_val > 0 else 0 %}
+{% set item2_percent = (item2_val / max_val * 100) if max_val > 0 else 0 %}
+
+<div class="stat-row">
+    <div class="stat-name">{{ name }}</div>
+    <div class="stat-bars">
+        <div class="stat-bar">
+            <div class="stat-bar-fill" style="width: {{ item1_percent }}%"></div>
+        </div>
+        <div class="stat-value">{{ item1_val }}</div>
+        <div class="stat-bar">
+            <div class="stat-bar-fill" style="width: {{ item2_percent }}%"></div>
+        </div>
+        <div class="stat-value">{{ item2_val }}</div>
+    </div>
+</div>
+{% endmacro %}
+
+{{ stat_row('攻击力', 'attack_damage') }}
+{{ stat_row('法术强度', 'ability_power') }}
+{{ stat_row('护甲', 'armor') }}
+{{ stat_row('魔法抗性', 'magic_resist') }}
+{{ stat_row('生命值', 'health') }}
+{{ stat_row('暴击几率', 'crit_chance') }}
+{{ stat_row('攻击速度', 'attack_speed') }}
+{{ stat_row('价格', 'price') }}
+
+<div class="ai-commentary">
+    <div class="ai-title">
+        <i data-lucide="sparkles" class="w-5 h-5"></i>
+        AI 点评
+    </div>
+    <div class="ai-content">{{ ai_commentary }}</div>
+    {% if ai_tags and ai_tags|length > 0 %}
+    <div class="ai-tags">
+        {% for tag in ai_tags %}
+        <span class="ai-tag">{{ tag }}</span>
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
+
+<script>
+// 重新初始化lucide图标
+if (typeof lucide !== 'undefined') {
+    lucide.createIcons();
+}
+</script>
+

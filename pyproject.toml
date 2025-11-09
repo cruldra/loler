@@ -14,4 +14,6 @@ dependencies = [
     "pydantic-settings>=2.11.0",
     "sqlmodel>=0.0.27",
     "python-multipart>=0.0.20",
+    "litellm>=1.79.3",
+    "crewai>=1.4.1",
 ]

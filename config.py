@@ -11,6 +11,8 @@ class Settings(BaseSettings):
     google_client_id: str = Field(default="", description="Google OAuth Client ID")
     google_client_secret: str = Field(default="", description="Google OAuth Client Secret")
 
+    openrouter_api_key: str = Field(default="", description="OpenRouter API Key")
+
     class Config:
         env_file = ".env"
 

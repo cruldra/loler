@@ -9,6 +9,7 @@ from .highlight_video import HighlightVideo
 from .champion_tip import ChampionTip
 from .item_build import ItemBuild
 from .replay import Replay
+from .equipment_comparison import EquipmentComparison
 
 __all__ = [
     "User",
@@ -18,5 +19,6 @@ __all__ = [
     "HighlightVideo",
     "ChampionTip",
     "ItemBuild",
-    "Replay"
+    "Replay",
+    "EquipmentComparison"
 ]

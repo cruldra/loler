@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>装备对比组件</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Merriweather:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="lol_theme.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-sans) !important;
+            background: linear-gradient(135deg, #0a0e27 0%, #1e2328 50%, #0a0e27 100%) !important;
+            color: var(--foreground) !important;
+            min-height: 100vh !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            padding: 20px !important;
+        }
+
+        .comparison-modal {
+            background: var(--card) !important;
+            border: 2px solid var(--border) !important;
+            border-radius: var(--radius-lg) !important;
+            box-shadow: var(--shadow-2xl) !important;
+            width: 100% !important;
+            max-width: 800px !important;
+            animation: modalEnter 300ms ease-out !important;
+            position: relative !important;
+            overflow: hidden !important;
+        }
+
+        .comparison-modal::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--primary), var(--accent), var(--primary));
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes modalEnter {
+            from {
+                transform: scale(0.9) translateY(-20px);
+                opacity: 0;
+            }
+            to {
+                transform: scale(1) translateY(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes shimmer {
+            0%, 100% { transform: translateX(-100%); }
+            50% { transform: translateX(100%); }
+        }
+
+        .header {
+            padding: 24px 32px 16px !important;
+            border-bottom: 1px solid var(--border) !important;
+            display: flex !important;
+            justify-content: space-between !important;
+            align-items: center !important;
+        }
+
+        .title {
+            font-size: 24px !important;
+            font-weight: 700 !important;
+            color: var(--primary) !important;
+            text-shadow: 0 0 10px var(--primary) !important;
+        }
+
+        .close-btn {
+            width: 32px !important;
+            height: 32px !important;
+            border-radius: var(--radius) !important;
+            background: var(--muted) !important;
+            border: 1px solid var(--border) !important;
+            color: var(--muted-foreground) !important;
+            cursor: pointer !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            transition: all 150ms ease !important;
+        }
+
+        .close-btn:hover {
+            background: var(--destructive) !important;
+            color: var(--destructive-foreground) !important;
+            transform: rotate(90deg) !important;
+        }
+
+        .equipment-section {
+            padding: 32px !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            gap: 32px !important;
+        }
+
+        .equipment-card {
+            flex: 1 !important;
+            background: var(--muted) !important;
+            border: 1px solid var(--border) !important;
+            border-radius: var(--radius-lg) !important;
+            padding: 24px !important;
+            text-align: center !important;
+            transition: all 200ms ease !important;
+            animation: equipCardEnter 400ms ease-out !important;
+            position: relative !important;
+            overflow: hidden !important;
+        }
+
+        .equipment-card:nth-child(1) {
+            animation-delay: 0ms !important;
+            transform: translateX(-30px);
+            opacity: 0;
+            animation-fill-mode: forwards;
+        }
+
+        .equipment-card:nth-child(3) {
+            animation-delay: 100ms !important;
+            transform: translateX(30px);
+            opacity: 0;
+            animation-fill-mode: forwards;
+        }
+
+        @keyframes equipCardEnter {
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .equipment-card:hover {
+            transform: scale(1.05) !important;
+            box-shadow: var(--shadow-lg) !important;
+            border-color: var(--primary) !important;
+        }
+
+        .equipment-card::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(45deg, var(--primary), var(--accent));
+            border-radius: var(--radius-lg);
+            z-index: -1;
+            opacity: 0;
+            transition: opacity 200ms ease;
+        }
+
+        .equipment-card:hover::before {
+            opacity: 0.3;
+        }
+
+        .equipment-icon {
+            width: 80px !important;
+            height: 80px !important;
+            background: linear-gradient(135deg, var(--primary), var(--accent)) !important;
+            border-radius: var(--radius) !important;
+            margin: 0 auto 16px !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            font-size: 32px !important;
+            box-shadow: var(--shadow) !important;
+        }
+
+        .equipment-name {
+            font-size: 18px !important;
+            font-weight: 600 !important;
+            color: var(--foreground) !important;
+            margin-bottom: 8px !important;
+        }
+
+        .equipment-price {
+            font-size: 14px !important;
+            color: var(--primary) !important;
+            font-weight: 500 !important;
+        }
+
+        .vs-divider {
+            font-size: 24px !important;
+            font-weight: 700 !important;
+            color: var(--accent) !important;
+            text-shadow: 0 0 15px var(--accent) !important;
+            animation: vsEnter 500ms bounce 200ms both !important;
+            position: relative !important;
+        }
+
+        @keyframes vsEnter {
+            0% { transform: scale(0); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+
+        .vs-divider::before,
+        .vs-divider::after {
+            content: '';
+            position: absolute;
+            width: 40px;
+            height: 2px;
+            background: var(--accent);
+            top: 50%;
+            animation: vsPulse 2s infinite;
+        }
+
+        .vs-divider::before {
+            left: -60px;
+        }
+
+        .vs-divider::after {
+            right: -60px;
+        }
+
+        @keyframes vsPulse {
+            0%, 100% { opacity: 0.3; box-shadow: none; }
+            50% { opacity: 1; box-shadow: 0 0 10px var(--accent); }
+        }
+
+        .stats-section {
+            padding: 0 32px 24px !important;
+        }
+
+        .stats-title {
+            font-size: 20px !important;
+            font-weight: 600 !important;
+            color: var(--foreground) !important;
+            margin-bottom: 20px !important;
+            padding-bottom: 8px !important;
+            border-bottom: 1px solid var(--border) !important;
+        }
+
+        .stat-row {
+            display: flex !important;
+            align-items: center !important;
+            margin-bottom: 16px !important;
+            animation: statRowEnter 800ms ease-out !important;
+            animation-fill-mode: both !important;
+        }
+
+        .stat-row:nth-child(2) { animation-delay: 0ms !important; }
+        .stat-row:nth-child(3) { animation-delay: 50ms !important; }
+        .stat-row:nth-child(4) { animation-delay: 100ms !important; }
+        .stat-row:nth-child(5) { animation-delay: 150ms !important; }
+        .stat-row:nth-child(6) { animation-delay: 200ms !important; }
+
+        @keyframes statRowEnter {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .stat-name {
+            width: 100px !important;
+            font-size: 14px !important;
+            color: var(--muted-foreground) !important;
+            font-weight: 500 !important;
+        }
+
+        .stat-bars {
+            flex: 1 !important;
+            display: flex !important;
+            gap: 16px !important;
+            align-items: center !important;
+            margin: 0 16px !important;
+        }
+
+        .stat-bar-container {
+            flex: 1 !important;
+            height: 8px !important;
+            background: var(--muted) !important;
+            border-radius: 4px !important;
+            overflow: hidden !important;
+            position: relative !important;
+        }
+
+        .stat-bar {
+            height: 100% !important;
+            border-radius: 4px !important;
+            transition: width 800ms ease-out !important;
+            position: relative !important;
+            overflow: hidden !important;
+        }
+
+        .stat-bar.left {
+            background: linear-gradient(90deg, var(--primary), var(--chart-1)) !important;
+        }
+
+        .stat-bar.right {
+            background: linear-gradient(90deg, var(--accent), var(--chart-3)) !important;
+        }
+
+        .stat-bar::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            animation: barShimmer 2s infinite;
+        }
+
+        @keyframes barShimmer {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+
+        .stat-value {
+            font-size: 14px !important;
+            font-weight: 600 !important;
+            color: var(--foreground) !important;
+            min-width: 40px !important;
+            text-align: center !important;
+        }
+
+        .stat-diff {
+            width: 60px !important;
+            font-size: 14px !important;
+            font-weight: 600 !important;
+            text-align: center !important;
+            animation: diffEnter 400ms bounce 500ms both !important;
+        }
+
+        .stat-diff.positive {
+            color: var(--chart-1) !important;
+        }
+
+        .stat-diff.negative {
+            color: var(--destructive) !important;
+        }
+
+        @keyframes diffEnter {
+            0% { transform: scale(0); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+
+        .ai-section {
+            padding: 24px 32px 32px !important;
+            border-top: 1px solid var(--border) !important;
+            background: linear-gradient(135deg, var(--muted), var(--card)) !important;
+        }
+
+        .ai-header {
+            display: flex !important;
+            align-items: center !important;
+            gap: 12px !important;
+            margin-bottom: 16px !important;
+        }
+
+        .ai-avatar {
+            width: 32px !important;
+            height: 32px !important;
+            background: linear-gradient(135deg, var(--accent), var(--chart-3)) !important;
+            border-radius: 50% !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            animation: aiAvatarEnter 600ms ease-out 400ms both !important;
+        }
+
+        @keyframes aiAvatarEnter {
+            from {
+                transform: rotate(-180deg) scale(0.8);
+                opacity: 0;
+            }
+            to {
+                transform: rotate(0deg) scale(1);
+                opacity: 1;
+            }
+        }
+
+        .ai-title {
+            font-size: 16px !important;
+            font-weight: 600 !important;
+            color: var(--accent) !important;
+        }
+
+        .ai-comment {
+            background: var(--card) !important;
+            border: 1px solid var(--border) !important;
+            border-radius: var(--radius) !important;
+            padding: 16px !important;
+            margin-bottom: 16px !important;
+            font-size: 14px !important;
+            line-height: 1.6 !important;
+            color: var(--foreground) !important;
+            animation: aiTextEnter 1000ms ease-out 400ms both !important;
+        }
+
+        @keyframes aiTextEnter {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .ai-tags {
+            display: flex !important;
+            gap: 8px !important;
+            flex-wrap: wrap !important;
+        }
+
+        .ai-tag {
+            background: var(--primary) !important;
+            color: var(--primary-foreground) !important;
+            padding: 6px 12px !important;
+            border-radius: var(--radius) !important;
+            font-size: 12px !important;
+            font-weight: 500 !important;
+            transition: all 200ms ease !important;
+            animation: tagEnter 300ms ease-out both !important;
+        }
+
+        .ai-tag:nth-child(1) { animation-delay: 800ms !important; }
+        .ai-tag:nth-child(2) { animation-delay: 900ms !important; }
+        .ai-tag:nth-child(3) { animation-delay: 1000ms !important; }
+
+        @keyframes tagEnter {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .ai-tag:hover {
+            transform: scale(1.1) !important;
+            background: var(--accent) !important;
+            color: var(--accent-foreground) !important;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .equipment-section {
+                flex-direction: column !important;
+                gap: 20px !important;
+            }
+
+            .vs-divider {
+                transform: rotate(90deg) !important;
+            }
+
+            .stat-bars {
+                flex-direction: column !important;
+                gap: 8px !important;
+            }
+
+            .stat-row {
+                flex-direction: column !important;
+                align-items: flex-start !important;
+                gap: 8px !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="comparison-modal">
+        <!-- 头部 -->
+        <div class="header">
+            <h1 class="title">装备对比</h1>
+            <button class="close-btn" onclick="closeModal()">
+                <i data-lucide="x"></i>
+            </button>
+        </div>
+
+        <!-- 装备选择区域 -->
+        <div class="equipment-section">
+            <div class="equipment-card">
+                <div class="equipment-icon">
+                    <i data-lucide="sword"></i>
+                </div>
+                <div class="equipment-name">无尽之刃</div>
+                <div class="equipment-price">3400 金币</div>
+            </div>
+
+            <div class="vs-divider">VS</div>
+
+            <div class="equipment-card">
+                <div class="equipment-icon">
+                    <i data-lucide="shield"></i>
+                </div>
+                <div class="equipment-name">守护天使</div>
+                <div class="equipment-price">2800 金币</div>
+            </div>
+        </div>
+
+        <!-- 属性对比区域 -->
+        <div class="stats-section">
+            <h2 class="stats-title">属性对比</h2>
+            
+            <div class="stat-row">
+                <div class="stat-name">攻击力</div>
+                <div class="stat-bars">
+                    <div class="stat-bar-container">
+                        <div class="stat-bar left" style="width: 80%"></div>
+                    </div>
+                    <div class="stat-value">80</div>
+                    <div class="stat-bar-container">
+                        <div class="stat-bar right" style="width: 45%"></div>
+                    </div>
+                    <div class="stat-value">45</div>
+                </div>
+                <div class="stat-diff negative">-35</div>
+            </div>
+
+            <div class="stat-row">
+                <div class="stat-name">暴击率</div>
+                <div class="stat-bars">
+                    <div class="stat-bar-container">
+                        <div class="stat-bar left" style="width: 25%"></div>
+                    </div>
+                    <div class="stat-value">25%</div>
+                    <div class="stat-bar-container">
+                        <div class="stat-bar right" style="width: 0%"></div>
+                    </div>
+                    <div class="stat-value">0%</div>
+                </div>
+                <div class="stat-diff negative">-25%</div>
+            </div>
+
+            <div class="stat-row">
+                <div class="stat-name">护甲</div>
+                <div class="stat-bars">
+                    <div class="stat-bar-container">
+                        <div class="stat-bar left" style="width: 0%"></div>
+                    </div>
+                    <div class="stat-value">0</div>
+                    <div class="stat-bar-container">
+                        <div class="stat-bar right" style="width: 40%"></div>
+                    </div>
+                    <div class="stat-value">40</div>
+                </div>
+                <div class="stat-diff positive">+40</div>
+            </div>
+
+            <div class="stat-row">
+                <div class="stat-name">魔法抗性</div>
+                <div class="stat-bars">
+                    <div class="stat-bar-container">
+                        <div class="stat-bar left" style="width: 0%"></div>
+                    </div>
+                    <div class="stat-value">0</div>
+                    <div class="stat-bar-container">
+                        <div class="stat-bar right" style="width: 40%"></div>
+                    </div>
+                    <div class="stat-value">40</div>
+                </div>
+                <div class="stat-diff positive">+40</div>
+            </div>
+
+            <div class="stat-row">
+                <div class="stat-name">生命值</div>
+                <div class="stat-bars">
+                    <div class="stat-bar-container">
+                        <div class="stat-bar left" style="width: 0%"></div>
+                    </div>
+                    <div class="stat-value">0</div>
+                    <div class="stat-bar-container">
+                        <div class="stat-bar right" style="width: 0%"></div>
+                    </div>
+                    <div class="stat-value">0</div>
+                </div>
+                <div class="stat-diff">0</div>
+            </div>
+        </div>
+
+        <!-- AI点评区域 -->
+        <div class="ai-section">
+            <div class="ai-header">
+                <div class="ai-avatar">
+                    <i data-lucide="brain-circuit"></i>
+                </div>
+                <div class="ai-title">AI 战术分析</div>
+            </div>
+            
+            <div class="ai-comment">
+                基于当前游戏局势分析，推荐选择<strong>守护天使</strong>。虽然攻击力和暴击率不如无尽之刃，但在当前团战频繁的游戏节奏下，守护天使提供的护甲、魔抗以及复活被动能显著提升生存能力，让你在团战中发挥更大作用。考虑到价格优势，性价比更高。
+            </div>
+            
+            <div class="ai-tags">
+                <div class="ai-tag">提升生存</div>
+                <div class="ai-tag">团战优势</div>
+                <div class="ai-tag">性价比高</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 初始化 Lucide 图标
+        lucide.createIcons();
+
+        // 关闭模态框
+        function closeModal() {
+            document.querySelector('.comparison-modal').style.animation = 'modalExit 300ms ease-out forwards';
+            setTimeout(() => {
+                // 这里可以添加关闭逻辑
+                console.log('Modal closed');
+            }, 300);
+        }
+
+        // 添加退出动画
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes modalExit {
+                from {
+                    transform: scale(1) translateY(0);
+                    opacity: 1;
+                }
+                to {
+                    transform: scale(0.9) translateY(-20px);
+                    opacity: 0;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+
+        // 动态设置属性条宽度动画
+        window.addEventListener('load', () => {
+            const statBars = document.querySelectorAll('.stat-bar');
+            statBars.forEach((bar, index) => {
+                setTimeout(() => {
+                    const width = bar.style.width;
+                    bar.style.width = '0%';
+                    setTimeout(() => {
+                        bar.style.width = width;
+                    }, 100);
+                }, index * 50);
+            });
+        });
+    </script>
+</body>
+</html>
