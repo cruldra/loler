@@ -1,0 +1,189 @@
+<div class="champions-header" style="display: grid; grid-template-columns: 1fr auto 1fr; gap: 2rem; align-items: center; margin-bottom: 2rem; padding: 1.5rem; background: var(--muted); border-radius: var(--radius-lg);">
+    <div style="text-align: center;">
+        <img src="https://ddragon.leagueoflegends.com/cdn/{{ version }}/img/champion/{{ champion1.image.full }}" 
+             alt="{{ champion1.name }}"
+             style="width: 100px; height: 100px; border-radius: var(--radius-lg); border: 3px solid var(--primary); margin-bottom: 0.5rem;">
+        <div style="font-size: 1.25rem; font-weight: 600; color: var(--foreground);">{{ champion1.name }}</div>
+        <div style="font-size: 0.9rem; color: var(--muted-foreground);">{{ champion1.title }}</div>
+    </div>
+    
+    <div style="font-size: 2rem; font-weight: 700; color: var(--accent); text-shadow: 0 0 10px var(--accent);">VS</div>
+    
+    <div style="text-align: center;">
+        <img src="https://ddragon.leagueoflegends.com/cdn/{{ version }}/img/champion/{{ champion2.image.full }}" 
+             alt="{{ champion2.name }}"
+             style="width: 100px; height: 100px; border-radius: var(--radius-lg); border: 3px solid var(--primary); margin-bottom: 0.5rem;">
+        <div style="font-size: 1.25rem; font-weight: 600; color: var(--foreground);">{{ champion2.name }}</div>
+        <div style="font-size: 0.9rem; color: var(--muted-foreground);">{{ champion2.title }}</div>
+    </div>
+</div>
+
+<h3 style="font-size: 1.25rem; font-weight: 600; margin-bottom: 1.5rem;">属性对比</h3>
+
+{% macro stat_row(name, key) %}
+{% set champion1_val = stats_comparison[key]['champion1'] %}
+{% set champion2_val = stats_comparison[key]['champion2'] %}
+{% set max_val = [champion1_val, champion2_val]|max %}
+{% set champion1_percent = (champion1_val / max_val * 100) if max_val > 0 else 0 %}
+{% set champion2_percent = (champion2_val / max_val * 100) if max_val > 0 else 0 %}
+
+<div style="display: flex; align-items: center; margin-bottom: 1rem;">
+    <div style="width: 120px; font-size: 0.9rem; color: var(--muted-foreground); font-weight: 500;">{{ name }}</div>
+    <div style="flex: 1; display: flex; gap: 1rem; align-items: center;">
+        <div style="flex: 1; height: 8px; background: var(--muted); border-radius: 4px; overflow: hidden;">
+            <div style="height: 100%; background: var(--primary); transition: width 0.3s ease-out; width: {{ champion1_percent }}%;"></div>
+        </div>
+        <div style="width: 60px; text-align: right; font-size: 0.9rem; font-weight: 600; color: var(--foreground);">{{ champion1_val }}</div>
+        <div style="flex: 1; height: 8px; background: var(--muted); border-radius: 4px; overflow: hidden;">
+            <div style="height: 100%; background: var(--primary); transition: width 0.3s ease-out; width: {{ champion2_percent }}%;"></div>
+        </div>
+        <div style="width: 60px; text-align: right; font-size: 0.9rem; font-weight: 600; color: var(--foreground);">{{ champion2_val }}</div>
+    </div>
+</div>
+{% endmacro %}
+
+{{ stat_row('生命值', 'hp') }}
+{{ stat_row('生命成长', 'hp_per_level') }}
+{{ stat_row('法力值', 'mp') }}
+{{ stat_row('法力成长', 'mp_per_level') }}
+{{ stat_row('攻击力', 'attack_damage') }}
+{{ stat_row('攻击成长', 'attack_damage_per_level') }}
+{{ stat_row('攻击速度', 'attack_speed') }}
+{{ stat_row('攻速成长', 'attack_speed_per_level') }}
+{{ stat_row('攻击距离', 'attack_range') }}
+{{ stat_row('护甲', 'armor') }}
+{{ stat_row('护甲成长', 'armor_per_level') }}
+{{ stat_row('魔法抗性', 'magic_resist') }}
+{{ stat_row('魔抗成长', 'magic_resist_per_level') }}
+{{ stat_row('移动速度', 'move_speed') }}
+{{ stat_row('难度', 'difficulty') }}
+
+<div style="margin-top: 2rem; padding: 1.5rem; background: var(--muted); border-radius: var(--radius-lg); border: 1px solid var(--border);">
+    <div style="font-size: 1.125rem; font-weight: 600; color: var(--foreground); margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+        <i data-lucide="sparkles" class="w-5 h-5"></i>
+        AI 点评
+    </div>
+    <div class="markdown-content" id="aiCommentaryContent" style="color: var(--muted-foreground); line-height: 1.6;">{{ ai_commentary }}</div>
+    {% if ai_tags and ai_tags|length > 0 %}
+    <div style="margin-top: 1rem; display: flex; flex-wrap: wrap; gap: 0.5rem;">
+        {% for tag in ai_tags %}
+        <span style="padding: 0.25rem 0.75rem; background: var(--primary); color: var(--primary-foreground); border-radius: var(--radius); font-size: 0.85rem; font-weight: 500;">{{ tag }}</span>
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
+
+<script>
+// 重新初始化lucide图标
+if (typeof lucide !== 'undefined') {
+    lucide.createIcons();
+}
+</script>
+
+<style>
+.markdown-content {
+    line-height: 1.8;
+}
+
+.markdown-content h1,
+.markdown-content h2,
+.markdown-content h3,
+.markdown-content h4,
+.markdown-content h5,
+.markdown-content h6 {
+    font-weight: 600;
+    margin-top: 1.5em;
+    margin-bottom: 0.5em;
+    color: var(--foreground);
+}
+
+.markdown-content h1 { font-size: 1.5em; }
+.markdown-content h2 { font-size: 1.3em; }
+.markdown-content h3 { font-size: 1.1em; }
+
+.markdown-content p {
+    margin-bottom: 1em;
+}
+
+.markdown-content ul,
+.markdown-content ol {
+    margin-left: 1.5em;
+    margin-bottom: 1em;
+}
+
+.markdown-content li {
+    margin-bottom: 0.5em;
+}
+
+.markdown-content strong {
+    font-weight: 600;
+    color: var(--foreground);
+}
+
+.markdown-content em {
+    font-style: italic;
+}
+
+.markdown-content code {
+    background: var(--muted);
+    padding: 0.2em 0.4em;
+    border-radius: var(--radius);
+    font-family: monospace;
+    font-size: 0.9em;
+}
+
+.markdown-content pre {
+    background: var(--muted);
+    padding: 1em;
+    border-radius: var(--radius);
+    overflow-x: auto;
+    margin-bottom: 1em;
+}
+
+.markdown-content pre code {
+    background: none;
+    padding: 0;
+}
+
+.markdown-content blockquote {
+    border-left: 4px solid var(--primary);
+    padding-left: 1em;
+    margin-left: 0;
+    margin-bottom: 1em;
+    color: var(--muted-foreground);
+}
+
+.markdown-content a {
+    color: var(--primary);
+    text-decoration: underline;
+}
+
+.markdown-content a:hover {
+    opacity: 0.8;
+}
+
+.markdown-content table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 1em;
+}
+
+.markdown-content th,
+.markdown-content td {
+    border: 1px solid var(--border);
+    padding: 0.5em;
+    text-align: left;
+}
+
+.markdown-content th {
+    background: var(--muted);
+    font-weight: 600;
+}
+
+.markdown-content hr {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 1.5em 0;
+}
+</style>
+

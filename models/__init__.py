@@ -10,6 +10,7 @@ from .champion_tip import ChampionTip
 from .item_build import ItemBuild
 from .replay import Replay
 from .equipment_comparison import EquipmentComparison
+from .champion_comparison import ChampionComparison
 
 __all__ = [
     "User",
@@ -20,5 +21,6 @@ __all__ = [
     "ChampionTip",
     "ItemBuild",
     "Replay",
-    "EquipmentComparison"
+    "EquipmentComparison",
+    "ChampionComparison"
 ]

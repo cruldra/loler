@@ -45,6 +45,11 @@ from .replay import (
     ReplayImportResponse,
     ReplayUpdateRequest
 )
+from .champion_comparison import (
+    ChampionComparisonResponse,
+    ChampionStatsComparisonData,
+    ChampionStatComparison
+)
 
 __all__ = [
     "ChampionDataModel",
@@ -79,6 +84,9 @@ __all__ = [
     "ReplayResponse",
     "ReplayImportRequest",
     "ReplayImportResponse",
-    "ReplayUpdateRequest"
+    "ReplayUpdateRequest",
+    "ChampionComparisonResponse",
+    "ChampionStatsComparisonData",
+    "ChampionStatComparison"
 ]
 
