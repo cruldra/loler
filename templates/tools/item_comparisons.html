@@ -43,7 +43,7 @@
                 </div>
                 {% endif %}
 
-                <div class="comparison-commentary">
+                <div class="comparison-commentary markdown-preview">
                     {{ comparison.ai_commentary[:150] }}{% if comparison.ai_commentary|length > 150 %}...{% endif %}
                 </div>
             </div>
@@ -228,6 +228,28 @@
 .comparisons-empty {
     text-align: center;
     padding: 3rem 1rem;
+}
+
+/* Markdown 预览样式 */
+.markdown-preview {
+    /* 移除Markdown语法符号的视觉效果 */
+}
+
+.markdown-preview strong {
+    font-weight: 600;
+    color: var(--foreground);
+}
+
+.markdown-preview em {
+    font-style: italic;
+}
+
+.markdown-preview code {
+    background: var(--muted);
+    padding: 0.1em 0.3em;
+    border-radius: var(--radius-sm);
+    font-family: var(--font-mono);
+    font-size: 0.9em;
 }
 </style>
 

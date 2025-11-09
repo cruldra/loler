@@ -12,12 +12,12 @@ class EquipmentComparisonService:
 
     def __init__(self):
         """初始化服务"""
-        # 配置使用OpenRouter
+        # 配置使用OpenRouter的Claude Sonnet 4.5
         openrouter_api_key = os.getenv("OPENROUTER_API_KEY")
 
         # 使用crewai.LLM配置
         llm = LLM(
-            model="openai/gpt-5",
+            model="openrouter/anthropic/claude-sonnet-4.5",
             api_key=openrouter_api_key,
             base_url="https://openrouter.ai/api/v1"
         )

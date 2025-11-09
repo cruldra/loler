@@ -36,7 +36,7 @@
         <i data-lucide="sparkles" class="w-5 h-5"></i>
         AI 点评
     </div>
-    <div class="ai-content">{{ ai_commentary }}</div>
+    <div class="ai-content markdown-content" id="aiCommentaryContent">{{ ai_commentary }}</div>
     {% if ai_tags and ai_tags|length > 0 %}
     <div class="ai-tags">
         {% for tag in ai_tags %}
@@ -46,10 +46,127 @@
     {% endif %}
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script>
 // 重新初始化lucide图标
 if (typeof lucide !== 'undefined') {
     lucide.createIcons();
 }
+
+// 渲染Markdown内容
+(function() {
+    const contentElement = document.getElementById('aiCommentaryContent');
+    if (contentElement && typeof marked !== 'undefined') {
+        const rawText = contentElement.textContent;
+        contentElement.innerHTML = marked.parse(rawText);
+    }
+})();
 </script>
+
+<style>
+.markdown-content {
+    line-height: 1.8;
+}
+
+.markdown-content h1,
+.markdown-content h2,
+.markdown-content h3,
+.markdown-content h4,
+.markdown-content h5,
+.markdown-content h6 {
+    font-weight: 600;
+    margin-top: 1.5em;
+    margin-bottom: 0.5em;
+    color: var(--foreground);
+}
+
+.markdown-content h1 { font-size: 1.5em; }
+.markdown-content h2 { font-size: 1.3em; }
+.markdown-content h3 { font-size: 1.1em; }
+
+.markdown-content p {
+    margin-bottom: 1em;
+}
+
+.markdown-content ul,
+.markdown-content ol {
+    margin-left: 1.5em;
+    margin-bottom: 1em;
+}
+
+.markdown-content li {
+    margin-bottom: 0.5em;
+}
+
+.markdown-content strong {
+    font-weight: 600;
+    color: var(--primary);
+}
+
+.markdown-content em {
+    font-style: italic;
+}
+
+.markdown-content code {
+    background: var(--muted);
+    padding: 0.2em 0.4em;
+    border-radius: var(--radius-sm);
+    font-family: var(--font-mono);
+    font-size: 0.9em;
+}
+
+.markdown-content pre {
+    background: var(--muted);
+    padding: 1em;
+    border-radius: var(--radius);
+    overflow-x: auto;
+    margin-bottom: 1em;
+}
+
+.markdown-content pre code {
+    background: transparent;
+    padding: 0;
+}
+
+.markdown-content blockquote {
+    border-left: 4px solid var(--primary);
+    padding-left: 1em;
+    margin-left: 0;
+    margin-bottom: 1em;
+    color: var(--muted-foreground);
+}
+
+.markdown-content a {
+    color: var(--primary);
+    text-decoration: underline;
+}
+
+.markdown-content a:hover {
+    opacity: 0.8;
+}
+
+.markdown-content hr {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 1.5em 0;
+}
+
+.markdown-content table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 1em;
+}
+
+.markdown-content th,
+.markdown-content td {
+    border: 1px solid var(--border);
+    padding: 0.5em;
+    text-align: left;
+}
+
+.markdown-content th {
+    background: var(--muted);
+    font-weight: 600;
+}
+</style>
 
