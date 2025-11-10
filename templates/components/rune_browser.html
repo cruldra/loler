@@ -228,6 +228,91 @@
         text-align: center;
         color: var(--muted-foreground) !important;
     }
+
+    /* 符文详情提示框 */
+    .rune-tooltip {
+        position: fixed;
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+        border: 2px solid #c89b3c;
+        border-radius: 12px;
+        padding: 1rem;
+        max-width: 320px;
+        z-index: 9999;
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.2s ease;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6), 0 0 20px rgba(200, 155, 60, 0.3);
+    }
+
+    .rune-tooltip.show {
+        opacity: 1;
+    }
+
+    .rune-tooltip-header {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 0.75rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 1px solid rgba(200, 155, 60, 0.3);
+    }
+
+    .rune-tooltip-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        border: 2px solid #c89b3c;
+        background: linear-gradient(135deg, rgba(200, 155, 60, 0.1) 0%, rgba(200, 155, 60, 0.05) 100%);
+        padding: 4px;
+        box-shadow: 0 2px 8px rgba(200, 155, 60, 0.3);
+    }
+
+    .rune-tooltip-title {
+        flex: 1;
+    }
+
+    .rune-tooltip-name {
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: #c89b3c;
+        margin-bottom: 0.25rem;
+    }
+
+    .rune-tooltip-meta {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.875rem;
+    }
+
+    .rune-tooltip-tree {
+        color: #a09b8c;
+    }
+
+    .rune-tooltip-type {
+        background: linear-gradient(135deg, rgba(200, 155, 60, 0.2) 0%, rgba(200, 155, 60, 0.1) 100%);
+        color: #c89b3c;
+        padding: 0.125rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.75rem;
+        font-weight: 500;
+    }
+
+    .rune-tooltip-desc {
+        color: #f0e6d2;
+        font-size: 0.875rem;
+        line-height: 1.6;
+    }
+
+    .rune-tooltip-desc-short {
+        margin-bottom: 0.5rem;
+        color: #c8aa6e;
+        font-weight: 500;
+    }
+
+    .rune-tooltip-desc-long {
+        color: #a09b8c;
+    }
 </style>
 
 <div class="rune-browser">
@@ -268,14 +353,18 @@
         <div class="runes-container" id="runesContainer">
             {% for tree in rune_trees %}
                 {% for slot in tree.slots %}
+                    {% set slot_index = loop.index0 %}
                     {% for rune in slot.runes %}
-                    <div class="rune-card {% if loop.parent.index0 == 0 %}keystone{% endif %}"
+                    <div class="rune-card {% if slot_index == 0 %}keystone{% endif %}"
                          data-rune-id="{{ rune.id }}"
                          data-rune-name="{{ rune.name }}"
                          data-rune-key="{{ rune.key }}"
+                         data-rune-icon="{{ rune.icon }}"
                          data-tree="{{ tree.key }}"
                          data-tree-name="{{ tree_translations.get(tree.key, {}).get('name', tree.name) }}"
-                         data-is-keystone="{{ 'true' if loop.parent.index0 == 0 else 'false' }}"
+                         data-is-keystone="{{ 'true' if slot_index == 0 else 'false' }}"
+                         data-short-desc="{{ rune.shortDesc }}"
+                         data-long-desc="{{ rune.longDesc }}"
                          title="{{ rune.name }}">
                         <img src="https://ddragon.leagueoflegends.com/cdn/img/{{ rune.icon }}"
                              alt="{{ rune.name }}"
@@ -298,6 +387,24 @@
         {% endfor %}
         共 <span id="runeCount">{{ total_runes.count }}</span> 个符文
     </div>
+
+    <!-- 符文详情提示框 -->
+    <div class="rune-tooltip" id="runeTooltip">
+        <div class="rune-tooltip-header">
+            <img src="" alt="" class="rune-tooltip-icon" id="tooltipIcon">
+            <div class="rune-tooltip-title">
+                <div class="rune-tooltip-name" id="tooltipName"></div>
+                <div class="rune-tooltip-meta">
+                    <span class="rune-tooltip-tree" id="tooltipTree"></span>
+                    <span class="rune-tooltip-type" id="tooltipType"></span>
+                </div>
+            </div>
+        </div>
+        <div class="rune-tooltip-desc">
+            <div class="rune-tooltip-desc-short" id="tooltipShortDesc"></div>
+            <div class="rune-tooltip-desc-long" id="tooltipLongDesc"></div>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -305,6 +412,113 @@
 if (typeof lucide !== 'undefined') {
     lucide.createIcons();
 }
+
+// 符文详情提示框功能
+(function() {
+    const tooltip = document.getElementById('runeTooltip');
+    if (!tooltip) return;
+
+    const tooltipIcon = document.getElementById('tooltipIcon');
+    const tooltipName = document.getElementById('tooltipName');
+    const tooltipTree = document.getElementById('tooltipTree');
+    const tooltipType = document.getElementById('tooltipType');
+    const tooltipShortDesc = document.getElementById('tooltipShortDesc');
+    const tooltipLongDesc = document.getElementById('tooltipLongDesc');
+
+    let hideTimeout = null;
+
+    // 为所有符文卡片添加悬停事件
+    document.addEventListener('mouseover', function(e) {
+        const runeCard = e.target.closest('.rune-card');
+        if (!runeCard) return;
+
+        // 清除隐藏定时器
+        if (hideTimeout) {
+            clearTimeout(hideTimeout);
+            hideTimeout = null;
+        }
+
+        // 获取符文数据
+        const icon = runeCard.dataset.runeIcon;
+        const name = runeCard.dataset.runeName;
+        const treeName = runeCard.dataset.treeName;
+        const isKeystone = runeCard.dataset.isKeystone === 'true';
+        const shortDesc = runeCard.dataset.shortDesc;
+        const longDesc = runeCard.dataset.longDesc;
+
+        // 更新提示框内容
+        tooltipIcon.src = `https://ddragon.leagueoflegends.com/cdn/img/${icon}`;
+        tooltipIcon.alt = name;
+        tooltipName.textContent = name;
+        tooltipTree.textContent = treeName;
+
+        if (isKeystone) {
+            tooltipType.textContent = '基石符文';
+            tooltipType.style.display = 'inline-block';
+        } else {
+            tooltipType.style.display = 'none';
+        }
+
+        // 处理描述文本中的HTML标签
+        tooltipShortDesc.innerHTML = shortDesc;
+        tooltipLongDesc.innerHTML = longDesc;
+
+        // 显示提示框
+        tooltip.classList.add('show');
+
+        // 更新提示框位置
+        updateTooltipPosition(e, runeCard);
+    });
+
+    // 鼠标移动时更新位置
+    document.addEventListener('mousemove', function(e) {
+        const runeCard = e.target.closest('.rune-card');
+        if (runeCard && tooltip.classList.contains('show')) {
+            updateTooltipPosition(e, runeCard);
+        }
+    });
+
+    // 鼠标离开符文卡片时隐藏提示框
+    document.addEventListener('mouseout', function(e) {
+        const runeCard = e.target.closest('.rune-card');
+        if (!runeCard) return;
+
+        // 延迟隐藏，避免闪烁
+        hideTimeout = setTimeout(() => {
+            tooltip.classList.remove('show');
+        }, 100);
+    });
+
+    // 更新提示框位置
+    function updateTooltipPosition(e, runeCard) {
+        const rect = runeCard.getBoundingClientRect();
+        const tooltipRect = tooltip.getBoundingClientRect();
+
+        let left = rect.right + 10; // 默认显示在右侧
+        let top = rect.top;
+
+        // 如果右侧空间不足，显示在左侧
+        if (left + tooltipRect.width > window.innerWidth - 10) {
+            left = rect.left - tooltipRect.width - 10;
+        }
+
+        // 如果左侧也不足，显示在鼠标位置
+        if (left < 10) {
+            left = e.clientX + 10;
+        }
+
+        // 确保不超出顶部和底部
+        if (top + tooltipRect.height > window.innerHeight - 10) {
+            top = window.innerHeight - tooltipRect.height - 10;
+        }
+        if (top < 10) {
+            top = 10;
+        }
+
+        tooltip.style.left = left + 'px';
+        tooltip.style.top = top + 'px';
+    }
+})();
 </script>
 
 {% endmacro %}

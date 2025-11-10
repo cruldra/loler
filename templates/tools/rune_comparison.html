@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "components/rune_browser.html" import RuneBrowser %}
 
 {% block title %}符文对比 - LOL助手{% endblock %}
 
@@ -18,184 +19,7 @@
         padding: 2rem;
     }
 
-    /* 左侧符文浏览器样式 */
-    .rune-browser {
-        background: var(--card);
-        border: 1px solid var(--border);
-        border-radius: var(--radius-lg);
-        box-shadow: var(--shadow-xl);
-        overflow: hidden;
-        height: fit-content;
-        position: sticky;
-        top: 5rem;
-    }
 
-    .browser-header {
-        padding: 1rem;
-        border-bottom: 1px solid var(--border);
-        background: var(--muted);
-    }
-
-    .browser-title {
-        font-size: 1.125rem;
-        font-weight: 600;
-        color: var(--foreground);
-        margin-bottom: 0.5rem;
-    }
-
-    .search-box {
-        position: relative;
-    }
-
-    .search-input {
-        width: 100%;
-        padding: 0.75rem 1rem 0.75rem 2.5rem;
-        background: var(--input);
-        border: 1px solid var(--border);
-        border-radius: var(--radius);
-        color: var(--foreground);
-        font-size: 0.9rem;
-        transition: all 0.2s ease-out;
-    }
-
-    .search-input:focus {
-        outline: none;
-        border-color: var(--primary);
-        box-shadow: 0 0 0 2px rgba(255, 215, 0, 0.2);
-    }
-
-    .search-icon {
-        position: absolute;
-        left: 0.75rem;
-        top: 50%;
-        transform: translateY(-50%);
-        color: var(--muted-foreground);
-        pointer-events: none;
-    }
-
-    .filter-section {
-        padding: 1rem;
-        border-bottom: 1px solid var(--border);
-    }
-
-    .filter-title {
-        font-size: 0.85rem;
-        font-weight: 600;
-        color: var(--muted-foreground);
-        margin-bottom: 0.75rem;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-    }
-
-    .filter-buttons {
-        display: flex;
-        gap: 0.5rem;
-        flex-wrap: wrap;
-    }
-
-    .filter-btn {
-        padding: 0.5rem 0.75rem;
-        border-radius: var(--radius);
-        background: var(--muted);
-        border: 1px solid var(--border);
-        color: var(--muted-foreground);
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        cursor: pointer;
-        transition: all 0.2s ease-out;
-        font-size: 0.8rem;
-        font-weight: 600;
-        white-space: nowrap;
-    }
-
-    .filter-btn:hover {
-        background: var(--accent);
-        color: var(--accent-foreground);
-        transform: scale(1.05);
-    }
-
-    .filter-btn.active {
-        background: var(--primary);
-        color: var(--primary-foreground);
-        border-color: var(--primary);
-    }
-
-    .tree-icon {
-        width: 20px;
-        height: 20px;
-        border-radius: 50%;
-    }
-
-    .runes-grid {
-        padding: 1rem;
-        max-height: 600px;
-        overflow-y: auto;
-    }
-
-    .runes-container {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 0.75rem;
-    }
-
-    .rune-card {
-        position: relative;
-        aspect-ratio: 1;
-        border-radius: var(--radius);
-        overflow: hidden;
-        cursor: pointer;
-        transition: all 0.2s ease-out;
-        border: 2px solid transparent;
-        background: var(--muted);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    .rune-card:hover {
-        transform: scale(1.05);
-        border-color: var(--primary);
-        box-shadow: 0 0 15px rgba(255, 215, 0, 0.4);
-    }
-
-    .rune-card.selected {
-        border-color: var(--primary);
-        box-shadow: 0 0 20px rgba(255, 215, 0, 0.6);
-    }
-
-    .rune-card.keystone {
-        border-color: var(--accent);
-        background: linear-gradient(135deg, rgba(255, 215, 0, 0.1), rgba(255, 215, 0, 0.05));
-    }
-
-    .rune-image {
-        width: 80%;
-        height: 80%;
-        object-fit: contain;
-    }
-
-    .rune-name {
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        background: linear-gradient(transparent, rgba(0, 0, 0, 0.9));
-        color: white;
-        padding: 0.5rem 0.25rem 0.25rem;
-        font-size: 0.7rem;
-        font-weight: 500;
-        text-align: center;
-        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
-    }
-
-    .rune-count {
-        padding: 0.5rem 1rem;
-        text-align: center;
-        font-size: 0.85rem;
-        color: var(--muted-foreground);
-        border-top: 1px solid var(--border);
-    }
 
     /* 右侧对比区域样式 */
     .comparison-area {
@@ -372,110 +196,14 @@
         display: block;
     }
 
-    /* 滚动条样式 */
-    .runes-grid::-webkit-scrollbar {
-        width: 6px;
-    }
-
-    .runes-grid::-webkit-scrollbar-track {
-        background: var(--muted);
-        border-radius: 3px;
-    }
-
-    .runes-grid::-webkit-scrollbar-thumb {
-        background: var(--muted-foreground);
-        border-radius: 3px;
-    }
-
-    .runes-grid::-webkit-scrollbar-thumb:hover {
-        background: var(--primary);
-    }
 </style>
 {% endblock %}
 
 {% block content %}
-{# 符文系翻译映射 #}
-{% set tree_translations = {
-    'Precision': {'name': '精密', 'desc': '成为一个传奇'},
-    'Domination': {'name': '主宰', 'desc': '猎杀并消灭敌人'},
-    'Sorcery': {'name': '巫术', 'desc': '释放魔法'},
-    'Resolve': {'name': '坚决', 'desc': '生存'},
-    'Inspiration': {'name': '启迪', 'desc': '创造性工具和规则改动'}
-} %}
-
 <div class="comparison-page">
     <div class="comparison-layout">
         <!-- 左侧：符文浏览器 -->
-        <div class="rune-browser">
-            <div class="browser-header">
-                <h2 class="browser-title">符文浏览器</h2>
-                <div class="search-box">
-                    <input
-                        type="text"
-                        class="search-input"
-                        id="searchInput"
-                        placeholder="搜索符文..."
-                    >
-                    <i data-lucide="search" class="search-icon w-5 h-5"></i>
-                </div>
-            </div>
-
-            <!-- 符文系筛选 -->
-            <div class="filter-section">
-                <div class="filter-title">按符文系筛选</div>
-                <div class="filter-buttons">
-                    <button class="filter-btn active" data-tree="all">
-                        <i data-lucide="asterisk" class="w-4 h-4"></i>
-                        全部
-                    </button>
-                    {% for tree in rune_trees %}
-                    <button class="filter-btn" data-tree="{{ tree.key }}">
-                        <img src="https://ddragon.leagueoflegends.com/cdn/img/{{ tree.icon }}"
-                             alt="{{ tree.name }}"
-                             class="tree-icon">
-                        {{ tree_translations.get(tree.key, {}).get('name', tree.name) }}
-                    </button>
-                    {% endfor %}
-                </div>
-            </div>
-
-            <!-- 符文网格 -->
-            <div class="runes-grid">
-                <div class="runes-container" id="runesContainer">
-                    {% for tree in rune_trees %}
-                        {% for slot in tree.slots %}
-                            {% set slot_index = loop.index0 %}
-                            {% for rune in slot.runes %}
-                            <div class="rune-card {% if slot_index == 0 %}keystone{% endif %}"
-                                 data-rune-id="{{ rune.id }}"
-                                 data-rune-name="{{ rune.name }}"
-                                 data-rune-key="{{ rune.key }}"
-                                 data-tree="{{ tree.key }}"
-                                 data-tree-name="{{ tree_translations.get(tree.key, {}).get('name', tree.name) }}"
-                                 data-is-keystone="{{ 'true' if slot_index == 0 else 'false' }}"
-                                 title="{{ rune.name }}">
-                                <img src="https://ddragon.leagueoflegends.com/cdn/img/{{ rune.icon }}"
-                                     alt="{{ rune.name }}"
-                                     class="rune-image">
-                                <div class="rune-name">{{ rune.name }}</div>
-                            </div>
-                            {% endfor %}
-                        {% endfor %}
-                    {% endfor %}
-                </div>
-            </div>
-
-            <!-- 符文计数 -->
-            <div class="rune-count">
-                {% set total_runes = namespace(count=0) %}
-                {% for tree in rune_trees %}
-                    {% for slot in tree.slots %}
-                        {% set total_runes.count = total_runes.count + slot.runes|length %}
-                    {% endfor %}
-                {% endfor %}
-                共 <span id="runeCount">{{ total_runes.count }}</span> 个符文
-            </div>
-        </div>
+        {{ RuneBrowser(rune_trees=rune_trees, version=version, max_width="400px") }}
 
         <!-- 右侧：对比区域 -->
         <div class="comparison-area">
@@ -526,8 +254,8 @@ if (typeof lucide !== 'undefined') {
 }
 
 // 获取DOM元素
-const searchInput = document.getElementById('searchInput');
-const filterBtns = document.querySelectorAll('.filter-btn');
+const searchInput = document.getElementById('runeSearchInput');
+const filterBtns = document.querySelectorAll('.rune-tree-filter-btn');
 const runeCards = document.querySelectorAll('.rune-card');
 const runeCountSpan = document.getElementById('runeCount');
 const slot1 = document.getElementById('slot1');
@@ -541,7 +269,9 @@ let currentFilter = 'all';
 let lastSelectedSlot = null;
 
 // 搜索功能
-searchInput.addEventListener('input', filterRunes);
+if (searchInput) {
+    searchInput.addEventListener('input', filterRunes);
+}
 
 // 符文系筛选功能
 filterBtns.forEach(btn => {
@@ -577,39 +307,40 @@ function filterRunes() {
 }
 
 // 符文卡片点击事件
-runeCards.forEach(card => {
-    card.addEventListener('click', function() {
-        const runeData = {
-            id: this.dataset.runeId,
-            name: this.dataset.runeName,
-            key: this.dataset.runeKey,
-            tree: this.dataset.tree,
-            treeName: this.dataset.treeName,
-            isKeystone: this.dataset.isKeystone === 'true',
-            image: this.querySelector('.rune-image').src
-        };
+document.addEventListener('click', function(e) {
+    const card = e.target.closest('.rune-card');
+    if (!card) return;
 
-        let targetSlot;
+    const runeData = {
+        id: card.dataset.runeId,
+        name: card.dataset.runeName,
+        key: card.dataset.runeKey,
+        tree: card.dataset.tree,
+        treeName: card.dataset.treeName,
+        isKeystone: card.dataset.isKeystone === 'true',
+        image: card.querySelector('.rune-image').src
+    };
 
-        // 如果两个槽位都已填充，替换最后选择的槽位
-        if (rune1 && rune2) {
-            targetSlot = lastSelectedSlot || slot1;
-        } else if (!rune1) {
-            targetSlot = slot1;
-        } else {
-            targetSlot = slot2;
-        }
+    let targetSlot;
 
-        // 填充槽位
-        fillSlot(targetSlot, runeData);
-        lastSelectedSlot = targetSlot;
+    // 如果两个槽位都已填充，替换最后选择的槽位
+    if (rune1 && rune2) {
+        targetSlot = lastSelectedSlot || slot1;
+    } else if (!rune1) {
+        targetSlot = slot1;
+    } else {
+        targetSlot = slot2;
+    }
 
-        // 更新选中状态
-        updateSelection();
+    // 填充槽位
+    fillSlot(targetSlot, runeData);
+    lastSelectedSlot = targetSlot;
 
-        // 检查是否可以对比
-        checkCanCompare();
-    });
+    // 更新选中状态
+    updateSelection();
+
+    // 检查是否可以对比
+    checkCanCompare();
 });
 
 function fillSlot(slot, runeData) {
