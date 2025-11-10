@@ -39,5 +39,11 @@
     "line": "f6>石头人>红>三狼>蛤蟆>蓝buff",
     "duration": "3分27秒",
     "remainingHealth": 80
+  },
+  {
+    "champion_name": "盲僧",
+    "line": "f6>石头人>红>三狼>蛤蟆>蓝buff",
+    "duration": "3分30秒",
+    "remainingHealth": 70
   }
 ]

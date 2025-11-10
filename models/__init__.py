@@ -7,6 +7,7 @@ from .team_composition import TeamComposition
 from .champion_favorite import ChampionFavorite
 from .highlight_video import HighlightVideo
 from .champion_tip import ChampionTip
+from .champion_video import ChampionVideo
 from .item_build import ItemBuild
 from .replay import Replay
 from .equipment_comparison import EquipmentComparison
@@ -20,6 +21,7 @@ __all__ = [
     "ChampionFavorite",
     "HighlightVideo",
     "ChampionTip",
+    "ChampionVideo",
     "ItemBuild",
     "Replay",
     "EquipmentComparison",

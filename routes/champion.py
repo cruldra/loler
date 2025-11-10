@@ -7,8 +7,8 @@ from fastapi.templating import Jinja2Templates
 from sqlmodel import Session, select
 from services.champion_service import champion_service
 from database import get_session
-from models import User, ChampionFavorite, ChampionTip
-from schemas import ChampionTipCreate, ChampionTipUpdate, ChampionTipResponse
+from models import User, ChampionFavorite, ChampionTip, ChampionVideo
+from schemas import ChampionTipCreate, ChampionTipUpdate, ChampionTipResponse, ChampionVideoCreate, ChampionVideoUpdate, ChampionVideoResponse
 from datetime import datetime
 
 router = APIRouter(prefix="/champions", tags=["champions"])
@@ -50,9 +50,10 @@ async def champion_detail(request: Request, champion_id: str, session: Session =
             }
         )
 
-    # 检查用户是否已收藏该英雄，并获取技巧列表
+    # 检查用户是否已收藏该英雄，并获取技巧列表和视频列表
     is_favorited = False
     champion_tips = []
+    champion_videos = []
     if user:
         db_user = session.exec(
             select(User).where(
@@ -79,6 +80,15 @@ async def champion_detail(request: Request, champion_id: str, session: Session =
             ).all()
             champion_tips = list(tips)
 
+            # 获取该用户的该英雄的视频列表
+            videos = session.exec(
+                select(ChampionVideo).where(
+                    ChampionVideo.user_id == db_user.id,
+                    ChampionVideo.champion_id == champion_id
+                ).order_by(ChampionVideo.sort_order, ChampionVideo.created_at)
+            ).all()
+            champion_videos = list(videos)
+
     return templates.TemplateResponse(
         request=request,
         name="champions.html",
@@ -87,7 +97,8 @@ async def champion_detail(request: Request, champion_id: str, session: Session =
             "champions": champions,
             "selected_champion": selected_champion,
             "is_favorited": is_favorited,
-            "champion_tips": champion_tips
+            "champion_tips": champion_tips,
+            "champion_videos": champion_videos
         }
     )
 
@@ -298,6 +309,129 @@ async def delete_tip(
 
     if tip:
         session.delete(tip)
+        session.commit()
+
+    return RedirectResponse(url=f"/champions/{champion_id}", status_code=303)
+
+
+@router.post("/{champion_id}/videos/create")
+async def create_video(
+    request: Request,
+    champion_id: str,
+    title: str = Form(...),
+    url: str = Form(...),
+    description: str = Form(None),
+    platform: str = Form("bilibili"),
+    session: Session = Depends(get_session)
+):
+    """创建英雄教学视频"""
+    user = request.session.get('user')
+
+    if not user:
+        return RedirectResponse(url=f"/champions/{champion_id}", status_code=303)
+
+    db_user = session.exec(
+        select(User).where(
+            User.provider == user['provider'],
+            User.provider_user_id == user['provider_id']
+        )
+    ).first()
+
+    if not db_user:
+        return RedirectResponse(url=f"/champions/{champion_id}", status_code=303)
+
+    video = ChampionVideo(
+        user_id=db_user.id,
+        champion_id=champion_id,
+        title=title,
+        url=url,
+        description=description,
+        platform=platform
+    )
+    session.add(video)
+    session.commit()
+
+    return RedirectResponse(url=f"/champions/{champion_id}", status_code=303)
+
+
+@router.post("/{champion_id}/videos/{video_id}/update")
+async def update_video(
+    request: Request,
+    champion_id: str,
+    video_id: int,
+    title: str = Form(...),
+    url: str = Form(...),
+    description: str = Form(None),
+    platform: str = Form("bilibili"),
+    session: Session = Depends(get_session)
+):
+    """更新英雄教学视频"""
+    user = request.session.get('user')
+
+    if not user:
+        return RedirectResponse(url=f"/champions/{champion_id}", status_code=303)
+
+    db_user = session.exec(
+        select(User).where(
+            User.provider == user['provider'],
+            User.provider_user_id == user['provider_id']
+        )
+    ).first()
+
+    if not db_user:
+        return RedirectResponse(url=f"/champions/{champion_id}", status_code=303)
+
+    video = session.exec(
+        select(ChampionVideo).where(
+            ChampionVideo.id == video_id,
+            ChampionVideo.user_id == db_user.id
+        )
+    ).first()
+
+    if video:
+        video.title = title
+        video.url = url
+        video.description = description
+        video.platform = platform
+        video.updated_at = datetime.now()
+        session.add(video)
+        session.commit()
+
+    return RedirectResponse(url=f"/champions/{champion_id}", status_code=303)
+
+
+@router.post("/{champion_id}/videos/{video_id}/delete")
+async def delete_video(
+    request: Request,
+    champion_id: str,
+    video_id: int,
+    session: Session = Depends(get_session)
+):
+    """删除英雄教学视频"""
+    user = request.session.get('user')
+
+    if not user:
+        return RedirectResponse(url=f"/champions/{champion_id}", status_code=303)
+
+    db_user = session.exec(
+        select(User).where(
+            User.provider == user['provider'],
+            User.provider_user_id == user['provider_id']
+        )
+    ).first()
+
+    if not db_user:
+        return RedirectResponse(url=f"/champions/{champion_id}", status_code=303)
+
+    video = session.exec(
+        select(ChampionVideo).where(
+            ChampionVideo.id == video_id,
+            ChampionVideo.user_id == db_user.id
+        )
+    ).first()
+
+    if video:
+        session.delete(video)
         session.commit()
 
     return RedirectResponse(url=f"/champions/{champion_id}", status_code=303)

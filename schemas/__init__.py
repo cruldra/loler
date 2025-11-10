@@ -38,6 +38,11 @@ from .champion_tip import (
     ChampionTipUpdate,
     ChampionTipResponse
 )
+from .champion_video import (
+    ChampionVideoCreate,
+    ChampionVideoUpdate,
+    ChampionVideoResponse
+)
 from .monster import MonsterModel
 from .replay import (
     ReplayResponse,
@@ -80,6 +85,9 @@ __all__ = [
     "ChampionTipCreate",
     "ChampionTipUpdate",
     "ChampionTipResponse",
+    "ChampionVideoCreate",
+    "ChampionVideoUpdate",
+    "ChampionVideoResponse",
     "MonsterModel",
     "ReplayResponse",
     "ReplayImportRequest",

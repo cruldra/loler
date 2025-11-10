@@ -1,7 +1,9 @@
 {# 英雄详情组件 #}
-{% macro ChampionDetail(champion, is_favorited=False, user=None, champion_tips=[]) %}
+{% macro ChampionDetail(champion, is_favorited=False, user=None, champion_tips=[], champion_videos=[]) %}
 {# 导入技巧组件 #}
 {% import 'components/champion_tips.html' as ChampionTipsComponent %}
+{# 导入视频组件 #}
+{% import 'components/champion_videos.html' as ChampionVideosComponent %}
 {# 标签翻译映射 #}
 {% set tag_translations = {
     'Fighter': '战士',
@@ -563,6 +565,10 @@
                 <i data-lucide="lightbulb" class="w-4 h-4 inline mr-2"></i>
                 技巧
             </button>
+            <button class="tab-button" data-tab="videos">
+                <i data-lucide="video" class="w-4 h-4 inline mr-2"></i>
+                教学视频
+            </button>
             <button class="tab-button" data-tab="comparisons">
                 <i data-lucide="git-compare" class="w-4 h-4 inline mr-2"></i>
                 对比分析
@@ -690,6 +696,10 @@
 
             <div class="tab-panel" id="tips">
                 {{ ChampionTipsComponent.ChampionTips(champion, champion_tips, user) }}
+            </div>
+
+            <div class="tab-panel" id="videos">
+                {{ ChampionVideosComponent.ChampionVideos(champion, champion_videos, user) }}
             </div>
 
             <div class="tab-panel" id="comparisons">
