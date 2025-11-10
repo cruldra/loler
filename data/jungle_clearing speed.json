@@ -45,5 +45,17 @@
     "line": "f6>石头人>红>三狼>蛤蟆>蓝buff",
     "duration": "3分30秒",
     "remainingHealth": 70
+  },
+  {
+    "champion_name": "劫",
+   "line": "蓝buff>蛤蟆>三狼>f6>红>石头人",
+    "duration": "3分10秒",
+    "remainingHealth": 60
+  },
+  {
+    "champion_name": "姣月",
+   "line": "f6>石头人>红>三狼>蛤蟆>蓝buff",
+    "duration": "3分30秒",
+    "remainingHealth": 100
   }
 ]
