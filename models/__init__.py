@@ -11,6 +11,7 @@ from .item_build import ItemBuild
 from .replay import Replay
 from .equipment_comparison import EquipmentComparison
 from .champion_comparison import ChampionComparison
+from .rune_comparison import RuneComparison
 
 __all__ = [
     "User",
@@ -22,5 +23,6 @@ __all__ = [
     "ItemBuild",
     "Replay",
     "EquipmentComparison",
-    "ChampionComparison"
+    "ChampionComparison",
+    "RuneComparison"
 ]

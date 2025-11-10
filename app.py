@@ -18,8 +18,8 @@ from typing import Dict, List
 from config import settings
 from oauth_providers import oauth
 from database import create_db_and_tables, get_session
-from models import User, RunePage, TeamComposition, ChampionFavorite, HighlightVideo, ChampionTip, ItemBuild, Replay, EquipmentComparison, ChampionComparison
-from routes import summoner, champion, item, team_composition, highlight, monster, replay, game_data, equipment_comparison, champion_comparison
+from models import User, RunePage, TeamComposition, ChampionFavorite, HighlightVideo, ChampionTip, ItemBuild, Replay, EquipmentComparison, ChampionComparison, RuneComparison
+from routes import summoner, champion, item, team_composition, highlight, monster, replay, game_data, equipment_comparison, champion_comparison, rune_comparison
 from services.ffmpeg_service import ffmpeg_service
 
 
@@ -76,6 +76,7 @@ app.include_router(replay.router)
 app.include_router(game_data.router)
 app.include_router(equipment_comparison.router)
 app.include_router(champion_comparison.router)
+app.include_router(rune_comparison.router)
 
 BASE_DIR = Path(__file__).resolve().parent
 TEMPLATES_DIR = BASE_DIR / "templates"
