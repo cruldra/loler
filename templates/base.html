@@ -311,6 +311,64 @@
             animation: pulse 1.2s infinite;
         }
 
+        /* 回到顶部按钮 */
+        .back-to-top {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            width: 3rem;
+            height: 3rem;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            color: var(--primary-foreground);
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3), 0 0 20px rgba(201, 170, 113, 0.4);
+            transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(100px) scale(0.5);
+            z-index: 999;
+        }
+
+        .back-to-top.visible {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0) scale(1);
+        }
+
+        .back-to-top:hover {
+            transform: translateY(-5px) scale(1.1);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4), 0 0 30px rgba(201, 170, 113, 0.6);
+            background: linear-gradient(135deg, var(--accent), var(--primary));
+        }
+
+        .back-to-top:active {
+            transform: translateY(-3px) scale(1.05);
+        }
+
+        /* 回到顶部按钮动画 */
+        @keyframes bounce-in {
+            0% {
+                transform: translateY(100px) scale(0.5);
+                opacity: 0;
+            }
+            50% {
+                transform: translateY(-10px) scale(1.1);
+            }
+            100% {
+                transform: translateY(0) scale(1);
+                opacity: 1;
+            }
+        }
+
+        .back-to-top.bounce-in {
+            animation: bounce-in 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
         /* 响应式设计 */
         @media (max-width: 768px) {
             .nav-menu {
@@ -325,6 +383,13 @@
             .footer-links {
                 gap: 1rem;
             }
+
+            .back-to-top {
+                bottom: 1.5rem;
+                right: 1.5rem;
+                width: 2.75rem;
+                height: 2.75rem;
+            }
         }
 
         @media (max-width: 640px) {
@@ -334,6 +399,13 @@
 
             .user-actions {
                 gap: 0.5rem;
+            }
+
+            .back-to-top {
+                bottom: 1rem;
+                right: 1rem;
+                width: 2.5rem;
+                height: 2.5rem;
             }
         }
     </style>
@@ -403,6 +475,13 @@
                                     </div>
                                     <div class="mega-menu-item-title">段位分布</div>
                                     <div class="mega-menu-item-desc">查看英雄联盟各段位的玩家分布情况</div>
+                                </a>
+                                <a href="/game-data/jungle-clearing-speed" class="mega-menu-item">
+                                    <div class="mega-menu-item-icon">
+                                        <i data-lucide="zap" class="w-5 h-5"></i>
+                                    </div>
+                                    <div class="mega-menu-item-title">刷野速度</div>
+                                    <div class="mega-menu-item-desc">对比不同英雄的刷野效率和路线</div>
                                 </a>
                             </div>
                         </div>
@@ -519,6 +598,11 @@
         </div>
     </footer>
     {% endblock %}
+
+    {# 回到顶部按钮 #}
+    <button id="backToTop" class="back-to-top" aria-label="回到顶部">
+        <i data-lucide="arrow-up" class="w-5 h-5"></i>
+    </button>
 
     {# 脚本 #}
     <script>
@@ -644,6 +728,54 @@
                     }
                 });
             }
+
+            // 回到顶部按钮功能
+            const backToTopBtn = document.getElementById('backToTop');
+            const header = document.querySelector('.header');
+            let isBackToTopVisible = false;
+
+            // 监听滚动事件
+            window.addEventListener('scroll', function() {
+                const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+                const headerHeight = header ? header.offsetHeight : 0;
+
+                // 当页面滚动超过导航栏高度时显示按钮
+                if (scrollTop > headerHeight + 200) {
+                    if (!isBackToTopVisible) {
+                        backToTopBtn.classList.add('visible');
+                        backToTopBtn.classList.add('bounce-in');
+                        isBackToTopVisible = true;
+
+                        // 移除动画类，以便下次可以重新触发
+                        setTimeout(() => {
+                            backToTopBtn.classList.remove('bounce-in');
+                        }, 500);
+                    }
+                } else {
+                    if (isBackToTopVisible) {
+                        backToTopBtn.classList.remove('visible');
+                        isBackToTopVisible = false;
+                    }
+                }
+            });
+
+            // 点击按钮回到顶部
+            backToTopBtn.addEventListener('click', function() {
+                // 平滑滚动到顶部
+                window.scrollTo({
+                    top: 0,
+                    behavior: 'smooth'
+                });
+
+                // 添加点击动画效果
+                this.style.transform = 'translateY(-5px) scale(0.9)';
+                setTimeout(() => {
+                    this.style.transform = '';
+                }, 200);
+            });
+
+            // 重新初始化图标（包括回到顶部按钮的图标）
+            lucide.createIcons();
         });
     </script>
     {% block scripts %}{% endblock %}

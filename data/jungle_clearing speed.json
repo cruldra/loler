@@ -1,0 +1,43 @@
+[
+  {
+    "champion_name": "卡尔萨斯",
+    "champion_second_name": "死歌",
+    "line": "蓝buff>蛤蟆>三狼>f6>红>石头人",
+    "duration": "3分22秒",
+    "remainingHealth": 30
+  },
+  {
+    "champion_name": "佛耶戈",
+    "champion_second_name": "破败王",
+    "line": "f6>石头人>红>三狼>蛤蟆>蓝buff",
+    "duration": "3分30秒",
+    "remainingHealth": 80
+  },
+  {
+    "champion": "莉莉娅",
+    "line": "蓝buff>蛤蟆>三狼>f6>红>石头人",
+    "duration": "3分25秒",
+    "remainingHealth": 80
+  },
+  {
+    "champion_name": "格雷福斯",
+    "champion_second_name": "男枪",
+    "line": "红buff>石头人>f6>三狼>蛤蟆>蓝buff",
+    "duration": "3分30秒",
+    "remainingHealth": 100
+  },
+  {
+    "champion_name": "复仇焰魂",
+    "champion_second_name": "火男",
+    "line": "蓝buff>蛤蟆>三狼>f6>红>石头人",
+    "duration": "3分25秒",
+    "remainingHealth": 70
+  },
+  {
+    "champion_name": "影流之镰",
+    "champion_second_name": "凯影",
+    "line": "f6>石头人>红>三狼>蛤蟆>蓝buff",
+    "duration": "3分27秒",
+    "remainingHealth": 80
+  }
+]

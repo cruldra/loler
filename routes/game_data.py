@@ -55,3 +55,27 @@ def rank_distribution_page(request: Request):
         rank_data=rank_data
     )
 
+
+@router.get("/jungle-clearing-speed", response_class=HTMLResponse)
+def jungle_clearing_speed_page(request: Request):
+    """刷野速度页面"""
+    user = request.session.get('user')
+
+    jungle_file = data_dir / "jungle_clearing speed.json"
+
+    with open(jungle_file, 'r', encoding='utf-8') as f:
+        jungle_data = json.load(f)
+
+    for item in jungle_data:
+        if 'champion' in item and 'champion_name' not in item:
+            item['champion_name'] = item['champion']
+            item['champion_second_name'] = ''
+
+    jungle_data_sorted = sorted(jungle_data, key=lambda x: x['duration'])
+
+    template = env.get_template("game_data/jungle_clearing_speed.html")
+    return template.render(
+        user=user,
+        jungle_data=jungle_data_sorted
+    )
+

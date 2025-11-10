@@ -1,0 +1,295 @@
+{% extends "base.html" %}
+
+{% block title %}刷野速度 - LOL助手{% endblock %}
+
+{% block styles %}
+<style>
+    .jungle-container {
+        width: 100%;
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 2rem;
+        min-height: calc(100vh - 4rem);
+    }
+
+    .jungle-header {
+        text-align: center;
+        margin-bottom: 3rem;
+    }
+
+    .jungle-title {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: var(--primary);
+        margin-bottom: 0.5rem;
+        text-shadow: 0 0 20px rgba(201, 170, 113, 0.3);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 1rem;
+    }
+
+    .jungle-subtitle {
+        font-size: 1.1rem;
+        color: var(--muted-foreground);
+        font-weight: 500;
+    }
+
+    .jungle-tip {
+        background: linear-gradient(135deg, rgba(201, 170, 113, 0.1), rgba(201, 170, 113, 0.05));
+        border: 1px solid rgba(201, 170, 113, 0.2);
+        border-radius: 12px;
+        padding: 1rem 1.5rem;
+        margin: 2rem auto;
+        max-width: 800px;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        color: var(--primary);
+    }
+
+    .jungle-table-card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 2rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+
+    .jungle-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+
+    .jungle-table thead {
+        background: linear-gradient(135deg, rgba(201, 170, 113, 0.15), rgba(201, 170, 113, 0.08));
+    }
+
+    .jungle-table th {
+        padding: 1.25rem 1.5rem;
+        text-align: left;
+        font-weight: 600;
+        color: var(--primary);
+        font-size: 0.95rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border-bottom: 2px solid var(--border);
+    }
+
+    .jungle-table th:first-child {
+        border-top-left-radius: 12px;
+    }
+
+    .jungle-table th:last-child {
+        border-top-right-radius: 12px;
+    }
+
+    .jungle-table tbody tr {
+        transition: all 0.2s ease;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .jungle-table tbody tr:hover {
+        background: rgba(201, 170, 113, 0.05);
+        transform: translateX(4px);
+    }
+
+    .jungle-table tbody tr:last-child {
+        border-bottom: none;
+    }
+
+    .jungle-table td {
+        padding: 1.25rem 1.5rem;
+        color: var(--foreground);
+    }
+
+    .champion-cell {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+
+    .champion-name {
+        font-weight: 600;
+        font-size: 1rem;
+        color: var(--foreground);
+    }
+
+    .champion-second-name {
+        font-size: 0.875rem;
+        color: var(--muted-foreground);
+    }
+
+    .route-cell {
+        font-family: 'Courier New', monospace;
+        font-size: 0.9rem;
+        color: var(--muted-foreground);
+        line-height: 1.6;
+    }
+
+    .duration-cell {
+        font-weight: 600;
+        font-size: 1.1rem;
+        color: var(--primary);
+    }
+
+    .health-cell {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .health-value {
+        font-weight: 600;
+        font-size: 1rem;
+    }
+
+    .health-bar {
+        flex: 1;
+        height: 8px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 4px;
+        overflow: hidden;
+        position: relative;
+    }
+
+    .health-bar-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #22c55e, #16a34a);
+        border-radius: 4px;
+        transition: width 0.6s ease;
+    }
+
+    .rank-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        font-weight: 700;
+        font-size: 0.875rem;
+    }
+
+    .rank-1 {
+        background: linear-gradient(135deg, #ffd700, #ffed4e);
+        color: #000;
+        box-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
+    }
+
+    .rank-2 {
+        background: linear-gradient(135deg, #c0c0c0, #e8e8e8);
+        color: #000;
+        box-shadow: 0 0 15px rgba(192, 192, 192, 0.5);
+    }
+
+    .rank-3 {
+        background: linear-gradient(135deg, #cd7f32, #e8a87c);
+        color: #000;
+        box-shadow: 0 0 15px rgba(205, 127, 50, 0.5);
+    }
+
+    .rank-other {
+        background: rgba(201, 170, 113, 0.2);
+        color: var(--muted-foreground);
+    }
+
+    @media (max-width: 768px) {
+        .jungle-container {
+            padding: 1rem;
+        }
+
+        .jungle-title {
+            font-size: 2rem;
+        }
+
+        .jungle-table-card {
+            padding: 1rem;
+            overflow-x: auto;
+        }
+
+        .jungle-table {
+            min-width: 800px;
+        }
+
+        .jungle-table th,
+        .jungle-table td {
+            padding: 1rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="jungle-container">
+    <div class="jungle-header">
+        <h1 class="jungle-title">
+            <i data-lucide="zap" class="w-10 h-10"></i>
+            刷野速度
+        </h1>
+        <p class="jungle-subtitle">Jungle Clearing Speed Comparison</p>
+
+        <div class="jungle-tip">
+            <i data-lucide="info" class="w-5 h-5"></i>
+            <span>数据为六组野怪全刷完成时间，仅供参考。实际刷野速度受符文、装备、技能等级等多种因素影响</span>
+        </div>
+    </div>
+
+    <div class="jungle-table-card">
+        <table class="jungle-table">
+            <thead>
+                <tr>
+                    <th style="width: 60px;">排名</th>
+                    <th style="width: 180px;">英雄</th>
+                    <th>刷野路线</th>
+                    <th style="width: 120px;">完成时间</th>
+                    <th style="width: 200px;">剩余血量</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in jungle_data %}
+                <tr>
+                    <td>
+                        <div class="rank-badge {% if loop.index == 1 %}rank-1{% elif loop.index == 2 %}rank-2{% elif loop.index == 3 %}rank-3{% else %}rank-other{% endif %}">
+                            {{ loop.index }}
+                        </div>
+                    </td>
+                    <td>
+                        <div class="champion-cell">
+                            <div class="champion-name">{{ item.champion_name }}</div>
+                            {% if item.champion_second_name %}
+                            <div class="champion-second-name">{{ item.champion_second_name }}</div>
+                            {% endif %}
+                        </div>
+                    </td>
+                    <td>
+                        <div class="route-cell">{{ item.line }}</div>
+                    </td>
+                    <td>
+                        <div class="duration-cell">{{ item.duration }}</div>
+                    </td>
+                    <td>
+                        <div class="health-cell">
+                            <div class="health-value">{{ item.remainingHealth }}%</div>
+                            <div class="health-bar">
+                                <div class="health-bar-fill" style="width: {{ item.remainingHealth }}%"></div>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        lucide.createIcons();
+    });
+</script>
+{% endblock %}
+
