@@ -8,8 +8,9 @@ from sqlmodel import Session, select
 from services.champion_service import champion_service
 from services.ocr_service import ocr_service
 from services.rune_service import rune_service
+from services.item_service import item_service
 from database import get_session
-from models import User, ChampionFavorite, ChampionTip, ChampionVideo, ChampionSkill, RunePage
+from models import User, ChampionFavorite, ChampionTip, ChampionVideo, ChampionSkill, RunePage, ItemBuild
 from schemas import ChampionTipCreate, ChampionTipUpdate, ChampionTipResponse, ChampionVideoCreate, ChampionVideoUpdate, ChampionVideoResponse, ChampionSkillCreate, ChampionSkillUpdate, ChampionSkillResponse
 from datetime import datetime
 from pathlib import Path
@@ -665,6 +666,56 @@ async def get_champion_runes(
             "champion": champion,
             "rune_pages": rune_pages,
             "rune_trees": rune_trees,
+            "version": version
+        }
+    )
+
+
+@router.get("/{champion_id}/item-builds", response_class=HTMLResponse)
+async def get_champion_item_builds(
+    request: Request,
+    champion_id: str,
+    session: Session = Depends(get_session)
+):
+    """获取英雄关联的装备配置"""
+    user = request.session.get('user')
+    if not user:
+        return HTMLResponse(content='<div style="text-align: center; padding: 2rem; color: var(--muted-foreground);">请先登录</div>')
+
+    # 查找用户
+    db_user = session.exec(
+        select(User).where(
+            User.provider == user['provider'],
+            User.provider_user_id == user['provider_id']
+        )
+    ).first()
+
+    if not db_user:
+        return HTMLResponse(content='<div style="text-align: center; padding: 2rem; color: var(--muted-foreground);">用户不存在</div>')
+
+    # 获取英雄信息
+    champion = champion_service.get_champion_by_id(champion_id)
+    if not champion:
+        return HTMLResponse(content='<div style="text-align: center; padding: 2rem; color: var(--muted-foreground);">英雄不存在</div>')
+
+    # 查询该英雄关联的装备配置
+    item_builds = session.exec(
+        select(ItemBuild).where(
+            ItemBuild.user_id == db_user.id,
+            ItemBuild.champion_id == champion_id
+        ).order_by(ItemBuild.updated_at.desc())
+    ).all()
+
+    # 获取版本信息
+    version = item_service.get_version()
+
+    return templates.TemplateResponse(
+        request=request,
+        name="components/champion_item_builds.html",
+        context={
+            "user": user,
+            "champion": champion,
+            "item_builds": item_builds,
             "version": version
         }
     )

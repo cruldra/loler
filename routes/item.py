@@ -6,6 +6,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from sqlmodel import Session, select
 from services.item_service import item_service
+from services.champion_service import champion_service
 from database import get_session
 from models import User, ItemBuild
 from datetime import datetime
@@ -51,6 +52,10 @@ async def item_builds_page(request: Request, edit: int = None, session: Session 
     version = item_service.get_version()
     edit_build = None
 
+    # 获取所有英雄列表
+    champions = list(champion_service.get_all_champions().values())
+    champions.sort(key=lambda x: x.name)
+
     if user and edit:
         db_user = session.exec(
             select(User).where(
@@ -75,6 +80,7 @@ async def item_builds_page(request: Request, edit: int = None, session: Session 
             "items": items_list,
             "version": version,
             "edit_build": edit_build,
+            "champions": champions,
             "tag_translations": item_service.get_tag_translations(),
             "map_translations": item_service.get_map_translations()
         }

@@ -1,0 +1,244 @@
+{% if item_builds %}
+<div class="builds-grid">
+    {% for build in item_builds %}
+    <div class="build-card">
+        <div class="build-card-header">
+            <h3 class="build-card-title">{{ build.name }}</h3>
+            {% if build.description %}
+            <p class="build-card-desc">{{ build.description }}</p>
+            {% endif %}
+        </div>
+        
+        <!-- 装备图标 -->
+        <div class="build-card-items">
+            {% for slot in [build.item_slot1, build.item_slot2, build.item_slot3, build.item_slot4, build.item_slot5, build.item_slot6] %}
+                {% if slot %}
+                <img src="https://ddragon.leagueoflegends.com/cdn/{{ version }}/img/item/{{ slot }}.png" 
+                     class="build-item-icon"
+                     alt="装备">
+                {% else %}
+                <div class="build-item-empty"></div>
+                {% endif %}
+            {% endfor %}
+        </div>
+        
+        <!-- 操作按钮 -->
+        <div class="build-card-actions">
+            <a href="/items/builds?edit={{ build.id }}" class="build-action-btn build-action-edit">
+                <i data-lucide="edit-2" class="w-4 h-4"></i>
+                编辑
+            </a>
+            <button onclick="deleteItemBuild({{ build.id }})" class="build-action-btn build-action-delete">
+                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                删除
+            </button>
+        </div>
+        
+        <!-- 时间信息 -->
+        <div class="build-card-footer">
+            更新于 {{ build.updated_at.strftime('%Y-%m-%d %H:%M') }}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<!-- 空状态 -->
+<div class="builds-empty">
+    <i data-lucide="inbox" class="builds-empty-icon"></i>
+    <h3 class="builds-empty-title">还没有为 {{ champion.name }} 创建装备配置</h3>
+    <p class="builds-empty-desc">创建你的第一个装备配置方案吧！</p>
+    <a href="/items/builds" class="builds-empty-btn">
+        <i data-lucide="plus" class="w-5 h-5"></i>
+        创建配置
+    </a>
+</div>
+{% endif %}
+
+<style>
+    .builds-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 1.5rem;
+        padding: 1rem;
+    }
+
+    .build-card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        padding: 1.5rem;
+        transition: all 0.3s ease;
+    }
+
+    .build-card:hover {
+        border-color: var(--primary);
+        box-shadow: 0 4px 12px rgba(201, 170, 113, 0.2);
+        transform: translateY(-2px);
+    }
+
+    .build-card-header {
+        margin-bottom: 1rem;
+    }
+
+    .build-card-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--primary);
+        margin-bottom: 0.5rem;
+    }
+
+    .build-card-desc {
+        font-size: 0.875rem;
+        color: var(--muted-foreground);
+        line-height: 1.5;
+    }
+
+    .build-card-items {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .build-item-icon {
+        width: 100%;
+        aspect-ratio: 1;
+        border-radius: var(--radius-sm);
+        border: 1px solid var(--border);
+        transition: all 0.2s ease;
+    }
+
+    .build-item-icon:hover {
+        transform: scale(1.1);
+        border-color: var(--primary);
+    }
+
+    .build-item-empty {
+        width: 100%;
+        aspect-ratio: 1;
+        border-radius: var(--radius-sm);
+        border: 1px dashed var(--border);
+        background: var(--muted);
+    }
+
+    .build-card-actions {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .build-action-btn {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        border-radius: var(--radius-sm);
+        font-size: 0.875rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        border: none;
+    }
+
+    .build-action-edit {
+        background: var(--primary);
+        color: var(--primary-foreground);
+        text-decoration: none;
+    }
+
+    .build-action-edit:hover {
+        opacity: 0.9;
+    }
+
+    .build-action-delete {
+        background: var(--destructive);
+        color: var(--destructive-foreground);
+    }
+
+    .build-action-delete:hover {
+        opacity: 0.9;
+    }
+
+    .build-card-footer {
+        font-size: 0.75rem;
+        color: var(--muted-foreground);
+        text-align: center;
+        padding-top: 1rem;
+        border-top: 1px solid var(--border);
+    }
+
+    .builds-empty {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 4rem 2rem;
+        text-align: center;
+    }
+
+    .builds-empty-icon {
+        width: 4rem;
+        height: 4rem;
+        color: var(--muted-foreground);
+        margin-bottom: 1rem;
+    }
+
+    .builds-empty-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--foreground);
+        margin-bottom: 0.5rem;
+    }
+
+    .builds-empty-desc {
+        font-size: 1rem;
+        color: var(--muted-foreground);
+        margin-bottom: 2rem;
+    }
+
+    .builds-empty-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1.5rem;
+        background: var(--primary);
+        color: var(--primary-foreground);
+        border-radius: var(--radius-lg);
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.2s ease;
+    }
+
+    .builds-empty-btn:hover {
+        opacity: 0.9;
+        transform: translateY(-2px);
+    }
+</style>
+
+<script>
+// 删除装备配置
+async function deleteItemBuild(buildId) {
+    if (!confirm('确定要删除这个装备配置吗？')) {
+        return;
+    }
+
+    const response = await fetch(`/items/builds/delete/${buildId}`, {
+        method: 'POST'
+    });
+
+    if (response.ok) {
+        // 重新加载装备配置列表
+        window.loadChampionItemBuilds(true);
+    } else {
+        alert('删除失败，请重试');
+    }
+}
+
+// 初始化图标
+if (typeof lucide !== 'undefined') {
+    lucide.createIcons();
+}
+</script>
+

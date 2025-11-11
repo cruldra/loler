@@ -687,6 +687,10 @@
                 <i data-lucide="sparkles" class="w-4 h-4 inline mr-2"></i>
                 符文配置
             </button>
+            <button class="tab-button" data-tab="item-builds">
+                <i data-lucide="zap" class="w-4 h-4 inline mr-2"></i>
+                装备配置
+            </button>
         </div>
 
         <div class="tab-content">
@@ -925,6 +929,15 @@
                     </div>
                 </div>
             </div>
+
+            <div class="tab-panel" id="item-builds">
+                <div id="item-builds-content">
+                    <div style="text-align: center; padding: 3rem; color: var(--muted-foreground);">
+                        <i data-lucide="loader-2" class="w-8 h-8 mx-auto mb-2 animate-spin"></i>
+                        <p>加载中...</p>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -1060,6 +1073,10 @@ document.addEventListener('click', function(e) {
                 // 如果切换到符文配置tab，加载符文配置
                 if (targetTab === 'runes') {
                     loadChampionRunes();
+                }
+                // 如果切换到装备配置tab，加载装备配置
+                if (targetTab === 'item-builds') {
+                    loadChampionItemBuilds();
                 }
             });
         });
@@ -1306,6 +1323,37 @@ document.addEventListener('click', function(e) {
         }
 
         runesLoaded = true;
+    };
+
+    // 加载英雄装备配置
+    let itemBuildsLoaded = false;
+    window.loadChampionItemBuilds = async function(forceReload = false) {
+        if (itemBuildsLoaded && !forceReload) return;
+
+        const championId = '{{ champion.id }}';
+        const itemBuildsContent = document.getElementById('item-builds-content');
+
+        // 显示加载状态
+        itemBuildsContent.innerHTML = `
+            <div style="text-align: center; padding: 3rem; color: var(--muted-foreground);">
+                <i data-lucide="loader-2" class="w-8 h-8 mx-auto mb-2 animate-spin"></i>
+                <p>加载中...</p>
+            </div>
+        `;
+
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+
+        const response = await fetch(`/champions/${championId}/item-builds`);
+        const html = await response.text();
+        itemBuildsContent.innerHTML = html;
+
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+
+        itemBuildsLoaded = true;
     };
 
 </script>
