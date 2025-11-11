@@ -43,6 +43,11 @@ from .champion_video import (
     ChampionVideoUpdate,
     ChampionVideoResponse
 )
+from .champion_skill import (
+    ChampionSkillCreate,
+    ChampionSkillUpdate,
+    ChampionSkillResponse
+)
 from .monster import MonsterModel
 from .replay import (
     ReplayResponse,
@@ -88,6 +93,9 @@ __all__ = [
     "ChampionVideoCreate",
     "ChampionVideoUpdate",
     "ChampionVideoResponse",
+    "ChampionSkillCreate",
+    "ChampionSkillUpdate",
+    "ChampionSkillResponse",
     "MonsterModel",
     "ReplayResponse",
     "ReplayImportRequest",

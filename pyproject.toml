@@ -16,4 +16,5 @@ dependencies = [
     "python-multipart>=0.0.20",
     "litellm>=1.79.3",
     "crewai>=1.4.1",
+    "paddleocr>=3.3.1",
 ]

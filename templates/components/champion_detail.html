@@ -1,5 +1,5 @@
 {# 英雄详情组件 #}
-{% macro ChampionDetail(champion, is_favorited=False, user=None, champion_tips=[], champion_videos=[]) %}
+{% macro ChampionDetail(champion, is_favorited=False, user=None, champion_tips=[], champion_videos=[], champion_skills={}) %}
 {# 导入技巧组件 #}
 {% import 'components/champion_tips.html' as ChampionTipsComponent %}
 {# 导入视频组件 #}
@@ -294,7 +294,114 @@
     .skill-description {
         color: var(--muted-foreground) !important;
         line-height: 1.6 !important;
-        margin-bottom: 1rem !important;
+    }
+
+    /* 技能详情扩展样式 */
+    .skill-details {
+        margin-top: 1.5rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid var(--border);
+    }
+
+    .skill-upload-section {
+        margin-bottom: 1rem;
+    }
+
+    .btn-upload-skill {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        background: var(--primary);
+        color: var(--primary-foreground);
+        border: none;
+        border-radius: var(--radius);
+        cursor: pointer;
+        font-size: 0.9rem;
+        transition: all 0.2s;
+    }
+
+    .btn-upload-skill:hover {
+        opacity: 0.9;
+        transform: translateY(-1px);
+    }
+
+    .btn-upload-skill:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+
+    .skill-ocr-section {
+        margin-bottom: 1.5rem;
+        padding: 1rem;
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+    }
+
+    .skill-ocr-section h4 {
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--foreground);
+        margin-bottom: 0.75rem;
+    }
+
+    .skill-ocr-content {
+        color: var(--muted-foreground);
+        line-height: 1.6;
+        white-space: pre-wrap;
+        margin-bottom: 1rem;
+    }
+
+    .skill-detail-image {
+        max-width: 100%;
+        border-radius: var(--radius);
+        border: 1px solid var(--border);
+    }
+
+    .skill-notes-section h4 {
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--foreground);
+        margin-bottom: 0.75rem;
+    }
+
+    .skill-notes-input {
+        width: 100%;
+        min-height: 120px;
+        padding: 0.75rem;
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        color: var(--foreground);
+        font-family: monospace;
+        font-size: 0.9rem;
+        resize: vertical;
+        margin-bottom: 0.75rem;
+    }
+
+    .skill-notes-input:focus {
+        outline: none;
+        border-color: var(--primary);
+    }
+
+    .btn-save-notes {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        background: var(--primary);
+        color: var(--primary-foreground);
+        border: none;
+        border-radius: var(--radius);
+        cursor: pointer;
+        font-size: 0.9rem;
+        transition: all 0.2s;
+    }
+
+    .btn-save-notes:hover {
+        opacity: 0.9;
+        transform: translateY(-1px);
     }
 
     .skins-grid {
@@ -590,13 +697,68 @@
 
             <div class="tab-panel" id="skills">
                 <div class="skills-grid">
+                    {% if champion.passive %}
+                    <!-- 被动技能 -->
+                    <div class="skill-item" data-skill-type="passive">
+                        <div class="skill-header">
+                            <div class="skill-icon">
+                                <img src="https://ddragon.leagueoflegends.com/cdn/15.21.1/img/passive/{{ champion.passive.image.full }}" alt="{{ champion.passive.name }}" onerror="this.parentElement.innerHTML='P'">
+                                <span class="skill-key">P</span>
+                            </div>
+                            <div class="skill-info">
+                                <h3>{{ champion.passive.name }}</h3>
+                                <div class="skill-type">被动技能</div>
+                            </div>
+                        </div>
+                        <div class="skill-description">{{ champion.passive.description }}</div>
+
+                        {% if user %}
+                        <!-- 技能详情扩展区域 -->
+                        <div class="skill-details">
+                            {% set skill_data = champion_skills.get('passive') %}
+
+                            <!-- 上传图片按钮 -->
+                            <div class="skill-upload-section">
+                                <button class="btn-upload-skill" onclick="uploadSkillImage('{{ champion.id }}', 'passive')">
+                                    <i data-lucide="upload" class="w-4 h-4"></i>
+                                    上传技能详情图片
+                                </button>
+                                <input type="file" id="skill-image-passive" accept="image/*" style="display: none;">
+                            </div>
+
+                            <!-- OCR识别的详情 -->
+                            {% if skill_data and skill_data.ocr_description %}
+                            <div class="skill-ocr-section">
+                                <h4>OCR识别的详细介绍：</h4>
+                                <div class="skill-ocr-content">{{ skill_data.ocr_description }}</div>
+                                {% if skill_data.image_path %}
+                                <img src="{{ skill_data.image_path }}" alt="技能详情图片" class="skill-detail-image">
+                                {% endif %}
+                            </div>
+                            {% endif %}
+
+                            <!-- 个人见解 -->
+                            <div class="skill-notes-section">
+                                <h4>个人见解：</h4>
+                                <textarea class="skill-notes-input" id="notes-passive" placeholder="在此添加你的个人见解（支持Markdown格式）...">{% if skill_data and skill_data.personal_notes %}{{ skill_data.personal_notes }}{% endif %}</textarea>
+                                <button class="btn-save-notes" onclick="saveSkillNotes('{{ champion.id }}', 'passive')">
+                                    <i data-lucide="save" class="w-4 h-4"></i>
+                                    保存见解
+                                </button>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+
                     {% if champion.spells %}
                         {% for spell in champion.spells %}
-                        <div class="skill-item">
+                        {% set skill_key = ['Q', 'W', 'E', 'R'][loop.index0] %}
+                        <div class="skill-item" data-skill-type="{{ skill_key }}">
                             <div class="skill-header">
                                 <div class="skill-icon">
-                                    <img src="https://ddragon.leagueoflegends.com/cdn/15.21.1/img/spell/{{ spell.image.full }}" alt="{{ spell.name }}" onerror="this.parentElement.innerHTML='{{ ['Q', 'W', 'E', 'R'][loop.index0] }}'">
-                                    <span class="skill-key">{{ ['Q', 'W', 'E', 'R'][loop.index0] }}</span>
+                                    <img src="https://ddragon.leagueoflegends.com/cdn/15.21.1/img/spell/{{ spell.image.full }}" alt="{{ spell.name }}" onerror="this.parentElement.innerHTML='{{ skill_key }}'">
+                                    <span class="skill-key">{{ skill_key }}</span>
                                 </div>
                                 <div class="skill-info">
                                     <h3>{{ spell.name }}</h3>
@@ -604,6 +766,43 @@
                                 </div>
                             </div>
                             <div class="skill-description">{{ spell.description }}</div>
+
+                            {% if user %}
+                            <!-- 技能详情扩展区域 -->
+                            <div class="skill-details">
+                                {% set skill_data = champion_skills.get(skill_key) %}
+
+                                <!-- 上传图片按钮 -->
+                                <div class="skill-upload-section">
+                                    <button class="btn-upload-skill" onclick="uploadSkillImage('{{ champion.id }}', '{{ skill_key }}')">
+                                        <i data-lucide="upload" class="w-4 h-4"></i>
+                                        上传技能详情图片
+                                    </button>
+                                    <input type="file" id="skill-image-{{ skill_key }}" accept="image/*" style="display: none;">
+                                </div>
+
+                                <!-- OCR识别的详情 -->
+                                {% if skill_data and skill_data.ocr_description %}
+                                <div class="skill-ocr-section">
+                                    <h4>OCR识别的详细介绍：</h4>
+                                    <div class="skill-ocr-content">{{ skill_data.ocr_description }}</div>
+                                    {% if skill_data.image_path %}
+                                    <img src="{{ skill_data.image_path }}" alt="技能详情图片" class="skill-detail-image">
+                                    {% endif %}
+                                </div>
+                                {% endif %}
+
+                                <!-- 个人见解 -->
+                                <div class="skill-notes-section">
+                                    <h4>个人见解：</h4>
+                                    <textarea class="skill-notes-input" id="notes-{{ skill_key }}" placeholder="在此添加你的个人见解（支持Markdown格式）...">{% if skill_data and skill_data.personal_notes %}{{ skill_data.personal_notes }}{% endif %}</textarea>
+                                    <button class="btn-save-notes" onclick="saveSkillNotes('{{ champion.id }}', '{{ skill_key }}')">
+                                        <i data-lucide="save" class="w-4 h-4"></i>
+                                        保存见解
+                                    </button>
+                                </div>
+                            </div>
+                            {% endif %}
                         </div>
                         {% endfor %}
                     {% else %}
@@ -995,6 +1194,70 @@ document.addEventListener('click', function(e) {
     setupTabs();
     animateStatBars();
 })();
+    // 上传技能图片
+    window.uploadSkillImage = async function(championId, skillType) {
+        const fileInput = document.getElementById(`skill-image-${skillType}`);
+
+        fileInput.onchange = async function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const formData = new FormData();
+            formData.append('skill_type', skillType);
+            formData.append('image', file);
+
+            // 显示加载提示
+            const uploadBtn = event.target.closest('.skill-upload-section').querySelector('.btn-upload-skill');
+            const originalText = uploadBtn.innerHTML;
+            uploadBtn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> 上传中...';
+            uploadBtn.disabled = true;
+
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+
+            const response = await fetch(`/champions/${championId}/skills/upload`, {
+                method: 'POST',
+                body: formData
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                alert('图片上传成功，OCR识别完成！');
+                location.reload(); // 重新加载页面以显示OCR结果
+            } else {
+                alert('上传失败：' + result.message);
+                uploadBtn.innerHTML = originalText;
+                uploadBtn.disabled = false;
+            }
+        };
+
+        fileInput.click();
+    };
+
+    // 保存技能见解
+    window.saveSkillNotes = async function(championId, skillType) {
+        const notesInput = document.getElementById(`notes-${skillType}`);
+        const notes = notesInput.value;
+
+        const formData = new FormData();
+        formData.append('personal_notes', notes);
+
+        const response = await fetch(`/champions/${championId}/skills/${skillType}/notes`, {
+            method: 'POST',
+            body: formData
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            alert('个人见解保存成功！');
+        } else {
+            alert('保存失败：' + result.message);
+        }
+    };
+
 </script>
 
 <!-- 引入marked.js用于Markdown渲染 -->

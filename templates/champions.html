@@ -43,7 +43,7 @@
         <!-- 右侧：英雄详情 -->
         <div class="lg:col-span-2">
             {% if selected_champion %}
-                {{ ChampionDetail.ChampionDetail(champion=selected_champion, is_favorited=is_favorited, user=user, champion_tips=champion_tips|default([]), champion_videos=champion_videos|default([])) }}
+                {{ ChampionDetail.ChampionDetail(champion=selected_champion, is_favorited=is_favorited, user=user, champion_tips=champion_tips|default([]), champion_videos=champion_videos|default([]), champion_skills=champion_skills|default({})) }}
             {% else %}
                 <div class="flex items-center justify-center h-full">
                     <div class="text-center">

@@ -1,15 +1,18 @@
 """
 英雄相关路由
 """
-from fastapi import APIRouter, Request, Depends, Form
+from fastapi import APIRouter, Request, Depends, Form, UploadFile, File
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from sqlmodel import Session, select
 from services.champion_service import champion_service
+from services.ocr_service import ocr_service
 from database import get_session
-from models import User, ChampionFavorite, ChampionTip, ChampionVideo
-from schemas import ChampionTipCreate, ChampionTipUpdate, ChampionTipResponse, ChampionVideoCreate, ChampionVideoUpdate, ChampionVideoResponse
+from models import User, ChampionFavorite, ChampionTip, ChampionVideo, ChampionSkill
+from schemas import ChampionTipCreate, ChampionTipUpdate, ChampionTipResponse, ChampionVideoCreate, ChampionVideoUpdate, ChampionVideoResponse, ChampionSkillCreate, ChampionSkillUpdate, ChampionSkillResponse
 from datetime import datetime
+from pathlib import Path
+import shutil
 
 router = APIRouter(prefix="/champions", tags=["champions"])
 templates = Jinja2Templates(directory="templates")
@@ -54,6 +57,7 @@ async def champion_detail(request: Request, champion_id: str, session: Session =
     is_favorited = False
     champion_tips = []
     champion_videos = []
+    champion_skills = {}
     if user:
         db_user = session.exec(
             select(User).where(
@@ -89,6 +93,16 @@ async def champion_detail(request: Request, champion_id: str, session: Session =
             ).all()
             champion_videos = list(videos)
 
+            # 获取该用户的该英雄的技能详情
+            skills = session.exec(
+                select(ChampionSkill).where(
+                    ChampionSkill.user_id == db_user.id,
+                    ChampionSkill.champion_id == champion_id
+                )
+            ).all()
+            # 转换为字典，以skill_type为key
+            champion_skills = {skill.skill_type: skill for skill in skills}
+
     return templates.TemplateResponse(
         request=request,
         name="champions.html",
@@ -98,7 +112,8 @@ async def champion_detail(request: Request, champion_id: str, session: Session =
             "selected_champion": selected_champion,
             "is_favorited": is_favorited,
             "champion_tips": champion_tips,
-            "champion_videos": champion_videos
+            "champion_videos": champion_videos,
+            "champion_skills": champion_skills
         }
     )
 
@@ -435,4 +450,171 @@ async def delete_video(
         session.commit()
 
     return RedirectResponse(url=f"/champions/{champion_id}", status_code=303)
+
+
+def get_current_user(request: Request, session: Session) -> User:
+    """获取当前登录用户"""
+    user = request.session.get('user')
+    if not user:
+        return None
+
+    db_user = session.exec(
+        select(User).where(
+            User.provider == user['provider'],
+            User.provider_user_id == user['provider_id']
+        )
+    ).first()
+
+    return db_user
+
+
+@router.post("/{champion_id}/skills/upload")
+async def upload_skill_image(
+    request: Request,
+    champion_id: str,
+    skill_type: str = Form(...),
+    image: UploadFile = File(...),
+    session: Session = Depends(get_session)
+):
+    """上传技能图片并进行OCR识别"""
+    db_user = get_current_user(request, session)
+    if not db_user:
+        return JSONResponse(content={"success": False, "message": "未登录"}, status_code=401)
+
+    # 创建上传目录
+    upload_dir = Path("static/uploads/skills")
+    upload_dir.mkdir(parents=True, exist_ok=True)
+
+    # 保存图片
+    file_ext = Path(image.filename).suffix
+    file_name = f"{champion_id}_{skill_type}_{db_user.id}{file_ext}"
+    file_path = upload_dir / file_name
+
+    with file_path.open("wb") as buffer:
+        shutil.copyfileobj(image.file, buffer)
+
+    # OCR识别
+    ocr_text = ocr_service.recognize_text(str(file_path))
+
+    # 查找或创建技能详情记录
+    skill = session.exec(
+        select(ChampionSkill).where(
+            ChampionSkill.user_id == db_user.id,
+            ChampionSkill.champion_id == champion_id,
+            ChampionSkill.skill_type == skill_type
+        )
+    ).first()
+
+    if skill:
+        # 更新现有记录
+        skill.image_path = f"/static/uploads/skills/{file_name}"
+        skill.ocr_description = ocr_text
+        skill.updated_at = datetime.now()
+    else:
+        # 创建新记录
+        skill = ChampionSkill(
+            user_id=db_user.id,
+            champion_id=champion_id,
+            skill_type=skill_type,
+            image_path=f"/static/uploads/skills/{file_name}",
+            ocr_description=ocr_text
+        )
+        session.add(skill)
+
+    session.commit()
+    session.refresh(skill)
+
+    return JSONResponse(content={
+        "success": True,
+        "message": "图片上传成功",
+        "data": {
+            "id": skill.id,
+            "image_path": skill.image_path,
+            "ocr_description": skill.ocr_description
+        }
+    })
+
+
+@router.post("/{champion_id}/skills/{skill_type}/notes")
+async def update_skill_notes(
+    request: Request,
+    champion_id: str,
+    skill_type: str,
+    personal_notes: str = Form(...),
+    session: Session = Depends(get_session)
+):
+    """更新技能个人见解"""
+    db_user = get_current_user(request, session)
+    if not db_user:
+        return JSONResponse(content={"success": False, "message": "未登录"}, status_code=401)
+
+    # 查找或创建技能详情记录
+    skill = session.exec(
+        select(ChampionSkill).where(
+            ChampionSkill.user_id == db_user.id,
+            ChampionSkill.champion_id == champion_id,
+            ChampionSkill.skill_type == skill_type
+        )
+    ).first()
+
+    if skill:
+        # 更新现有记录
+        skill.personal_notes = personal_notes
+        skill.updated_at = datetime.now()
+    else:
+        # 创建新记录
+        skill = ChampionSkill(
+            user_id=db_user.id,
+            champion_id=champion_id,
+            skill_type=skill_type,
+            personal_notes=personal_notes
+        )
+        session.add(skill)
+
+    session.commit()
+    session.refresh(skill)
+
+    return JSONResponse(content={
+        "success": True,
+        "message": "个人见解保存成功",
+        "data": {
+            "id": skill.id,
+            "personal_notes": skill.personal_notes
+        }
+    })
+
+
+@router.get("/{champion_id}/skills/{skill_type}")
+async def get_skill_detail(
+    request: Request,
+    champion_id: str,
+    skill_type: str,
+    session: Session = Depends(get_session)
+):
+    """获取技能详情"""
+    db_user = get_current_user(request, session)
+    if not db_user:
+        return JSONResponse(content={"success": False, "message": "未登录"}, status_code=401)
+
+    skill = session.exec(
+        select(ChampionSkill).where(
+            ChampionSkill.user_id == db_user.id,
+            ChampionSkill.champion_id == champion_id,
+            ChampionSkill.skill_type == skill_type
+        )
+    ).first()
+
+    if not skill:
+        return JSONResponse(content={"success": False, "message": "未找到技能详情"}, status_code=404)
+
+    return JSONResponse(content={
+        "success": True,
+        "data": {
+            "id": skill.id,
+            "skill_type": skill.skill_type,
+            "image_path": skill.image_path,
+            "ocr_description": skill.ocr_description,
+            "personal_notes": skill.personal_notes
+        }
+    })
 
