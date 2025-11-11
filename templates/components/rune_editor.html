@@ -1,4 +1,4 @@
-{% macro rune_editor(rune_trees, version, edit_page=None, user=None) %}
+{% macro rune_editor(rune_trees, version, edit_page=None, user=None, champions=[]) %}
 <style>
     .rune-editor-container {
         background-image: 
@@ -112,6 +112,71 @@
         outline: none;
         border-color: #c9aa71;
         box-shadow: 0 0 0 2px rgba(201, 170, 113, 0.2);
+    }
+
+    .searchable-select-wrapper {
+        position: relative;
+    }
+
+    .searchable-select-input {
+        cursor: text !important;
+    }
+
+    .searchable-select-dropdown {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        max-height: 300px;
+        overflow-y: auto;
+        background: rgba(26, 26, 46, 0.98);
+        border: 1px solid rgba(201, 170, 113, 0.3);
+        border-radius: 8px;
+        margin-top: 0.25rem;
+        z-index: 1000;
+        display: none;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    }
+
+    .searchable-select-dropdown.show {
+        display: block;
+    }
+
+    .searchable-select-option {
+        padding: 0.75rem;
+        color: #c9aa71;
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+
+    .searchable-select-option:hover {
+        background: rgba(201, 170, 113, 0.1);
+    }
+
+    .searchable-select-option.selected {
+        background: rgba(201, 170, 113, 0.2);
+    }
+
+    .searchable-select-option.hidden {
+        display: none;
+    }
+
+    .searchable-select-dropdown::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    .searchable-select-dropdown::-webkit-scrollbar-track {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 4px;
+    }
+
+    .searchable-select-dropdown::-webkit-scrollbar-thumb {
+        background: rgba(201, 170, 113, 0.3);
+        border-radius: 4px;
+    }
+
+    .searchable-select-dropdown::-webkit-scrollbar-thumb:hover {
+        background: rgba(201, 170, 113, 0.5);
     }
 
     .rune-tooltip {
@@ -292,9 +357,25 @@
 
                 <div style="margin-bottom: 1.5rem;">
                     <label style="display: block; color: #c9aa71; font-weight: 500; margin-bottom: 0.5rem;">关联英雄 (可选)</label>
-                    <input type="text" class="form-input" name="champion_id" id="championId" 
-                           placeholder="英雄ID"
-                           value="{% if edit_page %}{{ edit_page.champion_id or '' }}{% endif %}">
+                    <div class="searchable-select-wrapper">
+                        <input type="text"
+                               class="form-input searchable-select-input"
+                               id="championSearchInput"
+                               placeholder="搜索英雄..."
+                               autocomplete="off">
+                        <input type="hidden" name="champion_id" id="championId" value="{% if edit_page %}{{ edit_page.champion_id or '' }}{% endif %}">
+                        <div class="searchable-select-dropdown" id="championDropdown">
+                            <div class="searchable-select-option" data-value="">-- 选择英雄 --</div>
+                            {% for champion in champions %}
+                            <div class="searchable-select-option"
+                                 data-value="{{ champion.id }}"
+                                 data-name="{{ champion.name }}"
+                                 data-title="{{ champion.title }}">
+                                {{ champion.name }} - {{ champion.title }}
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
                 </div>
 
                 <div style="display: flex; gap: 1rem;">
@@ -687,7 +768,107 @@
         }, 100);
     }
 
-    document.addEventListener('DOMContentLoaded', init);
+    // 可搜索下拉选择框功能
+    function initSearchableSelect() {
+        const searchInput = document.getElementById('championSearchInput');
+        const dropdown = document.getElementById('championDropdown');
+        const hiddenInput = document.getElementById('championId');
+        const options = dropdown.querySelectorAll('.searchable-select-option');
+
+        // 初始化显示值
+        const initialValue = hiddenInput.value;
+        if (initialValue) {
+            const selectedOption = dropdown.querySelector(`[data-value="${initialValue}"]`);
+            if (selectedOption) {
+                searchInput.value = selectedOption.textContent.trim();
+                selectedOption.classList.add('selected');
+            }
+        }
+
+        // 点击输入框显示下拉列表
+        searchInput.addEventListener('focus', function() {
+            dropdown.classList.add('show');
+        });
+
+        // 搜索过滤
+        searchInput.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            dropdown.classList.add('show');
+
+            options.forEach(option => {
+                const text = option.textContent.toLowerCase();
+                if (text.includes(searchTerm)) {
+                    option.classList.remove('hidden');
+                } else {
+                    option.classList.add('hidden');
+                }
+            });
+        });
+
+        // 选择选项
+        options.forEach(option => {
+            option.addEventListener('click', function() {
+                const value = this.dataset.value;
+                const text = this.textContent.trim();
+
+                // 更新隐藏输入框
+                hiddenInput.value = value;
+
+                // 更新显示文本
+                searchInput.value = text;
+
+                // 更新选中状态
+                options.forEach(opt => opt.classList.remove('selected'));
+                this.classList.add('selected');
+
+                // 隐藏下拉列表
+                dropdown.classList.remove('show');
+            });
+        });
+
+        // 点击外部关闭下拉列表
+        document.addEventListener('click', function(e) {
+            if (!searchInput.contains(e.target) && !dropdown.contains(e.target)) {
+                dropdown.classList.remove('show');
+            }
+        });
+
+        // 键盘导航
+        searchInput.addEventListener('keydown', function(e) {
+            const visibleOptions = Array.from(options).filter(opt => !opt.classList.contains('hidden'));
+            const currentSelected = dropdown.querySelector('.searchable-select-option.selected');
+            let currentIndex = visibleOptions.indexOf(currentSelected);
+
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                dropdown.classList.add('show');
+                if (currentIndex < visibleOptions.length - 1) {
+                    if (currentSelected) currentSelected.classList.remove('selected');
+                    visibleOptions[currentIndex + 1].classList.add('selected');
+                    visibleOptions[currentIndex + 1].scrollIntoView({ block: 'nearest' });
+                }
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                if (currentIndex > 0) {
+                    if (currentSelected) currentSelected.classList.remove('selected');
+                    visibleOptions[currentIndex - 1].classList.add('selected');
+                    visibleOptions[currentIndex - 1].scrollIntoView({ block: 'nearest' });
+                }
+            } else if (e.key === 'Enter') {
+                e.preventDefault();
+                if (currentSelected && dropdown.classList.contains('show')) {
+                    currentSelected.click();
+                }
+            } else if (e.key === 'Escape') {
+                dropdown.classList.remove('show');
+            }
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        init();
+        initSearchableSelect();
+    });
 </script>
 {% endmacro %}
 

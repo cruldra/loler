@@ -7,8 +7,9 @@ from fastapi.templating import Jinja2Templates
 from sqlmodel import Session, select
 from services.champion_service import champion_service
 from services.ocr_service import ocr_service
+from services.rune_service import rune_service
 from database import get_session
-from models import User, ChampionFavorite, ChampionTip, ChampionVideo, ChampionSkill
+from models import User, ChampionFavorite, ChampionTip, ChampionVideo, ChampionSkill, RunePage
 from schemas import ChampionTipCreate, ChampionTipUpdate, ChampionTipResponse, ChampionVideoCreate, ChampionVideoUpdate, ChampionVideoResponse, ChampionSkillCreate, ChampionSkillUpdate, ChampionSkillResponse
 from datetime import datetime
 from pathlib import Path
@@ -617,4 +618,54 @@ async def get_skill_detail(
             "personal_notes": skill.personal_notes
         }
     })
+
+
+@router.get("/{champion_id}/runes", response_class=HTMLResponse)
+async def get_champion_runes(
+    request: Request,
+    champion_id: str,
+    session: Session = Depends(get_session)
+):
+    """获取英雄关联的符文配置"""
+    user = request.session.get('user')
+
+    # 获取英雄信息
+    champion = champion_service.get_champion_by_id(champion_id)
+    if not champion:
+        return HTMLResponse(content="<p>未找到英雄</p>")
+
+    # 获取符文配置列表
+    rune_pages = []
+    if user:
+        db_user = session.exec(
+            select(User).where(
+                User.provider == user['provider'],
+                User.provider_user_id == user['provider_id']
+            )
+        ).first()
+
+        if db_user:
+            # 查询该英雄关联的符文配置
+            rune_pages = session.exec(
+                select(RunePage).where(
+                    RunePage.user_id == db_user.id,
+                    RunePage.champion_id == champion_id
+                ).order_by(RunePage.updated_at.desc())
+            ).all()
+
+    # 获取符文树数据
+    rune_trees = rune_service.get_all_trees()
+    version = rune_service.get_version()
+
+    return templates.TemplateResponse(
+        request=request,
+        name="components/champion_runes.html",
+        context={
+            "user": user,
+            "champion": champion,
+            "rune_pages": rune_pages,
+            "rune_trees": rune_trees,
+            "version": version
+        }
+    )
 

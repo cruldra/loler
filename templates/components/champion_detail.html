@@ -151,12 +151,14 @@
 
     .tabs-header {
         display: flex;
+        flex-wrap: wrap;
         background: var(--muted) !important;
         border-bottom: 1px solid var(--border) !important;
     }
 
     .tab-button {
-        flex: 1;
+        flex: 0 0 auto;
+        min-width: 120px;
         padding: 1rem 1.5rem !important;
         background: transparent !important;
         border: none !important;
@@ -166,6 +168,7 @@
         cursor: pointer !important;
         transition: all 0.2s ease-out !important;
         position: relative;
+        white-space: nowrap;
     }
 
     .tab-button::after {
@@ -680,6 +683,10 @@
                 <i data-lucide="git-compare" class="w-4 h-4 inline mr-2"></i>
                 对比分析
             </button>
+            <button class="tab-button" data-tab="runes">
+                <i data-lucide="sparkles" class="w-4 h-4 inline mr-2"></i>
+                符文配置
+            </button>
         </div>
 
         <div class="tab-content">
@@ -909,6 +916,15 @@
                     </div>
                 </div>
             </div>
+
+            <div class="tab-panel" id="runes">
+                <div id="runes-content">
+                    <div style="text-align: center; padding: 3rem; color: var(--muted-foreground);">
+                        <i data-lucide="loader-2" class="w-8 h-8 mx-auto mb-2 animate-spin"></i>
+                        <p>加载中...</p>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -1040,6 +1056,10 @@ document.addEventListener('click', function(e) {
                 // 如果切换到对比分析tab，加载对比报告
                 if (targetTab === 'comparisons') {
                     loadChampionComparisons();
+                }
+                // 如果切换到符文配置tab，加载符文配置
+                if (targetTab === 'runes') {
+                    loadChampionRunes();
                 }
             });
         });
@@ -1256,6 +1276,36 @@ document.addEventListener('click', function(e) {
         } else {
             alert('保存失败：' + result.message);
         }
+    };
+
+    // 加载英雄符文配置
+    let runesLoaded = false;
+    window.loadChampionRunes = async function(forceReload = false) {
+        if (runesLoaded && !forceReload) return;
+
+        const championId = '{{ champion.id }}';
+        const runesContent = document.getElementById('runes-content');
+
+        runesContent.innerHTML = `
+            <div style="text-align: center; padding: 3rem; color: var(--muted-foreground);">
+                <i data-lucide="loader-2" class="w-8 h-8 mx-auto mb-2 animate-spin"></i>
+                <p>加载中...</p>
+            </div>
+        `;
+
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+
+        const response = await fetch(`/champions/${championId}/runes`);
+        const html = await response.text();
+        runesContent.innerHTML = html;
+
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+
+        runesLoaded = true;
     };
 
 </script>

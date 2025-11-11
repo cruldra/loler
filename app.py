@@ -227,6 +227,11 @@ async def runes_page(request: Request, edit: int = None, session: Session = Depe
                     'secondary_slot2_id': rune_page.secondary_slot2_id
                 }
 
+    # 获取所有英雄列表
+    champions = list(champion_service.get_all_champions().values())
+    # 按名称排序
+    champions.sort(key=lambda x: x.name)
+
     return templates.TemplateResponse(
         request=request,
         name="runes.html",
@@ -234,7 +239,8 @@ async def runes_page(request: Request, edit: int = None, session: Session = Depe
             "user": user,
             "rune_trees": rune_trees,
             "version": rune_service.get_version(),
-            "edit_page": edit_page
+            "edit_page": edit_page,
+            "champions": champions
         }
     )
 
@@ -400,6 +406,41 @@ async def delete_rune_page(page_id: int, request: Request, session: Session = De
             session.commit()
 
     return RedirectResponse(url='/profile', status_code=303)
+
+
+@app.delete("/runes/{page_id}")
+async def delete_rune_page_api(page_id: int, request: Request, session: Session = Depends(get_session)):
+    """删除符文页 (API)"""
+    user = request.session.get('user')
+    if not user:
+        return JSONResponse(content={"success": False, "message": "未登录"}, status_code=401)
+
+    # 查找用户
+    db_user = session.exec(
+        select(User).where(
+            User.provider == user['provider'],
+            User.provider_user_id == user['provider_id']
+        )
+    ).first()
+
+    if not db_user:
+        return JSONResponse(content={"success": False, "message": "用户不存在"}, status_code=404)
+
+    # 查找并删除符文页
+    rune_page = session.exec(
+        select(RunePage).where(
+            RunePage.id == page_id,
+            RunePage.user_id == db_user.id
+        )
+    ).first()
+
+    if not rune_page:
+        return JSONResponse(content={"success": False, "message": "符文页不存在"}, status_code=404)
+
+    session.delete(rune_page)
+    session.commit()
+
+    return JSONResponse(content={"success": True, "message": "删除成功"})
 
 
 if __name__ == "__main__":
