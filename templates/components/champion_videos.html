@@ -17,9 +17,18 @@
     <div class="videos-list">
         {% if champion_videos %}
             {% for video in champion_videos %}
-            <div class="video-card">
-                <div class="video-thumbnail">
-                    {% if video.platform == 'bilibili' %}
+            <div class="video-card"
+                 data-video-id="{{ video.id }}"
+                 data-video-title="{{ video.title }}"
+                 data-video-url="{{ video.url or '' }}"
+                 data-video-description="{{ video.description or '' }}"
+                 data-video-platform="{{ video.platform or '' }}"
+                 data-video-type="{{ video.video_type }}">
+                <div class="video-thumbnail" {% if video.video_type == 'upload' %}onclick="playUploadedVideoById({{ video.id }})"{% endif %}>
+                    {% if video.video_type == 'upload' %}
+                        <i data-lucide="play-circle" class="w-12 h-12 text-primary"></i>
+                        <span class="platform-badge upload">站内视频</span>
+                    {% elif video.platform == 'bilibili' %}
                         <i data-lucide="play-circle" class="w-12 h-12 text-primary"></i>
                         <span class="platform-badge bilibili">B站</span>
                     {% else %}
@@ -33,12 +42,19 @@
                     <p class="video-description">{{ video.description }}</p>
                     {% endif %}
                     <div class="video-actions">
+                        {% if video.video_type == 'upload' %}
+                        <button class="btn-watch" onclick="playUploadedVideoById({{ video.id }})">
+                            <i data-lucide="play" class="w-4 h-4"></i>
+                            播放视频
+                        </button>
+                        {% else %}
                         <a href="{{ video.url }}" target="_blank" class="btn-watch">
                             <i data-lucide="external-link" class="w-4 h-4"></i>
                             观看视频
                         </a>
+                        {% endif %}
                         {% if user %}
-                        <button class="btn-edit-video" onclick="showEditVideoModal({{ video.id }}, '{{ video.title }}', '{{ video.url }}', '{{ video.description or '' }}', '{{ video.platform }}')">
+                        <button class="btn-edit-video" onclick="showEditVideoModalById({{ video.id }})">
                             <i data-lucide="edit" class="w-4 h-4"></i>
                         </button>
                         <button class="btn-delete-video" onclick="deleteVideo({{ video.id }})">
@@ -70,22 +86,48 @@
                 <i data-lucide="x" class="w-5 h-5"></i>
             </button>
         </div>
-        <form action="/champions/{{ champion.id }}/videos/create" method="post" class="video-form">
+        <form action="/champions/{{ champion.id }}/videos/create" method="post" enctype="multipart/form-data" class="video-form">
             <div class="form-group">
                 <label for="video-title">视频标题</label>
-                <input type="text" id="video-title" name="title" required class="form-input">
+                <input type="text" id="video-title" name="title" required class="form-input" oninput="this.dataset.autoFilled = 'false'">
             </div>
+
             <div class="form-group">
-                <label for="video-url">视频链接</label>
-                <input type="url" id="video-url" name="url" required class="form-input" placeholder="https://...">
+                <label>视频来源</label>
+                <div class="video-source-tabs">
+                    <button type="button" class="source-tab active" data-source="link" onclick="switchVideoSource('link', 'add')">
+                        <i data-lucide="link" class="w-4 h-4"></i>
+                        外部链接
+                    </button>
+                    <button type="button" class="source-tab" data-source="upload" onclick="switchVideoSource('upload', 'add')">
+                        <i data-lucide="upload" class="w-4 h-4"></i>
+                        上传视频
+                    </button>
+                </div>
             </div>
-            <div class="form-group">
-                <label for="video-platform">视频平台</label>
-                <select id="video-platform" name="platform" class="form-select">
-                    <option value="bilibili">B站</option>
-                    <option value="youtube">YouTube</option>
-                </select>
+
+            <div id="add-link-fields" class="source-fields">
+                <div class="form-group">
+                    <label for="video-url">视频链接</label>
+                    <input type="url" id="video-url" name="url" class="form-input" placeholder="https://...">
+                </div>
+                <div class="form-group">
+                    <label for="video-platform">视频平台</label>
+                    <select id="video-platform" name="platform" class="form-select">
+                        <option value="bilibili">B站</option>
+                        <option value="youtube">YouTube</option>
+                    </select>
+                </div>
             </div>
+
+            <div id="add-upload-fields" class="source-fields" style="display: none;">
+                <div class="form-group">
+                    <label for="video-file">选择视频文件</label>
+                    <input type="file" id="video-file" name="video_file" accept="video/*" class="form-input" onchange="handleVideoFileChange(this, 'add')">
+                    <p class="form-hint">支持 MP4, AVI, MOV 等常见视频格式，选择文件后将自动提取文件名作为标题</p>
+                </div>
+            </div>
+
             <div class="form-group">
                 <label for="video-description">视频描述（可选）</label>
                 <textarea id="video-description" name="description" rows="3" class="form-textarea"></textarea>
@@ -107,22 +149,48 @@
                 <i data-lucide="x" class="w-5 h-5"></i>
             </button>
         </div>
-        <form id="editVideoForm" method="post" class="video-form">
+        <form id="editVideoForm" method="post" enctype="multipart/form-data" class="video-form">
             <div class="form-group">
                 <label for="edit-video-title">视频标题</label>
-                <input type="text" id="edit-video-title" name="title" required class="form-input">
+                <input type="text" id="edit-video-title" name="title" required class="form-input" oninput="this.dataset.autoFilled = 'false'">
             </div>
+
             <div class="form-group">
-                <label for="edit-video-url">视频链接</label>
-                <input type="url" id="edit-video-url" name="url" required class="form-input">
+                <label>视频来源</label>
+                <div class="video-source-tabs">
+                    <button type="button" class="source-tab active" data-source="link" onclick="switchVideoSource('link', 'edit')">
+                        <i data-lucide="link" class="w-4 h-4"></i>
+                        外部链接
+                    </button>
+                    <button type="button" class="source-tab" data-source="upload" onclick="switchVideoSource('upload', 'edit')">
+                        <i data-lucide="upload" class="w-4 h-4"></i>
+                        上传视频
+                    </button>
+                </div>
             </div>
-            <div class="form-group">
-                <label for="edit-video-platform">视频平台</label>
-                <select id="edit-video-platform" name="platform" class="form-select">
-                    <option value="bilibili">B站</option>
-                    <option value="youtube">YouTube</option>
-                </select>
+
+            <div id="edit-link-fields" class="source-fields">
+                <div class="form-group">
+                    <label for="edit-video-url">视频链接</label>
+                    <input type="url" id="edit-video-url" name="url" class="form-input">
+                </div>
+                <div class="form-group">
+                    <label for="edit-video-platform">视频平台</label>
+                    <select id="edit-video-platform" name="platform" class="form-select">
+                        <option value="bilibili">B站</option>
+                        <option value="youtube">YouTube</option>
+                    </select>
+                </div>
             </div>
+
+            <div id="edit-upload-fields" class="source-fields" style="display: none;">
+                <div class="form-group">
+                    <label for="edit-video-file">选择视频文件</label>
+                    <input type="file" id="edit-video-file" name="video_file" accept="video/*" class="form-input" onchange="handleVideoFileChange(this, 'edit')">
+                    <p class="form-hint">支持 MP4, AVI, MOV 等常见视频格式，选择文件后将自动提取文件名作为标题</p>
+                </div>
+            </div>
+
             <div class="form-group">
                 <label for="edit-video-description">视频描述（可选）</label>
                 <textarea id="edit-video-description" name="description" rows="3" class="form-textarea"></textarea>
@@ -225,6 +293,10 @@
 
 .platform-badge.youtube {
     background: #ff0000;
+}
+
+.platform-badge.upload {
+    background: #10b981;
 }
 
 .video-info {
@@ -458,35 +530,141 @@
 .btn-submit:hover {
     background: var(--primary-dark);
 }
+
+.video-source-tabs {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.source-tab {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.75rem;
+    background: var(--muted);
+    border: 2px solid var(--border);
+    border-radius: var(--radius);
+    cursor: pointer;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--muted-foreground);
+    transition: all 0.2s ease;
+}
+
+.source-tab:hover {
+    background: var(--background);
+    border-color: var(--primary);
+}
+
+.source-tab.active {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: white;
+}
+
+.source-fields {
+    transition: all 0.3s ease;
+}
+
+.form-hint {
+    font-size: 0.75rem;
+    color: var(--muted-foreground);
+    margin-top: 0.25rem;
+}
 </style>
 
 <script>
+window.handleVideoFileChange = function(input, mode) {
+    if (input.files && input.files[0]) {
+        const file = input.files[0];
+        const fileName = file.name;
+        const titleWithoutExt = fileName.substring(0, fileName.lastIndexOf('.')) || fileName;
+
+        const titleInput = document.getElementById(mode === 'add' ? 'video-title' : 'edit-video-title');
+        if (!titleInput.value || titleInput.dataset.autoFilled === 'true') {
+            titleInput.value = titleWithoutExt;
+            titleInput.dataset.autoFilled = 'true';
+        }
+    }
+};
+
+window.switchVideoSource = function(source, mode) {
+    const prefix = mode === 'add' ? 'add' : 'edit';
+    const tabs = document.querySelectorAll(`#${mode === 'add' ? 'addVideoModal' : 'editVideoModal'} .source-tab`);
+    const linkFields = document.getElementById(`${prefix}-link-fields`);
+    const uploadFields = document.getElementById(`${prefix}-upload-fields`);
+
+    tabs.forEach(tab => {
+        if (tab.dataset.source === source) {
+            tab.classList.add('active');
+        } else {
+            tab.classList.remove('active');
+        }
+    });
+
+    if (source === 'link') {
+        linkFields.style.display = 'block';
+        uploadFields.style.display = 'none';
+        document.getElementById(`${prefix === 'add' ? 'video' : 'edit-video'}-url`).required = true;
+        document.getElementById(`${prefix === 'add' ? 'video' : 'edit-video'}-file`).required = false;
+    } else {
+        linkFields.style.display = 'none';
+        uploadFields.style.display = 'block';
+        document.getElementById(`${prefix === 'add' ? 'video' : 'edit-video'}-url`).required = false;
+        document.getElementById(`${prefix === 'add' ? 'video' : 'edit-video'}-file`).required = true;
+    }
+};
+
 window.showAddVideoModal = function() {
     const modal = document.getElementById('addVideoModal');
     modal.classList.add('active');
     document.body.style.overflow = 'hidden';
+    switchVideoSource('link', 'add');
 };
 
 window.closeAddVideoModal = function() {
     const modal = document.getElementById('addVideoModal');
     modal.classList.remove('active');
     document.body.style.overflow = '';
-    document.getElementById('video-title').value = '';
+    const titleInput = document.getElementById('video-title');
+    titleInput.value = '';
+    titleInput.dataset.autoFilled = 'false';
     document.getElementById('video-url').value = '';
     document.getElementById('video-description').value = '';
     document.getElementById('video-platform').value = 'bilibili';
+    document.getElementById('video-file').value = '';
 };
 
-window.showEditVideoModal = function(id, title, url, description, platform) {
+window.showEditVideoModalById = function(videoId) {
+    const videoCard = document.querySelector(`.video-card[data-video-id="${videoId}"]`);
+    if (!videoCard) return;
+
+    const title = videoCard.dataset.videoTitle;
+    const url = videoCard.dataset.videoUrl;
+    const description = videoCard.dataset.videoDescription;
+    const platform = videoCard.dataset.videoPlatform;
+    const videoType = videoCard.dataset.videoType;
+
     const modal = document.getElementById('editVideoModal');
     const form = document.getElementById('editVideoForm');
-    form.action = `/champions/{{ champion.id }}/videos/${id}/update`;
-    document.getElementById('edit-video-title').value = title;
-    document.getElementById('edit-video-url').value = url;
-    document.getElementById('edit-video-description').value = description;
-    document.getElementById('edit-video-platform').value = platform;
+    form.action = `/champions/{{ champion.id }}/videos/${videoId}/update`;
+    const titleInput = document.getElementById('edit-video-title');
+    titleInput.value = title;
+    titleInput.dataset.autoFilled = 'false';
+    document.getElementById('edit-video-url').value = url || '';
+    document.getElementById('edit-video-description').value = description || '';
+    document.getElementById('edit-video-platform').value = platform || 'bilibili';
     modal.classList.add('active');
     document.body.style.overflow = 'hidden';
+
+    if (videoType === 'upload') {
+        switchVideoSource('upload', 'edit');
+    } else {
+        switchVideoSource('link', 'edit');
+    }
 };
 
 window.closeEditVideoModal = function() {
@@ -505,6 +683,43 @@ window.deleteVideo = function(id) {
     }
 };
 
+window.playUploadedVideoById = function(videoId) {
+    const videoCard = document.querySelector(`.video-card[data-video-id="${videoId}"]`);
+    const title = videoCard ? videoCard.dataset.videoTitle : '视频播放';
+
+    const modal = document.createElement('div');
+    modal.className = 'video-player-modal';
+    modal.innerHTML = `
+        <div class="video-player-content">
+            <div class="video-player-header">
+                <h3>${title}</h3>
+                <button class="video-player-close" onclick="this.closest('.video-player-modal').remove(); document.body.style.overflow = '';">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <div class="video-player-body">
+                <video controls autoplay style="width: 100%; max-height: 70vh;">
+                    <source src="/champions/{{ champion.id }}/videos/${videoId}/play" type="video/mp4">
+                    您的浏览器不支持视频播放
+                </video>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+    document.body.style.overflow = 'hidden';
+
+    setTimeout(() => {
+        lucide.createIcons();
+    }, 0);
+
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal) {
+            modal.remove();
+            document.body.style.overflow = '';
+        }
+    });
+};
+
 // 点击模态框外部关闭
 document.addEventListener('click', function(e) {
     const addModal = document.getElementById('addVideoModal');
@@ -517,5 +732,72 @@ document.addEventListener('click', function(e) {
     }
 });
 </script>
+
+<style>
+.video-player-modal {
+    display: flex;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.9);
+    z-index: 10000;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+}
+
+.video-player-content {
+    background: var(--card);
+    border-radius: var(--radius-lg);
+    max-width: 1200px;
+    width: 100%;
+    max-height: 90vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: var(--shadow-2xl);
+}
+
+.video-player-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--muted);
+}
+
+.video-player-header h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--foreground);
+    margin: 0;
+}
+
+.video-player-close {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--muted-foreground);
+    padding: 0.5rem;
+    border-radius: var(--radius);
+    transition: all 0.2s ease;
+}
+
+.video-player-close:hover {
+    background: var(--background);
+    color: var(--foreground);
+}
+
+.video-player-body {
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #000;
+}
+</style>
 {% endmacro %}
 

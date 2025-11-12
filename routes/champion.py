@@ -336,9 +336,10 @@ async def create_video(
     request: Request,
     champion_id: str,
     title: str = Form(...),
-    url: str = Form(...),
+    url: str = Form(None),
     description: str = Form(None),
-    platform: str = Form("bilibili"),
+    platform: str = Form(None),
+    video_file: UploadFile = File(None),
     session: Session = Depends(get_session)
 ):
     """创建英雄教学视频"""
@@ -357,13 +358,33 @@ async def create_video(
     if not db_user:
         return RedirectResponse(url=f"/champions/{champion_id}", status_code=303)
 
+    video_type = "link"
+    video_file_path = None
+
+    if video_file and video_file.filename:
+        video_type = "upload"
+        upload_dir = Path("data/champion_videos")
+        upload_dir.mkdir(parents=True, exist_ok=True)
+
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        file_ext = Path(video_file.filename).suffix
+        filename = f"{champion_id}_{db_user.id}_{timestamp}{file_ext}"
+        file_path = upload_dir / filename
+
+        with open(file_path, "wb") as buffer:
+            shutil.copyfileobj(video_file.file, buffer)
+
+        video_file_path = str(file_path)
+
     video = ChampionVideo(
         user_id=db_user.id,
         champion_id=champion_id,
         title=title,
         url=url,
         description=description,
-        platform=platform
+        platform=platform if platform else "upload",
+        video_type=video_type,
+        video_file=video_file_path
     )
     session.add(video)
     session.commit()
@@ -377,9 +398,10 @@ async def update_video(
     champion_id: str,
     video_id: int,
     title: str = Form(...),
-    url: str = Form(...),
+    url: str = Form(None),
     description: str = Form(None),
-    platform: str = Form("bilibili"),
+    platform: str = Form(None),
+    video_file: UploadFile = File(None),
     session: Session = Depends(get_session)
 ):
     """更新英雄教学视频"""
@@ -407,9 +429,31 @@ async def update_video(
 
     if video:
         video.title = title
-        video.url = url
         video.description = description
-        video.platform = platform
+
+        if video_file and video_file.filename:
+            if video.video_file and Path(video.video_file).exists():
+                Path(video.video_file).unlink()
+
+            upload_dir = Path("data/champion_videos")
+            upload_dir.mkdir(parents=True, exist_ok=True)
+
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            file_ext = Path(video_file.filename).suffix
+            filename = f"{champion_id}_{db_user.id}_{timestamp}{file_ext}"
+            file_path = upload_dir / filename
+
+            with open(file_path, "wb") as buffer:
+                shutil.copyfileobj(video_file.file, buffer)
+
+            video.video_type = "upload"
+            video.video_file = str(file_path)
+            video.platform = "upload"
+        else:
+            video.url = url
+            video.platform = platform
+            video.video_type = "link"
+
         video.updated_at = datetime.now()
         session.add(video)
         session.commit()
@@ -448,10 +492,38 @@ async def delete_video(
     ).first()
 
     if video:
+        if video.video_file and Path(video.video_file).exists():
+            Path(video.video_file).unlink()
         session.delete(video)
         session.commit()
 
     return RedirectResponse(url=f"/champions/{champion_id}", status_code=303)
+
+
+@router.get("/{champion_id}/videos/{video_id}/play")
+async def play_video(
+    champion_id: str,
+    video_id: int,
+    session: Session = Depends(get_session)
+):
+    """获取视频文件用于播放"""
+    video = session.exec(
+        select(ChampionVideo).where(ChampionVideo.id == video_id)
+    ).first()
+
+    if not video or not video.video_file:
+        return JSONResponse(content={"error": "视频不存在"}, status_code=404)
+
+    video_path = Path(video.video_file)
+    if not video_path.exists():
+        return JSONResponse(content={"error": "视频文件不存在"}, status_code=404)
+
+    from fastapi.responses import FileResponse
+    return FileResponse(
+        path=str(video_path),
+        media_type="video/mp4",
+        filename=f"{video.title}.mp4"
+    )
 
 
 def get_current_user(request: Request, session: Session) -> User:
