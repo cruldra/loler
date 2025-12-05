@@ -1,0 +1,166 @@
+{% extends "base.html" %}
+
+{% block title %}兵线信息 - LOL助手{% endblock %}
+
+{% block styles %}
+<style>
+    .minion-card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        padding: 1.5rem;
+        cursor: pointer;
+        transition: all 400ms ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .minion-card:hover {
+        transform: translateY(-8px) scale(1.02);
+        box-shadow: var(--shadow-xl);
+        border-color: var(--primary);
+    }
+
+    .minion-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, var(--primary), var(--accent));
+        transform: scaleX(0);
+        transition: transform 400ms ease;
+    }
+
+    .minion-card:hover::before {
+        transform: scaleX(1);
+    }
+
+    .minion-image {
+        width: 100%;
+        height: auto;
+        object-fit: contain;
+        border-radius: var(--radius);
+        margin-bottom: 1rem;
+        background: var(--muted);
+    }
+
+    .minion-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+        color: var(--foreground);
+    }
+
+    .minion-desc {
+        font-size: 0.9rem;
+        color: var(--muted-foreground);
+        line-height: 1.6;
+        padding: 0.75rem;
+        background: var(--muted);
+        border-radius: var(--radius);
+    }
+
+    @keyframes cardLoad {
+        from {
+            opacity: 0;
+            transform: translateY(30px) scale(0.9);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+    }
+
+    .minion-card {
+        animation: cardLoad 600ms ease-out;
+    }
+
+    .minion-card:nth-child(1) { animation-delay: 0ms; }
+    .minion-card:nth-child(2) { animation-delay: 100ms; }
+    .minion-card:nth-child(3) { animation-delay: 200ms; }
+    .minion-card:nth-child(4) { animation-delay: 300ms; }
+    .minion-card:nth-child(5) { animation-delay: 400ms; }
+    .minion-card:nth-child(6) { animation-delay: 500ms; }
+    .minion-card:nth-child(7) { animation-delay: 600ms; }
+
+    .info-banner {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        padding: 1.5rem;
+        margin-top: 2rem;
+    }
+
+    .info-banner:hover {
+        border-color: var(--primary);
+        box-shadow: var(--shadow-lg);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <!-- 页面标题 -->
+    <div class="mb-8">
+        <div class="flex items-center gap-3 mb-4">
+            <i data-lucide="users" class="w-8 h-8 text-primary"></i>
+            <h1 class="text-3xl font-bold text-foreground">兵线信息</h1>
+        </div>
+        <p class="text-muted-foreground">了解兵线机制，掌握对线优势</p>
+    </div>
+
+    <!-- 兵线信息卡片网格 -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for item in minion_data %}
+        <div class="minion-card">
+            <div class="minion-title">{{ item.title }}</div>
+
+            {% if item.img %}
+            <img src="{{ item.img }}"
+                 alt="{{ item.title }}"
+                 class="minion-image"
+                 loading="lazy">
+            {% endif %}
+
+            {% if item.desc %}
+            <div class="minion-desc">
+                {{ item.desc }}
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- 底部提示 -->
+    <div class="info-banner">
+        <div class="flex items-start gap-4">
+            <div class="flex-shrink-0">
+                <i data-lucide="info" class="w-6 h-6 text-primary"></i>
+            </div>
+            <div>
+                <h3 class="text-lg font-semibold text-foreground mb-2">兵线控制技巧</h3>
+                <p class="text-muted-foreground text-sm leading-relaxed">
+                    合理控制兵线位置可以帮助你更安全地发育，或者创造击杀机会。
+                    理解优势线、劣势线和均势线的概念，根据对局情况灵活调整兵线位置。
+                </p>
+            </div>
+        </div>
+    </div>
+
+    {% if not minion_data %}
+    <div class="flex flex-col items-center justify-center py-16">
+        <i data-lucide="inbox" class="w-16 h-16 text-muted-foreground mb-4"></i>
+        <h3 class="text-xl font-semibold text-foreground mb-2">暂无兵线数据</h3>
+        <p class="text-muted-foreground">请稍后再试</p>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+    // 初始化 Lucide 图标
+    lucide.createIcons();
+</script>
+{% endblock %}
+

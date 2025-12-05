@@ -483,6 +483,13 @@
                                     <div class="mega-menu-item-title">刷野速度</div>
                                     <div class="mega-menu-item-desc">对比不同英雄的刷野效率和路线</div>
                                 </a>
+                                <a href="/game-data/minion" class="mega-menu-item">
+                                    <div class="mega-menu-item-icon">
+                                        <i data-lucide="users" class="w-5 h-5"></i>
+                                    </div>
+                                    <div class="mega-menu-item-title">兵线信息</div>
+                                    <div class="mega-menu-item-desc">了解兵线机制，掌握对线优势</div>
+                                </a>
                             </div>
                         </div>
                     </div>
@@ -615,7 +622,7 @@
             const currentPath = window.location.pathname;
 
             // 检查当前路径是否在 mega menu 中（排除 /items/builds）
-            const megaMenuPaths = ['/champions', '/summoner', '/monsters', '/game-data/respawn-timer'];
+            const megaMenuPaths = ['/champions', '/summoner', '/monsters', '/game-data/respawn-timer', '/game-data/rank-distribution', '/game-data/jungle-clearing-speed', '/game-data/minion'];
             const isItemsPath = currentPath.startsWith('/items') && !currentPath.startsWith('/items/builds');
             const isMegaMenuActive = megaMenuPaths.some(path => currentPath.startsWith(path)) || isItemsPath;
 

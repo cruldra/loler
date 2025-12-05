@@ -79,3 +79,20 @@ def jungle_clearing_speed_page(request: Request):
         jungle_data=jungle_data_sorted
     )
 
+
+@router.get("/minion", response_class=HTMLResponse)
+def minion_page(request: Request):
+    """兵线信息页面"""
+    user = request.session.get('user')
+
+    minion_file = data_dir / "minion.json"
+
+    with open(minion_file, 'r', encoding='utf-8') as f:
+        minion_data = json.load(f)
+
+    template = env.get_template("game_data/minion.html")
+    return template.render(
+        user=user,
+        minion_data=minion_data
+    )
+

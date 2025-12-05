@@ -1,0 +1,38 @@
+[
+  {
+    "title": "第一波小兵出兵时间",
+    "img": "https://github.com/cruldra/picx-images-hosting/raw/master/600638839173-11-4000009A-1-028D-10-3-1335.2ksce1zbyx.webp",
+    "desc":"第一波小兵在1分零5秒时出兵"
+  },
+  {
+    "title": "第一波小兵在中路汇集时间及地点",
+    "img": "https://github.com/cruldra/picx-images-hosting/raw/master/600638839173-11-4000009A-1-0392-10-4-138A.wizgv91sr.webp"
+  },
+  {
+    "title": "第一波小兵在上下路汇集时间及地点",
+    "img": "https://github.com/cruldra/picx-images-hosting/raw/master/600638839173-11-400002CA-1-0880-10-5-147B.232apgxye2.webp"
+  },{
+    "title": "第一波炮车兵出兵时间",
+    "img": "https://github.com/cruldra/picx-images-hosting/raw/master/600638848460-11-4000009A-1-0632-10-1-1FA2.64ea3vevfy.webp",
+    "desc":"第一波炮车兵在2分35秒时出兵"
+  },
+  {
+    "title":"劣势线",
+    "img":"https://github.com/cruldra/picx-images-hosting/raw/master/image.1lc90wtlnw.webp",
+    "desc":"对方兵多，已方兵少,汇聚在已方塔前称之为劣势线,好处是安稳发育，坏处是不利于支援和对拼"
+  },
+  {
+    "title":"均势线",
+    "img":"https://github.com/cruldra/picx-images-hosting/raw/master/image.39lly3mc66.webp",
+    "desc":"双方兵力数量相同，在中线汇聚,此时双方发育、对拼、支援等条件都相同，要看英雄自身优劣势"
+  },
+  {
+    "title":"优势线",
+    "img":"https://github.com/cruldra/picx-images-hosting/raw/master/image.5j4mhl7cb8.webp",
+    "desc":"已方兵多，对方兵少,汇聚在敌方塔前称之为优势线,发育劣势，支援和对拼优势"
+  },
+  {
+    "title":"炮车线刷新时间点",
+    "desc":"2:35,4:05,5:35,7:05,8:35,10:05,11:35,13:05,14:35,15:35,16:35,17:35,总结一下就是前15分钟除第一波普通兵线外，每隔2波兵出一波炮车兵,15分钟后每隔一波普通兵出一波炮车兵，25分钟后每波兵线都是炮车线"
+  }
+]
